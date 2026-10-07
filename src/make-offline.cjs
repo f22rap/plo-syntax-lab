@@ -1,0 +1,9 @@
+const fs=require('fs'),path=require('path');const dist=path.join(__dirname,'lab'),out=path.resolve(__dirname,'../dist');
+fs.mkdirSync(out,{recursive:true});let html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="style.css">',()=>'<style>'+fs.readFileSync(path.join(dist,'style.css'),'utf8')+'</style>');
+html=html.replace('<script id="engine-inline" src="engine.js"></script>',()=>'<script id="engine-inline">'+fs.readFileSync(path.join(dist,'engine.js'),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>');
+html=html.replace('<script src="app.js"></script>',()=>'<script>'+fs.readFileSync(path.join(dist,'app.js'),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>');
+fs.writeFileSync(path.join(out,'PLO-Syntax-Lab.html'),html);console.log('Generated standalone HTML: '+Buffer.byteLength(html)+' bytes');
+const engine=fs.readFileSync(path.join(dist,'engine.js'),'utf8'),defaults=fs.readFileSync(path.join(__dirname,'defaults.js'),'utf8'),catalog=fs.readFileSync(path.join(__dirname,'default-labels.json'),'utf8');
+const run=`(async()=>{const query=new URLSearchParams(location.search);let data={app:'PLO Syntax Lab',game:'PLO4',mode:'defaults',job:query.get('job'),board:[],ranges:[]};try{const board=PLO.parseBoard(query.get('board'));data.board=board.map(PLO.card);const e=new PLO.Engine();await e.prepare(board);data.ranges=await generateDefaults(PLO,e,${catalog});}catch(e){data.error=e.message;}await fetch(new URL('selection',location.href),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});})()`;
+fs.writeFileSync(path.join(out,'defaults.html'),'<!doctype html><meta charset="utf-8"><title>デフォルトsyntax生成</title><script>'+(engine+'\n'+defaults+'\n'+run).replace(/<\/script/gi,'<\\/script')+'</script>');

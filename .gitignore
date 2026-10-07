@@ -1,0 +1,17 @@
+/dist/
+/test-results/
+node_modules/
+*.csv
+*.xls
+*.xlsx
+*.xlsm
+*.zip
+*.exe
+*.pdb
+*.log
+.env
+.env.*
+.vs/
+.idea/
+History/
+src/defaults.html
