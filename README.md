@@ -40,6 +40,30 @@ Linux版の検証:
 
 weightは小数28桁までを整数に変換して正確に加算し、比率は小数8桁で切り捨てて返します。合計0の比率は未定義です。CSVの合計サイズは画面で30MiB、HTTPリクエスト全体では32MiBまで。同名のCSVは重複として拒否します。Windows版のPowerShellコマンド生成・実行はLinux版には含まれず、Node.jsで集計します。Windowsのexeの生成には以下のWindows環境が引き続き必要です。
 
+## Windows版のダウンロード・更新
+
+Windows版はGitHub Actionsで自動ビルドします。利用するPCでのビルドやNode.jsのインストールは不要です。
+
+- **開発中の最新版**：[Windows build](https://github.com/f22rap/plo-syntax-lab/actions/workflows/windows-build.yml)で、`codex/initial-import`の最新の成功した実行を開き、下部のArtifactsから`PLO-Syntax-Lab-Windows`をダウンロードします。GitHubへのログインが必要です。成果物の保存期間は30日です。
+- **タグ付き配布版**：[Releases](https://github.com/f22rap/plo-syntax-lab/releases)のAssetsから`PLO-Syntax-Lab-Windows.zip`をダウンロードします。最初のバージョンタグを公開するまで配布版はありません。
+
+ActionsからダウンロードしたZIPを展開すると、アプリのZIPと`SHA256SUMS.txt`が入っています。アプリの`PLO-Syntax-Lab-Windows.zip`も展開して、`FlopCommandApp.exe`を起動してください。Releaseから取得した場合はアプリのZIPを一度展開するだけです。`PLO-Syntax-Lab.html`は生成画面単独用です。
+
+更新時はアプリを終了し、新しいZIPの内容で前の配布ファイルを置き換えます。個人の履歴はアプリのフォルダーとは別の場所に保存されるため保持されます。アプリ内の自動更新機能はありません。実行環境はWindows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、EdgeまたはChromeです。
+
+### 開発者向け：自動ビルドとRelease
+
+`.github/workflows/windows-build.yml`は`codex/initial-import`へのpush・PRと手動実行で動きます。既存の5つのNodeテストを実行し、`build.ps1 -WithTests`で製品exeとネイティブテストexeをコンパイルします。デスクトップと実ブラウザを必要とする`test.ps1 -Native`はCIでは実行しません。Windowsの画面・ブラウザ連携は別途確認してください。配布物には製品exe、単独生成HTML、使い方、ビルド元コミットを記載したREADMEだけを含め、テストexeや個人データは含めません。
+
+配布版を公開する場合は、このワークフローを含むコミットに新しいバージョンタグを付けてpushします。例（未使用のバージョン名を使ってください）：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+`v*`タグのpushではビルド・テストの成功後にReleaseを作成し、同じZIPとSHA-256チェックサムを添付します。通常ビルドは読み取り権限のみ、Releaseジョブだけが`contents: write`を使います。個人アクセストークンの登録は不要です。同じタグの実行を再試行した場合は添付ファイルを更新します。
+
 ## Windows版の動作環境とビルド
 
 Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。**ビルド時のみNode.js 20以上**が必要です。外部のnpmパッケージは不要です。
