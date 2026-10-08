@@ -2,17 +2,8 @@
 const fs=require('node:fs/promises'),path=require('node:path'),{Worker}=require('node:worker_threads');
 const {randomUUID,createHash}=require('node:crypto'),{spawnSync}=require('node:child_process');
 const P=require('../lab/engine.js'),C=require('../linux/compare.cjs'),{catalog,validate,ApiError}=require('./contracts.cjs');
-const VERSION='2026-10-08-pair-draws-v1', MiB=1024*1024, terminal=s=>['succeeded','failed','cancelled'].includes(s);
-const definitions={
- roles:'PLO4は手札2枚＋ボード3枚の最強役。role.keyはplo_analyze_boardから取得する。',
- fd:'ボードに対象スート2枚、手札に2枚以上。ナッツ・セカンドはボードを除いた最高・第2位のカード。',
- bdfd:'フロップ限定。ボードに対象スート1枚、手札に2枚以上。As9h3dのナッツ=(Kss,Ahh,Add)、セカンド=(Qss:!ks,Khh:!ah,Kdd:!ad)。',
- sd:'nutGut/nonGut/nutOpen/nonOpenは2枚組条件で重複する。T93は順に(KQ,KJ)、(Q8,J7,86,76)、QJ、(J8,87)。残り2枚のブロッカーで分類を昇格させない。全SD・ラップ・実アウト数は4枚ハンド全体。完成ストレートのリドローは除く。',
- syntax:'ランク・スート・除外・和集合・積集合で表す。生成式は全合法ハンドで内部照合する。Monker実機での受理・抽出一致は未確認。空集合は空文字で全ハンドではない。',
- csv:'hand/comboとweight列。重複・衝突・不正weightは拒否。weightは0〜1、小数28桁。各CSV該当weight÷選択CSV該当weight合計×100。比率は8桁切り捨て、合計0はnull。',
- limits:'CSV単体30MiB、1比較合計30MiB、inline256KiB、条件500件、1ページ最大100件。IDの有効期限は1時間。'
-};
-function boardInfo(text){let cs;try{cs=P.parseBoard(text);}catch(e){throw new ApiError('INVALID_BOARD',e.message);}return {normalizedBoard:cs.map(P.card),boardKey:cs.slice(0,3).sort((a,b)=>a-b).concat(cs.slice(3)).map(P.card).join('')};}
+const {VERSION,definitions,boardInfo}=require('./domain.cjs');
+const MiB=1024*1024,terminal=s=>['succeeded','failed','cancelled'].includes(s);
 function version(){
  try{const v=require('./build-info.json').sourceCommit;if(/^[a-f0-9]{40}$/.test(v))return v;}catch{}
  const r=spawnSync('git',['rev-parse','HEAD'],{cwd:path.resolve(__dirname,'../..'),encoding:'utf8',timeout:1000,windowsHide:true});
@@ -65,7 +56,7 @@ class Service {
   });
  }
  async dispatch(name,a,{signal}={}) {
-  if(name==='plo_capabilities')return {supportedTransports:['stdio'],supportedProtocolVersions:['2025-11-25'],operations:catalog.tools.map(t=>t.name),scopes:['plo:analyze','plo:datasets','plo:compare'],sdkCompatibilityTested:true,limits:{csvBytesPerFile:30*MiB,csvBytesPerCompare:30*MiB,maxRanges:500,maxRequestsPerGeneration:100,maxConcurrentJobs:2,jobTimeoutSeconds:300,synchronousTimeoutSeconds:30,inlineCsvBytes:256*1024,responseBytes:256*1024,resourceResponseBytes:8*MiB,retainedResultsBytes:64*MiB,ttlSeconds:3600}};
+  if(name==='plo_capabilities')return {supportedTransports:['stdio'],supportedProtocolVersions:['2025-11-25'],operations:catalog.tools.map(t=>t.name),scopes:['plo:analyze','plo:datasets','plo:compare'],sdkCompatibilityTested:true,limits:{csvBytesPerFile:30*MiB,csvBytesPerCompare:30*MiB,maxRanges:500,maxRequestsPerGeneration:100,maxConcurrentJobs:2,jobTimeoutSeconds:300,synchronousTimeoutSeconds:30,inlineCsvBytes:256*1024,responseBytes:256*1024,resourceResponseBytes:8*MiB,retainedResultsBytes:64*MiB,ttlSeconds:3600,maxRowsPerPage:100,maxDatasetRows:211876}};
   if(name==='plo_definitions')return {definitions:(a.topics||Object.keys(definitions)).map(topic=>({topic,text:definitions[topic]})),examples:[{board:'Ts9h3d',filter:{sd:'nutGut'},syntax:'(KQ,KJ)'},{board:'As9h3d',filter:{bdfd:'bdNut'},syntax:'(Kss,Ahh,Add)'}]};
   if(name==='plo_analyze_board') {
    const b=boardInfo(a.board),r=await this.run('analyze',a,{signal});return {...b,street:{3:'flop',4:'turn',5:'river'}[r.street],totalLegalHands:r.total,roles:r.roles.map(x=>({key:x.key,label:x.label,category:x.cat,count:x.count})),ranks:r.ranks};

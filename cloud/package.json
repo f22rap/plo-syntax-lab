@@ -1,0 +1,23 @@
+{
+  "name": "plo-syntax-lab-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=24"},
+  "scripts": {
+    "build": "node build.mjs",
+    "db:generate": "drizzle-kit generate --config drizzle.config.mjs",
+    "test": "node tests/cloud-tests.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "drizzle-orm": "0.45.3"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.11",
+    "esbuild": "0.28.2",
+    "wrangler": "4.148.0"
+  }
+}

@@ -1,8 +1,8 @@
 # PLO Syntax Lab：MCP / AI利用API仕様 v1
 
-作成日：2026-10-08。状態：段階1A・1Bのローカルstdio実装済み。API version：1.0.0。
+作成日：2026-10-08。状態：ローカルstdioと段階2のHTTPS・認証・保存・アップロードを実装済み。実際のAIホストによる実演は接続後に確認する。API version：1.0.0。
 設計時のエンジン基準：36b3b47513a57fe3a2bc14140593af86cea10f12。
-11ツールの共通サービスとstdio MCPを実装した。HTTPS・認証・クラウド向けプラグインは後続段階。導入は[mcp-usage.md](mcp-usage.md)を参照。
+同じ11ツールをstdioとSitesのStreamable HTTPで提供する。導入は[ローカル手順](mcp-usage.md)・[クラウド手順](mcp-cloud-usage.md)を参照。
 
 ## 1. 目的と利用例
 
@@ -19,9 +19,9 @@
 
 ## 2. 構成と実装範囲
 
-共通サービスをNode.js上に設け、同じドメインAPIを2つの接続方式で公開する。
+共通計算をsrc/mcp/compute.cjsに設け、Node.jsのstdioとCloudflare WorkerのHTTPSで同じドメインAPIを公開する。
 
-| 層 | 計画する責務 |
+| 層 | 責務 |
 | --- | --- |
 | 共通サービス | 入力検証、版管理、エンジン起動、条件・データセット・ジョブの管理 |
 | stdio MCP | 対応するローカルAIクライアントが子プロセスとして起動 |
@@ -45,7 +45,7 @@
 | src/linux/worker.cjs | Workerによる比較・デフォルト生成 | 解析・カスタム条件・ジョブ・中止への対応 |
 | src/linux/server.cjs | ローカルUI用HTTP | 既存のloopback・Origin制限を保持。MCPの通信処理は別アダプターで実装 |
 
-実装は src/mcp/service.cjs、contracts.cjs、worker.cjs、stdio.cjs に置く。src/mcp/http.cjs は後続段階。既存UIのHTTPエンドポイントを外部公開するだけでMCP化したと扱わない。
+ローカルの実装はsrc/mcp/service.cjs、contracts.cjs、worker.cjs、stdio.cjs。共通計算はcompute.cjs、共通定義はdomain.cjs。HTTPSの実装はcloud/worker.mjs、service.mjs、store.mjs。既存UIのHTTPエンドポイントを外部公開するだけでMCP化したと扱わない。
 
 ## 4. MCPプロトコルと接続
 
@@ -156,7 +156,7 @@ generated syntaxは全合法ハンドで内部照合する。Monker実機の受�
 
 local_fileはrealpathを解決して起動時の許可root内か確認し、シンボリックリンク・相対パスの脱出を拒否する。クラウドではこのkindを受け付けない。
 
-以下のupload処理は未実装のHTTPS段階の設計。ローカル版はupload入力をPERMISSION_DENIEDで拒否する。
+以下のupload処理はクラウド版に実装済み。ローカル版はupload入力をPERMISSION_DENIEDで拒否する。
 
 大きなCSVは、認証済みのPOST /uploadsへtext/csvの本文とファイル名メタデータを送ってuploadIdを取得する。プラグイン側のアップロードUI・ファイル受け渡し機能が担当する。APIレスポンスはuploadId、sizeBytes、expiresAt。取り込み完了後にplo_register_datasetへ渡す。uploadIdは呼び出し元専用で1回の取り込み後に消費する。MCPホストごとのアップロード対応は接続テストで確認し、非対応ホストではローカルファイルまたはinlineを使う。
 
@@ -180,7 +180,7 @@ stateはqueued → running → succeeded / failed / cancelled。失敗理由はp
 
 requestKeyは必須。同じ呼び出し元・同じkey・同じ正規化入力は同じjobIdを返す。異なる入力で同じkeyを再使用するとREQUEST_KEY_CONFLICT。再送で比較を二重起動しない。
 
-cancelは自分のジョブだけを対象とし、実行workerを終了する。終了済みジョブはstateを維持しcancelRequested=false。中止済みへの再要求はcancelRequested=true。中止と正常終了の競合では先に確定した終端状態を維持する。
+cancelは自分のジョブだけを対象とする。ローカル版は実行workerを終了し、クラウド版はD1の状態を変更して計算ループが中止を確認する。終了済みジョブはstateを維持しcancelRequested=false。中止済みへの再要求はcancelRequested=true。中止と正常終了の競合では先に確定した終端状態を維持する。
 
 結果ページにはboardKey・totalRows・offset・nextOffset・rows・warningsを返す。rowsの各sourcesにはdatasetId・label・sourceRows・matchedHands・weightSum・percentを返す。全ハンド行はconditionId=null、cell=ALL、syntax=""。
 
@@ -190,7 +190,7 @@ exportはCSVまたはJSON。CSVはUTF-8 BOM・CRLF、既存の列意味を維持
 
 ## 8. 初期制限とデータ管理
 
-以下はローカル版の既定値。upload・HTTPSは後続段階。既存UIの制限を勝手に変えるものではない。変更する場合はcapabilitiesで公開する。
+以下はローカル版の既定値。クラウド版の制限は後段とplo_capabilitiesを参照。既存UIの制限を勝手に変えるものではない。変更する場合はcapabilitiesで公開する。
 
 | 項目 | 初期値 |
 | --- | --- |
@@ -218,13 +218,15 @@ exportはCSVまたはJSON。CSVはUTF-8 BOM・CRLF、既存の列意味を維持
 
 出力上限を超えたらOUTPUT_TOO_LARGEを返し、ページサイズ・requestsの削減またはincludeSyntax=falseを案内する。syntaxを黙って短縮しない。全合法ハンドの列挙は返さず、件数・最大8例・syntaxを返す。
 
-ownerごとのCSV保持量は初期100MiB、ジョブ・条件登録数にも運用上限を設ける。認証済みでも無制限にworkerを作らない。長時間操作はworker内で行い、通信・中止を止めない。
+上の表はローカル版の制限。クラウド版は単体CSV2MiB・50,000行、合計6MiB、20比較条件、生成10条件、ページ10件、同時比較1件、25秒。ownerのCSV・結果・成果物をそれぞれ8MiBに制限する。全制限はplo_capabilitiesを確認する。
+
+ローカルownerごとのCSV保持量は初期100MiB、ジョブ・条件登録数にも運用上限を設ける。認証済みでも無制限にworkerを作らない。長時間操作はworker内で行い、通信・中止を止めない。
 
 ローカル版のownerはMCPサーバープロセスの作業領域。クラウド版は認証主体ID。conditionId / datasetId / jobId / fileIdは接続をまたいで持ち運ぶ不透明なIDとし、全操作でownerを検証する。HTTP接続そのものに暗黙の選択中ボードやCSVを置かない。複数インスタンスの場合はowner付きの共有ストレージとジョブ管理を使う。期限切れ・他ownerのIDはID_NOT_FOUNDとして扱う。
 
 ## 9. 認証と権限
 
-ローカルstdioは許可rootを起動時に固定し、全11機能を提供する。scopesは機能分類の情報で、初版stdioで認証トークンやscopeの選択機構は提供しない。HTTPS版はMCPの対象版に準拠した認可方式を使用する。クライアント互換を検証して登録手順を文書化する。鍵・認証情報をLLMに入力させない。
+ローカルstdioは許可rootを起動時に固定し、全11機能を提供する。scopesは機能分類の情報で、初版stdioで認証トークンやscopeの選択機構は提供しない。HTTPS版はSitesがOAuth・サインインを処理し、認証済み利用者IDをdispatch境界で渡す。このIDのSHA-256で全レコードとR2ファイルを区分し、ownerを毎回検証する。サービス用バイパストークンを利用者本人として扱わない。認証なしでは初期化・ツール一覧・capabilities・definitionsだけを返す。plo:* scopesは機能分類であり、初版の個別scope選択機構ではない。鍵・認証情報をLLMに入力させない。
 
 アプリの権限案：
 - plo:analyze：定義・解析・生成・照合
@@ -250,7 +252,8 @@ owner検証はscopeとは別に行う。アップロードと成果物URLも同�
 | SERVER_BUSY | 空きworkerを待つ。retryable=true |
 | JOB_TIMEOUT / JOB_CANCELLED | ジョブの終端理由 |
 | REQUEST_KEY_CONFLICT | 新しいrequestKeyを使う |
-| INTERNAL_ERROR | 内部例外を秘匿。初版は合成データで再現して調査 |
+| INTERNAL_ERROR | 内部例外を秘匿。合成データで再現して調査 |
+| STORAGE_UNAVAILABLE | クラウド保存の一時エラー。retryable=true |
 
 schemaにはmessageだけでなくcodeを必須とし、モデルが文字列の部分一致で分岐する必要をなくす。EMPTY/UNSUPPORTEDの生成行はエラーではない。
 
@@ -309,7 +312,7 @@ plo_get_jobへjobIdを渡し、succeeded後にplo_export_resultでCSVを取得�
 | --- | --- | --- |
 | 1A（実装済み） | 共通サービス＋stdio、最初の5ツール | 公式SDKクライアントから解析・生成・照合が動く |
 | 1B（実装済み） | データセット・比較ジョブ・export | 2/3CSV比較・小数精度・中止・resources/readが動く |
-| 2 | HTTPS、認証、アップロード、プラグイン | 実際の対象クラウドAIから一連の操作が動く |
+| 2（実装済み・AIホスト実演待ち） | HTTPS、認証、アップロード、プラグイン | 公式HTTP SDK・workerd・D1/R2で検証済み。対象AIの接続後に実演 |
 | 3 | 結果表・グラフ、保存済み履歴、Tasks等 | 必要な拡張対応を明示し、初期APIの互換を保持 |
 
 受入テスト：
@@ -326,7 +329,7 @@ plo_get_jobへjobIdを渡し、succeeded後にplo_export_resultでCSVを取得�
 11. 非同期比較のジョブ状態と結果ページ、CSV/JSONダウンロードを検証する。
 12. プラグイン実装ではユーザーがCSVを渡し、AIが生成から結果取得まで行う実演を完了する。
 
-最初の実装着手点は1A。ドメイン契約を固定してから1Bへ進める。HTTPS公開やプラグイン登録は、この仕様書追加だけでは行わない。
+ローカルとクラウドのAPIを共通schemaで維持する。クラウドのCIは公式HTTP SDKとworkerdのD1/R2で全ツール・認証境界・保存を検証する。AIホスト固有の接続・ブラウザのWebMCPは、それぞれ対応する実環境で別途検証する。
 
 ## 13. 参照
 

@@ -4,7 +4,7 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 開発を引き継ぐ場合は[AI開発引継ぎ](AI_HANDOFF.md)を参照してください。構成・確定仕様・テスト・未確認事項をまとめています。
 
-AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)と、既存Windowsアプリの履歴・PowerShell・グラフ／レポートまで操作する[Windowsアプリ連携版](mcp/README.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
+AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)、既存Windowsアプリの履歴・PowerShell・グラフ／レポートまで操作する[Windowsアプリ連携版](mcp/README.md)、HTTPSの[クラウド版](docs/mcp-cloud-usage.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
 
 ## 機能
 
@@ -92,7 +92,13 @@ stdio MCPで、ボード解析・syntax生成・ハンド照合・CSV比較・�
 
 GitHub Actionsの`PLO-Syntax-Lab-MCP` artifactには依存同梱ZIPを用意します。Node.js 24以上を用意し、対応するAIクライアントに`src/mcp/stdio.cjs`の絶対パスを登録してください。ソースから起動する場合は`npm ci --prefix src/mcp`で依存をインストールします。MCP用の依存は既存Windows/HTMLビルドとは別です。
 
-設定例・CSV読み込み・11ツールの使い方は[MCP利用手順](docs/mcp-usage.md)、入出力は[API仕様](docs/mcp-api-spec.md)に記載しています。Windows/Linuxの公式SDK接続テストをCIで実行し、`v*`タグのReleaseにはMCP ZIPも添付します。HTTPS・クラウド向け接続は後続段階です。
+設定例・CSV読み込み・11ツールの使い方は[MCP利用手順](docs/mcp-usage.md)、入出力は[API仕様](docs/mcp-api-spec.md)に記載しています。Windows/Linuxの公式SDK接続テストをCIで実行し、`v*`タグのReleaseにはMCP ZIPも添付します。HTTPSのクラウドMCPも実装しています。以下を参照してください。
+
+## AIから利用するクラウドMCP
+
+HTTPSのStreamable HTTPで同じ11ツールを利用できます。Sitesの非公開プラグインを接続し、CSV登録画面から入力を渡します。PCにNode.jsやexeを用意する必要はありません。条件・CSV・ジョブ・成果物は利用者ごとに隔離し、通信をまたいで1時間保持します。
+
+[クラウドMCPの利用・開発手順](docs/mcp-cloud-usage.md)。クラウドの上限はCSV単体2MiB・50,000行、比較合計6MiB、比較20条件、生成10条件、1ページ10件です。現在の接続先は同文書で案内します。実際のAIホストからの接続確認はプラグイン接続後に行います。
 
 ## CSVの形式・計算
 

@@ -1,5 +1,5 @@
 {
-  "status": "local-stdio-implemented",
+  "status": "stdio-and-cloud-implemented",
   "apiVersion": "1.0.0",
   "sourceCommit": "36b3b47513a57fe3a2bc14140593af86cea10f12",
   "notes": [
@@ -158,6 +158,14 @@
                       "retainedResultsBytes": {
                         "type": "integer",
                         "minimum": 1
+                      },
+                      "maxRowsPerPage": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "maxDatasetRows": {
+                        "type": "integer",
+                        "minimum": 1
                       }
                     },
                     "required": [
@@ -172,7 +180,9 @@
                       "responseBytes",
                       "ttlSeconds",
                       "resourceResponseBytes",
-                      "retainedResultsBytes"
+                      "retainedResultsBytes",
+                      "maxRowsPerPage",
+                      "maxDatasetRows"
                     ],
                     "additionalProperties": false
                   },

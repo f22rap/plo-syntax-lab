@@ -247,3 +247,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有する。MCP比較は検証済みrowsを渡し、`percentAsString`でBigIntから小数8桁の文字列を直接生成する。既存UIは従来の数値型を維持する。
 
 許可root内のCSVだけを読み、任意のファイル書き込み・OS操作は提供しない。ID・結果はプロセス内メモリー、有効期限1時間。再起動で失われる。出力はMCP resources/read。HTTPS・認証・upload・クラウドプラグイン・2026版プロトコル・AIホスト固有の保存画面は未実装/未検証の後続段階。Monker実機での一致は従来どおり未確認。
+
+
+## クラウドMCPの追加（2026-10-08）
+
+ユーザーが生成AIからの自由な利用を依頼し、ローカル11ツールに加えてHTTPSのクラウドMCPを実装した。[クラウド手順](docs/mcp-cloud-usage.md)を参照。Sitesの非公開プロジェクトを使用し、接続済みユーザーのCSVだけを扱う。
+
+- `src/mcp/compute.cjs`：UIと同じengine・CSV計算を呼ぶ共通実装。Node workerとWorkerで再利用する。
+- `src/mcp/domain.cjs`：条件定義・boardInfo・classificationVersion。`contracts.cjs`とJSON Schemaも共有。
+- `cloud/worker.mjs`：公式SDKによるstateless POST /mcp、Sites dispatchの認証ID、Origin・入力サイズの検証。
+- `cloud/service.mjs`：11ツール、25秒の制限、ジョブのCAS更新、CSV2MiB/50,000行、精度28桁、結果出力。
+- `cloud/store.mjs`、`db/schema.ts`、`drizzle/`：D1メタデータとR2本文。owner区分、1時間の期限、原子的quota・一度だけのupload消費。
+- `cloud/page.mjs`：CSV登録とID一覧。WebMCPの任意拡張はfeature detectionし、実ブラウザでは未検証。
+- `cloud/tests/cloud-tests.mjs`：公式Streamable HTTPクライアント、workerd、D1/R2を使う統合テスト。
+
+クラウド用依存はcloud/package.jsonとlockfile。Windows/HTML/Linuxの従来ビルドには不要。既存CIはMCPのWindows/Linuxテストにクラウドテストを追加し、全て成功した後にexe・MCP ZIPをビルドする。Sites公開は別の管理ソースリポジトリから行う。GitHub変更だけでは自動再デプロイされない。Sites用checkoutのcloud/source-info.jsonに対応するGitHubコミットを記録し、版と出力の来歴を一致させる。
+
+適用済みD1 migrationは変更しない。Drizzleで追加migrationを生成する。稼働中WorkerはSites dispatchのみに公開し、認証IDヘッダーを信用できない直結の経路へそのまま公開しない。実AIホストの接続完了を、公式SDKのテスト成功だけで主張しない。

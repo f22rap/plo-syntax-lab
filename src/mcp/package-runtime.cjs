@@ -10,7 +10,7 @@ async function main(){
  await fs.access(path.join(__dirname,'node_modules/@modelcontextprotocol/sdk/package.json'));
  await fs.rm(destination,{recursive:true,force:true});
  const files=['src/lab/engine.js','src/defaults.js','src/default-labels.json','src/linux/compare.cjs',
-  'src/mcp/contracts.cjs','src/mcp/service.cjs','src/mcp/worker.cjs','src/mcp/stdio.cjs',
+  'src/mcp/contracts.cjs','src/mcp/compute.cjs','src/mcp/domain.cjs','src/mcp/service.cjs','src/mcp/worker.cjs','src/mcp/stdio.cjs',
   'src/mcp/package.json','src/mcp/package-lock.json','tests/mcp-tests.cjs',
   'docs/mcp-tools.schema.json','docs/mcp-api-spec.md','docs/mcp-usage.md','docs/mcp-config.example.json'];
  for(const file of files){const target=path.join(destination,file);await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(path.join(root,file),target);}
