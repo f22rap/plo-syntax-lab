@@ -4,7 +4,7 @@ export class Store {
  constructor(db,files,owner,now=Date.now){this.db=db;this.files=files;this.owner=owner;this.now=now;}
  query(sql,...args){return this.db.prepare(sql).bind(...args);}
  decode(row){if(!row)throw new ApiError('ID_NOT_FOUND','IDが見つからないか有効期限が切れています。');return {...JSON.parse(row.data),revision:row.revision};}
- async get(id,kind){return this.decode(await this.query('SELECT data,revision FROM plo_records WHERE owner=? AND id=? AND kind=? AND (expires_at>? OR retain_until>?)',this.owner,id,kind,this.now(),this.now()).first());}
+ async get(id,kind,{retained=false}={}){return this.decode(await this.query('SELECT data,revision FROM plo_records WHERE owner=? AND id=? AND kind=? AND '+(retained?'(expires_at>? OR retain_until>?)':'expires_at>?'),this.owner,id,kind,this.now(),...(retained?[this.now()]:[])).first());}
  async request(key){const row=await this.query('SELECT data,revision FROM plo_records WHERE owner=? AND request_key=? AND expires_at>?',this.owner,key,this.now()).first();return row?this.decode(row):null;}
  async list(kind){const rows=await this.query('SELECT data,revision FROM plo_records WHERE owner=? AND kind=? AND expires_at>? ORDER BY created_at,id',this.owner,kind,this.now()).all();return rows.results.map(row=>this.decode(row));}
  insertion(kind,id,data,{count=64,bytes=8*1024*1024,requestKey=null,signature=null,state=null,upload=null,activeJob=false,refs=[]}={}){
@@ -34,7 +34,7 @@ export class Store {
  async remove(id){await this.query('DELETE FROM plo_records WHERE owner=? AND id=?',this.owner,id).run();}
  async expireRequest(key){const row=await this.query('SELECT id,data FROM plo_records WHERE owner=? AND request_key=? AND expires_at<=?',this.owner,key,this.now()).first();if(row){await this.remove(row.id);const record=JSON.parse(row.data);if(record.resultKey)await this.files.delete(record.resultKey);}}
  pinStatement(ids,until,jobId){return this.query(`UPDATE plo_records SET retain_until=? WHERE owner=? AND id IN (${ids.map(()=>'?').join(',')}) AND EXISTS (SELECT 1 FROM plo_records WHERE owner=? AND id=? AND kind='job')`,until,this.owner,...ids,this.owner,jobId);}
- async release(job){const ids=[...job.datasetIds,...job.conditionIds];if(ids.length)await this.pinStatement(ids,0,job.jobId).run();}
+ async release(job){const ids=[...job.datasetIds,...job.conditionIds];if(ids.length)await this.query(`UPDATE plo_records SET retain_until=0 WHERE owner=? AND id IN (${ids.map(()=>'?').join(',')}) AND NOT EXISTS (SELECT 1 FROM plo_records WHERE owner=? AND kind='job' AND state IN ('queued','running') AND expires_at>?)`,this.owner,...ids,this.owner,this.now()).run();}
  async blob(key){const object=await this.files.get(key);if(!object)throw new ApiError('ID_NOT_FOUND','ファイルが見つかりません。');return object;}
  async cleanup(){
   // Expiry is always checked on access. Delete a bounded batch of physical blobs on later visits.

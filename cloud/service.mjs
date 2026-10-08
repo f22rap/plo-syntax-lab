@@ -113,9 +113,9 @@ export class CloudService {
    calculating=true;
    let flat=[],sources;
    try{
-    sources=await Promise.all(job.datasetIds.map(id=>this.store.get(id,'dataset')));
+    sources=await Promise.all(job.datasetIds.map(id=>this.store.get(id,'dataset',{retained:true})));
     const datasets=[];for(const d of sources){const text=await (await this.store.blob(d.blobKey)).text();datasets.push(comparison.parseDataset(engine.parseBoard(job.boardKey),{name:d.name,label:d.label,text}));}
-    const conditions=await Promise.all(job.conditionIds.map(id=>this.store.get(id,'condition')));
+    const conditions=await Promise.all(job.conditionIds.map(id=>this.store.get(id,'condition',{retained:true})));
     const ranges=[...(job.includeAll?[null]:[]),...conditions];
     for(const condition of ranges){
      job=await this.store.get(jobId,'job');if(terminal(job.state))return;

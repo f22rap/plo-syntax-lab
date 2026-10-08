@@ -97,7 +97,10 @@ try{
  const timed=await queued('timed',Date.now()-1);eq((await service.call('plo_get_job',{jobId:timed.jobId})).data.failure.code,'JOB_TIMEOUT');
  const fork=new CloudService({DB:db,FILES:bucket},owner,{origin:'http://plo.test'});eq((await fork.call('plo_get_job',{jobId:first.jobId})).data.state,'succeeded');
  const expiredId=crypto.randomUUID();await service.store.insert('condition',expiredId,{conditionId:expiredId,expiresAt:Date.now()-1});eq((await service.call('plo_match_hands',{board:'Ts9h3d',conditionId:expiredId,hands:['KsQhAsAd']})).error.code,'ID_NOT_FOUND');
+ await service.store.query('UPDATE plo_records SET retain_until=? WHERE owner=? AND id=?',Date.now()+10000,owner,expiredId).run();eq((await service.call('plo_match_hands',{board:'Ts9h3d',conditionId:expiredId,hands:['KsQhAsAd']})).error.code,'ID_NOT_FOUND');eq((await service.store.get(expiredId,'condition',{retained:true})).conditionId,expiredId);
  const quota=new Store(db,bucket,'quota-user');const success=await Promise.all([quota.insert('condition','one',{expiresAt:Date.now()+10000},{count:1}),quota.insert('condition','two',{expiresAt:Date.now()+10000},{count:1})]);eq(success.filter(Boolean).length,1);
+ // An older completed job must not unpin a newly started comparison.
+ const successor=await queued('successor');await service.store.pinStatement([d1.datasetId],Date.now()+40000,successor.jobId).run();await service.store.release(cancel);eq((await service.store.query('SELECT retain_until FROM plo_records WHERE owner=? AND id=?',owner,d1.datasetId).first()).retain_until>Date.now(),true);await service.finish(successor.jobId,'cancelled',error);
  // A storage failure after terminal CAS must preserve the published result.
  const pinFailure=await queued('release-failure');service.store.release=async()=>{throw Error('simulated D1 release failure');};eq((await service.finish(pinFailure.jobId,'succeeded',null,{resultKey:'fixture',rowCount:0})).state,'succeeded');
  const failedStore=new CloudService({DB:db,FILES:bucket},await sha256('write-failure'),{origin:'http://plo.test'});failedStore.store.insert=async()=>{throw Error('simulated failed insert');};
