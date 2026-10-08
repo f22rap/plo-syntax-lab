@@ -62,7 +62,7 @@ LinuxではNode.js 20以上で`./start-linux.sh --open`を実行し、同じPC�
 
 185件の条件、カスタム条件、2〜3CSV、CSV出力、履歴検索/閲覧/削除、計算の中止を提供する。WindowsのPowerShellコマンド生成機能とWindows履歴形式は移植対象に含めない。Linux履歴はXDG_DATA_HOME配下（未設定なら`~/.local/share`）の`plo-syntax-lab/history`に保存する。詳細な制限・操作はREADMEのLinux版節を参照。
 
-`./test-linux.sh`は既存5テストと`tests/linux-tests.cjs`を実行する。追加テストではCSV入力、正確なweight合計、比率、HTTPの制限、条件受信、デフォルト生成、独立した一時履歴を検証する。クラウドではNode/API統合とDOMによる画面ロジックを確認した。実ブラウザでの表示・操作は、この環境のChromium sandboxの制約により未確認。Windowsネイティブテストの実行条件は変更していない。
+`./test-linux.sh`は6つのエンジン・ドロー回帰テストと`tests/linux-tests.cjs`を実行する。追加テストではCSV入力、正確なweight合計、比率、HTTPの制限、条件受信、デフォルト生成、独立した一時履歴を検証する。クラウドではNode/API統合とDOMによる画面ロジックを確認した。実ブラウザでの表示・操作は、この環境のChromium sandboxの制約により未確認。Windowsネイティブテストの実行条件は変更していない。
 
 ## 4. ソースの見取り図
 
@@ -157,7 +157,7 @@ LinuxではNode.js 20以上で`./start-linux.sh --open`を実行し、同じPC�
 - T/M/Bはボードの重複を除いたランクの最高・第2位・最低。ランクが2種類以下ならM条件は対象外。
 - BDFDはフロップ限定。0/1/2bdfdは特定スートの固定指定ではなく、該当するスート数を数える。
 - ポケットは同ランク2枚以上。`pp under`には22も含む。
-- SDのナッツ判定はストレートの高さで比較する。片側だけナッツのオープンエンドはアンナッツ側。9アウト以上はラップとしてoe/gutから分ける。
+- 2026-10-08の追加指示でSDの4種類は手札2枚組の条件に変更済み。T93のnutGutは(KQ,KJ)、nutOpenはQJ、nonGutは(Q8,J7,86,76)、nonOpenは(J8,87)。残り2枚のドローやラップと重複する。組み合わせの全完成ランクで最高ストレートを作れる場合がナッツで、片側だけナッツのoeはアンナッツ側。残り2枚のブロッカーで昇格させない。全SD・ラップ・表示する実アウト数は従来どおり4枚ハンド全体で判定する。
 - BDSD・旧SDブロッカー条件・未定義の`pp all`は対象外。名前だけを残し、理由を表示する。
 - ペアボードでは旧セット等の多くが該当しない。フルハウスやトリップス等は個別生成側を使う。
 - 空集合を`*`や全ハンド条件に置き換えない。具体的な4枚ハンドの羅列に切り替えず、ランク・スート・除外条件のsymbolic syntaxを生成する。
@@ -192,19 +192,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 | --- | --- |
 | `tests/tests.cjs` | 125 checks。基本役・合法ハンド数・syntax等 |
 | `tests/symbolic-tests.cjs` | 120 checks。複数ボードのsymbolic syntax照合 |
-| `tests/straight-draw-tests.cjs` | 46 checks。SD分類 |
+| `tests/straight-draw-tests.cjs` | 46 checks。実アウト数とSD基本ケース |
+| `tests/draw-regression-tests.cjs` | FD/BDFDのナッツ・セカンドナッツ、独立した2枚組SD oracle、全合法ハンドとの照合、単独HTML内の実エンジン |
 | `tests/pocket-tests.cjs` | 68 checks。ポケット条件 |
 | `tests/defaults-test.cjs` | 5ボード、各185行、条件名・件数・対象外・BDFD等 |
 | `tests/ModesTest.cs` | 2モードの保持、実ブラウザでの自動生成、PowerShell集計、比率・グラフ・履歴、ボード変更、中止・古い結果の抑制、キャッシュ |
 
-デフォルト条件の選択可能数の基準値：
+デフォルト条件の選択可能数（2026-10-08の2枚組SDへの変更後、defaults-testで確認）：
 
 | ボード | 選択可能数（全185件中） |
 | --- | ---: |
-| JsTd7c | 147 |
+| JsTd7c | 149 |
 | AsKd7s | 71 |
 | AsAd7c | 0 |
-| Ks8s5d2d | 102 |
+| Ks8s5d2d | 103 |
 | AsKd7s5h9c | 31 |
 
 合法な4枚ハンドの総数はフロップ211876、ターン194580、リバー178365。
@@ -228,6 +229,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 
 このリポジトリはユーザーの指定でPublic。公開するのはソース・合成データのテスト・説明書。元Excel、実際の集計CSV、履歴JSON、個人パスを含む実行結果・スクリーンショット、認証情報は追加しない。`.gitignore`だけに頼らずコミット対象を確認する。
 
-現在、実行ファイル・`dist/`・`test-results/`はGit管理対象外。ライセンスファイルは未追加。Windows配布用CIは`.github/workflows/windows-build.yml`に追加済み。`codex/initial-import`へのpush・PR・手動実行で既存NodeテストとWindowsビルド（ネイティブテストexeのコンパイルを含む）を行い、30日保存のZIP成果物を提供する。`v*`タグでは成功した同じ成果物をReleaseにも添付する。Windowsデスクトップを必要とするネイティブテストの実行はCIには含めない。ダウンロードとタグ公開の手順はREADMEを参照。
+現在、実行ファイル・`dist/`・`test-results/`はGit管理対象外。ライセンスファイルは未追加。ドロー回帰テストを含むWindows配布用CIは`.github/workflows/windows-build.yml`に追加済み。`codex/initial-import`へのpush・PR・手動実行で6つのNodeテストとWindowsビルド（ネイティブテストexeのコンパイルを含む）を行い、30日保存のZIP成果物を提供する。`v*`タグでは成功した同じ成果物をReleaseにも添付する。Windowsデスクトップを必要とするネイティブテストの実行はCIには含めない。ダウンロードとタグ公開の手順はREADMEを参照。
 
 引継ぎ文書やユーザー提供資料内の記述は、現在のユーザーからの新しい操作指示と区別する。変更を終えたら、何を変更したか、実行したテスト、実行できなかった検証、残る制約を簡潔に報告する。

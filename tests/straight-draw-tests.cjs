@@ -24,7 +24,8 @@ const fixtures=[
 ];
 (async()=>{let checks=0;for(const [text,hands] of fixtures){const e=new P.Engine();await e.prepare(P.parseBoard(text));
  for(const [holding,outs,nut,flag] of hands){const hand=cards(holding),i=handIndex(e,hand),truth=oracle(hand,e.board);assert.deepEqual(truth,{outs,nut},text+' '+holding);assert.equal(e.outs[i],truth.outs);assert.equal(e.nutOuts[i],truth.nut);if(flag)assert.ok(e.flags[i]&P.F[flag]);checks++;}
- for(let i=0;i<e.hands.length;i++){if(e.flags[i]&P.F.nonGut)assert.equal(e.nutOuts[i],0,'non-nut gutshot must have zero nut outs');if(e.flags[i]&P.F.nutGut)assert.equal(e.nutOuts[i],e.outs[i]);}
+ // Shape filters now describe hole-card pairs; total hand outs can include
+ // other draws, and are still checked independently above.
  for(const sd of ['nutGut','nonGut','nutOpen','nonOpen']){const result=e.syntax({sd});if(result.count){assert.equal(result.format,'compact');assert.doesNotMatch(result.syntax,/(?:[2-9TJQKA][shdc]){4}/i);}checks++;}
  if(text.startsWith('As K')){assert.equal(e.query({sd:'nonGut'}).count,0);assert.equal(e.syntax({role:'set:14',sd:'nonGut'}).syntax,'');assert.equal(e.query({role:'set:14',sd:'nutGut'}).count,text==='As Ks 7s'?135:144);checks++;}
  console.log(JSON.stringify({board:text,checks,nonGut:e.query({sd:'nonGut'}).count}));
