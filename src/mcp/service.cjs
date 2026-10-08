@@ -20,7 +20,8 @@ function version(){
 }
 class Service {
  constructor(options={}) {
-  this.options=options;this.allowReadRoots=(options.allowReadRoots||[]).map(root=>require('node:fs').realpathSync(root));this.now=options.now||Date.now;
+  // Match fs.promises.realpath's native normalization, including Windows 8.3 aliases.
+  this.options=options;this.allowReadRoots=(options.allowReadRoots||[]).map(root=>require('node:fs').realpathSync.native(root));this.now=options.now||Date.now;
   this.ttl=options.ttlMs??3600000;this.jobTimeout=options.jobTimeoutMs??300000;this.queueTimeout=options.queueTimeoutMs??30000;
   this.conditions=new Map();this.datasets=new Map();this.jobs=new Map();this.files=new Map();this.requests=new Map();this.active=new Set();this.queue=[];this.closed=false;
   this.engine={sourceCommit:options.sourceCommit||version(),classificationVersion:VERSION,game:'PLO4'};
@@ -43,7 +44,7 @@ class Service {
    validate(name,'input',args);
    const data=await this.dispatch(name,args,options);
    result={ok:true,apiVersion:'1.0.0',engine:this.engine,data,error:null,warnings:this.engine.sourceCommit?[]:['ビルド元コミットが不明です。ソース版またはビルド情報付き配布物を使ってください。']};
-   const bytes=Buffer.byteLength(JSON.stringify(result));if(bytes*2>256*1024)throw new ApiError('OUTPUT_TOO_LARGE','ページサイズ・条件数を減らすかincludeSyntax=falseを指定してください。');
+   const bytes=Buffer.byteLength(JSON.stringify({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:false}));if(bytes>256*1024)throw new ApiError('OUTPUT_TOO_LARGE','ページサイズ・条件数を減らすかincludeSyntax=falseを指定してください。');
    validate(name,'output',result);
   }catch(e){if(name==='plo_generate_ranges'&&result?.ok)for(const row of result.data.rows)if(row.conditionId)this.conditions.delete(row.conditionId);const api=e instanceof ApiError?e:new ApiError('INTERNAL_ERROR','内部処理に失敗しました。');result={ok:false,apiVersion:'1.0.0',engine:this.engine,data:null,error:{code:api.code,message:api.message,retryable:api.retryable,details:api.details},warnings:[]};}
   return result;

@@ -19,6 +19,7 @@ function canonical(cards) { return cards.slice(0,3).sort((a,b)=>a-b).concat(card
  if(action==='analyze')return engine.summary();
  if(action==='generate') {
   if(input.mode==='defaults') return require('../defaults.js')(P,engine,require('../default-labels.json'));
+  const cache=new Map();
   return input.requests.map(request=>{
    const f={role:'all',fd:'all',sd:'all',bdfd:'all',clean:'',blockers:[],...request.filter};
    if(f.pocket==null)delete f.pocket;
@@ -30,7 +31,7 @@ function canonical(cards) { return cards.slice(0,3).sort((a,b)=>a-b).concat(card
    if(b.length===5&&['fd','sd','bdfd'].some(wanted))reason='リバーにドロー条件はありません。';
    else if(b.length!==3&&wanted('bdfd'))reason='BDFDはフロップ限定です。';
    if(reason)return {label:request.label,filter:f,count:0,syntax:'',status:'UNSUPPORTED',reason,examples:[]};
-   try {const result=engine.syntax(f);return {label:request.label,filter:f,...result,examples:result.examples.map(x=>x.cards.join('')),status:result.count?'MATCHES':'EMPTY',reason:result.count?null:'このボードでは該当なし'};}
+   try {const key=JSON.stringify(f);let result=cache.get(key);if(!result){result=engine.syntax(f);cache.set(key,result);}return {label:request.label,filter:f,...result,examples:result.examples.map(x=>x.cards.join('')),status:result.count?'MATCHES':'EMPTY',reason:result.count?null:'このボードでは該当なし'};}
    catch(e){fail('INTERNAL_ERROR','条件の生成または照合に失敗しました。');}
   });
  }
