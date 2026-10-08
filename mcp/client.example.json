@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "plo-syntax-lab": {
+    "plo-syntax-lab-windows": {
       "command": "node",
       "args": [
         "C:/path/to/plo-syntax-lab/mcp/server.mjs",

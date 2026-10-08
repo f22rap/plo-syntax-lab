@@ -1,12 +1,18 @@
-# ローカルMCPの導入と操作
+# Windowsアプリ連携MCPの導入と操作
 
 PLO Syntax Labの条件生成・CSV比較・履歴・結果出力を、MCP対応AIから操作できます。既存画面やブラウザを起動する必要はありません。処理はWindows上で実行します。AIクライアントにはツールの結果が返るため、そのクライアントのデータ取扱設定も適用されます。
+
+この版は`mcp/server.mjs`を入口とする15ツール版です。先行して追加された[Windows/Linux共通の11ツール版](../docs/mcp-usage.md)（`src/mcp/stdio.cjs`）も維持しています。既存アプリの履歴・PowerShell・グラフ／レポート保存まで操作する場合は本版を使ってください。どちらも複数のstdio対応AIクライアントから利用できます。
+
+共通11ツール版のIDやジョブを、本版へそのまま渡すことはできません。比率の表現も異なり、共通版は小数8桁切り捨て、本版はWindowsアプリと同じdecimal計算です。生成エンジンと最新の2枚組SD分類は共有します。
 
 ## 導入
 
 必要環境：64ビットWindows、.NET Framework 4.8、Windows PowerShell 5.1、Node.js 20以上。MCP経由の生成ではEdge/Chromeは不要です。GUIのデフォルト生成には引き続きEdge/Chromeを使います。
 
 リポジトリ直下で実行します。
+
+本版は現時点ではソースから導入します。既存の`PLO-Syntax-Lab-MCP`配布ZIPは共通11ツール版です。
 
 ```powershell
 npm.cmd ci --ignore-scripts
@@ -117,7 +123,9 @@ npm.cmd run test:mcp
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 ```
 
-MCPテストは公式クライアントで実際にサーバーを起動し、条件生成・集計・レポート・resource取得・再起動・履歴削除を検証します。CSVは合成データ、履歴は`test-results/`内の隔離先です。
+MCPテストは公式クライアントで実際にサーバーを起動し、条件生成・集計・レポート・resource取得・再起動・履歴削除を検証します。CSVは合成データ、履歴は`test-results/`内の隔離先です。Windows CIでもこのテストを実行します。
+
+2026-10-08の統合確認では、SDK 2.3.1による15ツールの接続・一連の操作、小数28桁のweight保持、既存GUIの生成・比較・履歴テストが成功しました。別途SDK 1.32.1のクライアントでも本版へ接続し、15ツールの取得と`get_status`呼び出しを確認しました。個々のAI製品への登録・表示まで検証したという意味ではありません。先行の共通11ツール版も147 checksを通過しました。
 
 構成：
 

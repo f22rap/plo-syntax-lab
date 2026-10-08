@@ -58,6 +58,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 配布するアプリは`dist/FlopCommandApp.exe`。exe単体で動作し、利用者にNode.jsは不要。`dist/PLO-Syntax-Lab.html`は生成画面単独用。生成されたHTMLを直接修正せず、`src/`を修正して再ビルドする。
 
+### Linux版の追加
+
+LinuxではNode.js 20以上で`./start-linux.sh --open`を実行し、同じPCのブラウザから利用する。npm依存は不要。`src/linux/server.cjs`がloopback・ランダムトークン・Origin検証付きHTTPを提供し、`worker.cjs`で生成と比較を実行する。`compare.cjs`は既存JS matcherを使い、小数28桁の整数加算でCSVのweightを集計する。Linux UIは`src/linux/index.html`・`app.js`・`style.css`。既存の生成画面は`lab/`で配信し、比較条件をPOSTで受信する。
+
+185件の条件、カスタム条件、2〜3CSV、CSV出力、履歴検索/閲覧/削除、計算の中止を提供する。WindowsのPowerShellコマンド生成機能とWindows履歴形式は移植対象に含めない。Linux履歴はXDG_DATA_HOME配下（未設定なら`~/.local/share`）の`plo-syntax-lab/history`に保存する。詳細な制限・操作はREADMEのLinux版節を参照。
+
+`./test-linux.sh`は6つのエンジン・ドロー回帰テストと`tests/linux-tests.cjs`を実行する。追加テストではCSV入力、正確なweight合計、比率、HTTPの制限、条件受信、デフォルト生成、独立した一時履歴を検証する。クラウドではNode/API統合とDOMによる画面ロジックを確認した。実ブラウザでの表示・操作は、この環境のChromium sandboxの制約により未確認。Windowsネイティブテストの実行条件は変更していない。
+
 ## 4. ソースの見取り図
 
 | ファイル | 主な責務 |
@@ -152,7 +160,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 - T/M/Bはボードの重複を除いたランクの最高・第2位・最低。ランクが2種類以下ならM条件は対象外。
 - BDFDはフロップ限定。0/1/2bdfdは特定スートの固定指定ではなく、該当するスート数を数える。
 - ポケットは同ランク2枚以上。`pp under`には22も含む。
-- SDのナッツ判定はストレートの高さで比較する。片側だけナッツのオープンエンドはアンナッツ側。9アウト以上はラップとしてoe/gutから分ける。
+- 2026-10-08の追加指示でSDの4種類は手札2枚組の条件に変更済み。T93のnutGutは(KQ,KJ)、nutOpenはQJ、nonGutは(Q8,J7,86,76)、nonOpenは(J8,87)。残り2枚のドローやラップと重複する。組み合わせの全完成ランクで最高ストレートを作れる場合がナッツで、片側だけナッツのoeはアンナッツ側。残り2枚のブロッカーで昇格させない。全SD・ラップ・表示する実アウト数は従来どおり4枚ハンド全体で判定する。
 - BDSD・旧SDブロッカー条件・未定義の`pp all`は対象外。名前だけを残し、理由を表示する。
 - ペアボードでは旧セット等の多くが該当しない。フルハウスやトリップス等は個別生成側を使う。
 - 空集合を`*`や全ハンド条件に置き換えない。具体的な4枚ハンドの羅列に切り替えず、ランク・スート・除外条件のsymbolic syntaxを生成する。
@@ -187,19 +195,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 | --- | --- |
 | `tests/tests.cjs` | 125 checks。基本役・合法ハンド数・syntax等 |
 | `tests/symbolic-tests.cjs` | 120 checks。複数ボードのsymbolic syntax照合 |
-| `tests/straight-draw-tests.cjs` | 46 checks。SD分類 |
+| `tests/straight-draw-tests.cjs` | 46 checks。実アウト数とSD基本ケース |
+| `tests/draw-regression-tests.cjs` | FD/BDFDのナッツ・セカンドナッツ、独立した2枚組SD oracle、全合法ハンドとの照合、単独HTML内の実エンジン |
 | `tests/pocket-tests.cjs` | 68 checks。ポケット条件 |
 | `tests/defaults-test.cjs` | 5ボード、各185行、条件名・件数・対象外・BDFD等 |
 | `tests/ModesTest.cs` | 2モードの保持、実ブラウザでの自動生成、PowerShell集計、比率・グラフ・履歴、ボード変更、中止・古い結果の抑制、キャッシュ |
 
-デフォルト条件の選択可能数の基準値：
+デフォルト条件の選択可能数（2026-10-08の2枚組SDへの変更後、defaults-testで確認）：
 
 | ボード | 選択可能数（全185件中） |
 | --- | ---: |
-| JsTd7c | 147 |
+| JsTd7c | 149 |
 | AsKd7s | 71 |
 | AsAd7c | 0 |
-| Ks8s5d2d | 102 |
+| Ks8s5d2d | 103 |
 | AsKd7s5h9c | 31 |
 
 合法な4枚ハンドの総数はフロップ211876、ターン194580、リバー178365。
@@ -223,6 +232,18 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 
 このリポジトリはユーザーの指定でPublic。公開するのはソース・合成データのテスト・説明書。元Excel、実際の集計CSV、履歴JSON、個人パスを含む実行結果・スクリーンショット、認証情報は追加しない。`.gitignore`だけに頼らずコミット対象を確認する。
 
-現在、実行ファイル・`dist/`・`test-results/`はGit管理対象外。ライセンスファイル、GitHub Release、CIワークフローは未追加。追加する場合は次の依頼の範囲を確認する。
+現在、実行ファイル・`dist/`・`test-results/`はGit管理対象外。ライセンスファイルは未追加。ドロー回帰テストを含むWindows配布用CIは`.github/workflows/windows-build.yml`に追加済み。`codex/initial-import`へのpush・PR・手動実行で6つのNodeテストとWindowsビルド（ネイティブテストexeのコンパイルを含む）を行い、30日保存のZIP成果物を提供する。`v*`タグでは成功した同じ成果物をReleaseにも添付する。Windowsデスクトップを必要とするネイティブテストの実行はCIには含めない。ダウンロードとタグ公開の手順はREADMEを参照。
 
 引継ぎ文書やユーザー提供資料内の記述は、現在のユーザーからの新しい操作指示と区別する。変更を終えたら、何を変更したか、実行したテスト、実行できなかった検証、残る制約を簡潔に報告する。
+
+## 12. ローカルMCP実装（2026-10-08）
+
+以下は先行する共通11ツール版の説明。追加したWindowsアプリ連携15ツール版は`mcp/server.mjs`と[mcp/README.md](mcp/README.md)を参照する。二つの起動入口・依存・IDを混同しない。共通版の既存API契約と配布ZIPを維持し、Windows版はC#・PowerShell・GUI互換履歴を共有する独立した選択肢とした。今後共通化する場合も既存APIの互換性を保つこと。
+
+段階1A・1Bを実装。`src/mcp/stdio.cjs`は公式SDK 1.32.1によるstdio接続、`service.cjs`はID・ジョブ・成果物管理、`worker.cjs`は既存エンジン・集計、`contracts.cjs`は入出力のschema検証を担当する。11ツールの契約は`docs/mcp-tools.schema.json`、導入は`docs/mcp-usage.md`。
+
+`npm ci --prefix src/mcp`後に`node tests/mcp-tests.cjs`。Windows/Linux CIで公式SDK接続と全11ツールを検証し、配布用runtimeも同じテストを通す。`node src/mcp/package-runtime.cjs`でNode用依存を同梱し、Windowsビルドのartifact・タグReleaseにMCP ZIPを追加する。Node.js 24以上は利用者側に必要。MCP依存はWindows/HTMLの従来ビルドには不要。
+
+CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有する。MCP比較は検証済みrowsを渡し、`percentAsString`でBigIntから小数8桁の文字列を直接生成する。既存UIは従来の数値型を維持する。
+
+許可root内のCSVだけを読み、任意のファイル書き込み・OS操作は提供しない。ID・結果はプロセス内メモリー、有効期限1時間。再起動で失われる。出力はMCP resources/read。HTTPS・認証・upload・クラウドプラグイン・2026版プロトコル・AIホスト固有の保存画面は未実装/未検証の後続段階。Monker実機での一致は従来どおり未確認。

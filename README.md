@@ -4,7 +4,7 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 開発を引き継ぐ場合は[AI開発引継ぎ](AI_HANDOFF.md)を参照してください。構成・確定仕様・テスト・未確認事項をまとめています。
 
-AIから条件生成・比較・グラフ／レポート出力・履歴を操作する[ローカルMCP](mcp/README.md)を追加しました。導入手順と接続設定例はリンク先を参照してください。
+AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)と、既存Windowsアプリの履歴・PowerShell・グラフ／レポートまで操作する[Windowsアプリ連携版](mcp/README.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
 
 ## 機能
 
@@ -18,7 +18,55 @@ AIから条件生成・比較・グラフ／レポート出力・履歴を操作
 
 Excelや元の条件一覧CSVは実行時に不要です。185件の条件名のみを内蔵し、集計用CSVとは独立してsyntaxを生成します。
 
-## 動作環境とビルド
+## Linux版
+
+Node.js 20以上と最新のChrome / Chromium / Firefoxがあれば、Linuxでもボードの条件生成・CSV比較を利用できます。npmパッケージ、PowerShell、.NETは不要です。リポジトリ直下で実行してください。
+
+```bash
+./start-linux.sh --open
+```
+
+`--open`は`xdg-open`でブラウザを開く指定です。ブラウザの自動起動が不要なら`./start-linux.sh`を実行し、端末に表示されるURLを同じPCのブラウザで開きます。終了はCtrl+C。Node.jsプロセスが必要なので、HTMLだけを開く場合と異なりCSV比較・履歴も利用できます。
+
+Linux版では、185件のデフォルト条件を生成して選択するか、syntax生成画面で「比較条件に追加」を押して条件を取り込みます。条件JSONの読み込みにも対応しています。2〜3つのCSVのラベルを指定してweight合計・比率・件数を表示し、結果CSVを保存できます。計算の中止、結果の自動保存、履歴の検索・閲覧・結果CSVの再保存・個別削除にも対応しています。ボード変更時は条件を再生成してください。
+
+CSVはブラウザから同じPCのNode.jsプロセスへ送られ、外部サーバーへ送信されません。サーバーは`127.0.0.1`のランダムポートとランダムトークン付きURLのみで待ち受けます。固定ポートが必要な場合は`PLO_PORT=8080 ./start-linux.sh`を使えます。入力CSVの内容は履歴には保存せず、ファイル名・ラベル・条件・集計結果を保存します。履歴の場所は`${XDG_DATA_HOME:-$HOME/.local/share}/plo-syntax-lab/history`です。Windows版の履歴形式とは独立しています。
+
+Linux版の検証:
+
+```bash
+./test-linux.sh
+```
+
+6つの生成エンジン・ドロー回帰テストに加え、CSV検証・小数加算・2/3CSV比較・HTTP制限・生成条件の受信・履歴の保存/再取得/削除をテストします。テスト履歴は専用の一時フォルダーを使用します。
+
+weightは小数28桁までを整数に変換して正確に加算し、比率は小数8桁で切り捨てて返します。合計0の比率は未定義です。CSVの合計サイズは画面で30MiB、HTTPリクエスト全体では32MiBまで。同名のCSVは重複として拒否します。Windows版のPowerShellコマンド生成・実行はLinux版には含まれず、Node.jsで集計します。Windowsのexeの生成には以下のWindows環境が引き続き必要です。
+
+## Windows版のダウンロード・更新
+
+Windows版はGitHub Actionsで自動ビルドします。利用するPCでのビルドやNode.jsのインストールは不要です。
+
+- **開発中の最新版**：[Windows build](https://github.com/f22rap/plo-syntax-lab/actions/workflows/windows-build.yml)で、`codex/initial-import`の最新の成功した実行を開き、下部のArtifactsから`PLO-Syntax-Lab-Windows`をダウンロードします。GitHubへのログインが必要です。成果物の保存期間は30日です。
+- **タグ付き配布版**：[Releases](https://github.com/f22rap/plo-syntax-lab/releases)のAssetsから`PLO-Syntax-Lab-Windows.zip`をダウンロードします。最初のバージョンタグを公開するまで配布版はありません。
+
+ActionsからダウンロードしたZIPを展開すると、アプリのZIPと`SHA256SUMS.txt`が入っています。アプリの`PLO-Syntax-Lab-Windows.zip`も展開して、`FlopCommandApp.exe`を起動してください。Releaseから取得した場合はアプリのZIPを一度展開するだけです。`PLO-Syntax-Lab.html`は生成画面単独用です。
+
+更新時はアプリを終了し、新しいZIPの内容で前の配布ファイルを置き換えます。個人の履歴はアプリのフォルダーとは別の場所に保存されるため保持されます。アプリ内の自動更新機能はありません。実行環境はWindows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、EdgeまたはChromeです。
+
+### 開発者向け：自動ビルドとRelease
+
+`.github/workflows/windows-build.yml`は`codex/initial-import`へのpush・PRと手動実行で動きます。6つのNodeテストを実行し、`build.ps1 -WithTests`で製品exeとネイティブテストexeをコンパイルします。デスクトップと実ブラウザを必要とする`test.ps1 -Native`はCIでは実行しません。Windowsの画面・ブラウザ連携は別途確認してください。配布物には製品exe、単独生成HTML、使い方、ビルド元コミットを記載したREADMEだけを含め、テストexeや個人データは含めません。
+
+配布版を公開する場合は、このワークフローを含むコミットに新しいバージョンタグを付けてpushします。例（未使用のバージョン名を使ってください）：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+`v*`タグのpushではビルド・テストの成功後にReleaseを作成し、同じZIPとSHA-256チェックサムを添付します。通常ビルドは読み取り権限のみ、Releaseジョブだけが`contents: write`を使います。個人アクセストークンの登録は不要です。同じタグの実行を再試行した場合は添付ファイルを更新します。
+
+## Windows版の動作環境とビルド
 
 Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。GUIは**ビルド時のみNode.js 20以上**が必要で、外部のnpmパッケージは不要です。MCPを利用する場合は実行時にもNode.jsと公式SDKが必要です。
 
@@ -30,6 +78,21 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
 `dist/FlopCommandApp.exe`は単体で利用できます。`dist/PLO-Syntax-Lab.html`は生成画面のみを単独で使うファイルです。生成・集計はPC内で行います。比較アプリとの連携にはランダムなトークン付きのローカル接続を使います。
+
+## AIから利用するローカルMCP
+
+| 版 | 入口 | 主な違い |
+| --- | --- | --- |
+| Windows/Linux共通版 | `src/mcp/stdio.cjs` | 11ツール。Node.jsのみで生成・照合・比較。ID・結果は1時間のメモリ保持 |
+| Windowsアプリ連携版 | `mcp/server.mjs` | 15ツール。Windowsの既存集計・永続履歴・PowerShell・SVG／Markdown保存に対応 |
+
+Windowsアプリ連携版は[専用の導入手順](mcp/README.md)を参照してください。以下は共通版の説明です。
+
+stdio MCPで、ボード解析・syntax生成・ハンド照合・CSV比較・結果出力の11ツールを公開しています。既存UIと同じ生成エンジン・集計を使います。
+
+GitHub Actionsの`PLO-Syntax-Lab-MCP` artifactには依存同梱ZIPを用意します。Node.js 24以上を用意し、対応するAIクライアントに`src/mcp/stdio.cjs`の絶対パスを登録してください。ソースから起動する場合は`npm ci --prefix src/mcp`で依存をインストールします。MCP用の依存は既存Windows/HTMLビルドとは別です。
+
+設定例・CSV読み込み・11ツールの使い方は[MCP利用手順](docs/mcp-usage.md)、入出力は[API仕様](docs/mcp-api-spec.md)に記載しています。Windows/Linuxの公式SDK接続テストをCIで実行し、`v*`タグのReleaseにはMCP ZIPも添付します。HTTPS・クラウド向け接続は後続段階です。
 
 ## CSVの形式・計算
 
@@ -71,6 +134,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 - `mcp/`：ローカルMCPサーバー、接続設定例、AI向け出力・操作。
 - `docs/`：操作説明と条件の定義。
 - `dist/`：ビルド出力（Git管理対象外）。
+
+## ドロー条件の定義
+
+ナッツ／アンナッツのガットショット・オープンエンドは、手札2枚の組み合わせを持つ条件です。例えばT93のナッツガットショットは`(KQ,KJ)`です。残りの手札に別のドローがあっても除外せず、ラップや他の2枚組分類との重複を許容します。ナッツ判定はその2枚組で全ての完成ランクに対して最高ストレートを作れるかで行い、残り2枚のブロッカーによる昇格は行いません。完成ストレートのリドローは対象外です。「全てのSD」「ラップ」と画面のアウト数は4枚ハンド全体を基準にします。
+
+FD/BDFDの最高・第2位のスートカードはボードを除いたデッキから選びます。As9h3dのナッツBDFDは`(Kss,Ahh,Add)`、セカンドナッツは`(Qss:!ks,Khh:!ah,Kdd:!ad)`です。
 
 ## 対応範囲
 

@@ -63,6 +63,12 @@ function coverPatterns(rows,wanted,patternsFor){
 }
 class Engine {
  async prepare(board,progress=()=>{}){
+  // Normalize public input before building the remaining deck: board cards must
+  // never be eligible as the nut or second-nut suited hole card.
+  if(typeof board==='string')board=parseBoard(board);
+  else if(Array.isArray(board)&&board.every(c=>typeof c==='string'))board=parseBoard(board.join(''));
+  else if(!Array.isArray(board)||board.length<3||board.length>5||board.some(c=>!Number.isInteger(c)||c<0||c>=52)||new Set(board).size!==board.length)throw Error('ボードを重複のない3〜5枚で入力してください。');
+  board=board.slice();
   this.board=board;this.expressionCache=new Map();this.rangeCache=new Map();this.atomSets=new Map();this.available=deck.filter(c=>!board.includes(c));this.bc=new Uint8Array(15);this.bs=new Uint8Array(4);for(const c of board){this.bc[rank(c)]++;this.bs[suit(c)]++;}
   this.ranks=[...new Set(board.map(rank))].sort((a,b)=>b-a);this.topSuit=Array.from({length:4},(_,s)=>this.available.filter(c=>suit(c)===s).sort((a,b)=>b-a));
   const triples=combos(board,3);this.pairs=new Array(2704);this.pairList=[];const roleMap=new Map();
@@ -83,6 +89,7 @@ class Engine {
     if(++n%5===0){progress({percent:Math.round(n/this.available.length*38),message:'次のカードとナッツ条件を照合中'});await pause();}
    }
   }
+  this.classifyPairDraws();
   const total=this.available.length*(this.available.length-1)*(this.available.length-2)*(this.available.length-3)/24;
   this.hands=new Uint32Array(total);this.handRoles=new Uint16Array(total);this.flags=new Uint32Array(total);this.outs=new Uint8Array(total);this.nutOuts=new Uint8Array(total);this.roleCounts=new Uint32Array(this.roles.length);this.rankTotals=new Map();
   let index=0;const av=this.available;
@@ -105,14 +112,15 @@ class Engine {
      if(!madeStraight){for(const p of ps){lo|=p.lo;hi|=p.hi;}for(const c of h){if(c<32)lo&=~(1<<c);else hi&=~(1<<(c-32));}lo>>>=0;hi>>>=0;}
      const outCount=pop(lo)+pop(hi);this.outs[index]=outCount;
      if(outCount){
-      flags|=F.sd;let nut=0,rankMask=0;
-      for(let part=0;part<2;part++){let bits=part?hi:lo;while(bits){const bit=31-Math.clz32(bits&-bits),out=bit+part*32;bits=(bits&(bits-1))>>>0;rankMask|=1<<rank(out);let high=0;for(const p of ps)high=Math.max(high,p.high[out]);
+      flags|=F.sd;let nut=0;
+      for(let part=0;part<2;part++){let bits=part?hi:lo;while(bits){const bit=31-Math.clz32(bits&-bits),out=bit+part*32;bits=(bits&(bits-1))>>>0;let high=0;for(const p of ps)high=Math.max(high,p.high[out]);
        for(const opp of this.straightOpponents[out]){if(!h.includes(opp[1])&&!h.includes(opp[2])){if(high>=opp[0])nut++;break;}}
       }}
       this.nutOuts[index]=nut;
       if(outCount>=9)flags|=F.wrap;
-      else if(ps.some(p=>p.open))flags|=(nut===outCount?F.nutOpen:F.nonOpen);
-      else if(pop(rankMask)===1)flags|=(nut===outCount?F.nutGut:F.nonGut);
+      // Named shapes describe a two-hole-card combination, so a wrap or
+      // another draw in the other hole cards does not remove that combination.
+      for(const p of ps)flags|=p.drawFlags;
      }
      this.flags[index]=flags;
     }
@@ -120,7 +128,7 @@ class Engine {
    }
    progress({percent:40+Math.round(index/total*60),message:'全ての4枚ハンドを判定中'});await pause();
   }
-  this.rankProfiles=new Map();for(let i=0;i<this.hands.length;i++){const h=unpack(this.hands[i]),key=rankKey(h),f=this.flags[i],features={sd:!!(f&F.sd),wrap:!!(f&F.wrap),gut:!!(f&(F.nutGut|F.nonGut)),open:!!(f&(F.nutOpen|F.nonOpen))};const old=this.rankProfiles.get(key);if(!old)this.rankProfiles.set(key,{rs:h.map(rank).sort((a,b)=>b-a),features});else for(const k of Object.keys(features))if(features[k]!==old.features[k])throw Error('ランク条件の整合性エラー');}
+  this.rankProfiles=new Map();for(let i=0;i<this.hands.length;i++){const h=unpack(this.hands[i]),key=rankKey(h),f=this.flags[i],features={sd:!!(f&F.sd),wrap:!!(f&F.wrap)};const old=this.rankProfiles.get(key);if(!old)this.rankProfiles.set(key,{rs:h.map(rank).sort((a,b)=>b-a),features});else for(const k of Object.keys(features))if(features[k]!==old.features[k])throw Error('ランク条件の整合性エラー');}
   this.ready=true;return this.summary();
  }
  roleOf(score,p){
@@ -200,13 +208,7 @@ class Engine {
    const made=pairNode(p=>p.sh>0),raw=pairNode(p=>!!(p.lo||p.hi));
    const result=and(raw,not(made));this.expressionCache.set(cacheKey,result);return result;
   }
-  if(feature==='gut'||feature==='open'){
-   const open=pairNode(p=>p.open);let result;
-   if(feature==='open')result=and(this.rankExpression('sd'),open,not(this.rankExpression('wrap')));
-   else{const ranks=[];for(let r=2;r<=14;r++){const outs=this.available.filter(c=>rank(c)===r),condition=pairNode(p=>outs.some(c=>p.high[c]>0));if(condition!==NO)ranks.push(condition);}const single=or(...ranks.map((c,i)=>and(c,not(or(...ranks.filter((_,j)=>j!==i))))));result=and(this.rankExpression('sd'),not(open),single);}
-   this.expressionCache.set(cacheKey,result);return result;
-  }
-  const profiles=[...this.rankProfiles.values()],domain=['wrap','gut','open'].includes(feature)?profiles.filter(p=>p.features.sd):profiles,yes=domain.filter(p=>p.features[feature]);let result;
+  const profiles=[...this.rankProfiles.values()],domain=feature==='wrap'?profiles.filter(p=>p.features.sd):profiles,yes=domain.filter(p=>p.features[feature]);let result;
   if(!yes.length)result=NO;
   else{
    const common=[];for(let r=14;r>=2;r--){const count=Math.min(...yes.map(p=>p.rs.filter(x=>x===r).length));for(let i=0;i<count;i++)common.push(r);}
@@ -217,32 +219,26 @@ class Engine {
   }
   this.expressionCache.set(cacheKey,result);return result;
  }
- blockerCovers(edges){
-  const covers=[];function walk(rest,held,budget){if(!rest.length){covers.push(held.slice().sort((a,b)=>a-b));return;}if(!budget)return;
-   // A matching supplies a lower bound on the number of blockers required.
-   const used=new Set();let bound=0;for(const [a,b] of rest)if(!used.has(a)&&!used.has(b)){used.add(a);used.add(b);if(++bound>budget)return;}
-   const [a,b]=rest[0];for(const c of [a,b])walk(rest.filter(e=>!e.includes(c)),held.concat(c),budget-1);
-  }walk(edges,[],4);
-  return covers.filter((c,i)=>!covers.some((d,j)=>j!==i&&d.length<=c.length&&d.every(x=>c.includes(x))&&(d.length<c.length||j<i)));
- }
- nutExpression(shape){
-  const cacheKey='nuts:'+shape;if(this.expressionCache.has(cacheKey))return this.expressionCache.get(cacheKey);
-  const positive=shape==='gut'?F.nutGut:F.nutOpen,negative=shape==='gut'?F.nonGut:F.nonOpen;let n=0,b=0;for(const f of this.flags){if(f&positive)n++;if(f&negative)b++;}
-  if(!n||!b){const result=n?YES:NO;this.expressionCache.set(cacheKey,result);return result;}
-  const bad=[];
-  for(const out of this.available){
-   const pairs=this.pairList.filter(p=>!p.p.includes(out)),highs=[...new Set(pairs.map(p=>p.high[out]).filter(Boolean))];if(!highs.length)continue;
-   const conditions=[];
-   for(const h of highs){
-    const better=this.straightOpponents[out].filter(p=>p[0]>h).map(p=>[p[1],p[2]]),covers=this.blockerCovers(better);if(!covers.length)continue;
-    const can=or(...[...new Set(pairs.filter(p=>p.high[out]>=h).map(p=>p.p.map(rank).sort((a,b)=>b-a).map(rname).join('')))].map(atom));
-    const block=or(...covers.map(c=>{const terms=[];for(let r=14;r>=2;r--){const chosen=c.filter(x=>rank(x)===r);if(!chosen.length)continue;const available=this.available.filter(x=>rank(x)===r&&x!==out);if(chosen.length===available.length)terms.push(atom(rname(r).repeat(chosen.length)));else terms.push(...chosen.map(x=>atom(card(x).toLowerCase())));}return and(...terms);}));
-    conditions.push(and(can,block));
-   }
-   const any=or(...[...new Set(pairs.filter(p=>p.high[out]).map(p=>p.p.map(rank).sort((a,b)=>b-a).map(rname).join('')))].map(atom));
-   bad.push(and(not(atom(card(out).toLowerCase())),any,not(or(...conditions))));
+ classifyPairDraws(){
+  // Classification is board-relative and rank-only. Extra hole-card blockers
+  // never promote a non-nut combination into a nut combination.
+  const nutHigh=new Uint8Array(52);for(const out of this.available)nutHigh[out]=this.straightOpponents[out]?.[0]?.[0]||0;
+  for(const p of this.pairList){
+   p.drawFlags=0;if(this.board.length===5||p.sh)continue;
+   const outs=this.available.filter(out=>!p.p.includes(out)&&p.high[out]>0);
+   if(!outs.length)continue;
+   const ranks=new Set(outs.map(rank)),nuts=outs.every(out=>p.high[out]>=nutHigh[out]);
+   if(p.open&&ranks.size===2)p.drawFlags=nuts?F.nutOpen:F.nonOpen;
+   else if(!p.open&&ranks.size===1)p.drawFlags=nuts?F.nutGut:F.nonGut;
   }
-  const result=not(or(...bad));this.expressionCache.set(cacheKey,result);return result;
+ }
+ drawExpression(sd){
+  const cacheKey='draw:'+sd;if(this.expressionCache.has(cacheKey))return this.expressionCache.get(cacheKey);
+  const patterns=[...new Set(this.pairList.filter(p=>p.drawFlags&F[sd]).map(p=>p.p.map(rank).sort((a,b)=>b-a).map(rname).join('')))]
+   .sort((a,b)=>R.indexOf(b[0])-R.indexOf(a[0])||R.indexOf(b[1])-R.indexOf(a[1]));
+  const made=this.pairExpression(p=>p.sh>0);
+  const result=and(or(...patterns.map(atom)),made?not(parseExpression(made)):YES);
+  this.expressionCache.set(cacheKey,result);return result;
  }
  symbolic(filter){
   const basic={...filter,sd:'all',clean:''};
@@ -252,7 +248,7 @@ class Engine {
   if(sd&&sd!=='all'){
    if(sd==='sd'||sd==='none')parts.push(sd==='sd'?this.rankExpression('sd'):not(this.rankExpression('sd')));
    else if(sd==='wrap')parts.push(this.rankExpression('wrap'));
-   else{const shape=sd.endsWith('Gut')?'gut':'open',nuts=this.nutExpression(shape);parts.push(this.rankExpression(shape),sd.startsWith('nut')?nuts:not(nuts));}
+   else parts.push(this.drawExpression(sd));
   }
 
   return render(and(...parts));
