@@ -77,6 +77,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 `dist/FlopCommandApp.exe`は単体で利用できます。`dist/PLO-Syntax-Lab.html`は生成画面のみを単独で使うファイルです。生成・集計はPC内で行います。比較アプリとの連携にはランダムなトークン付きのローカル接続を使います。
 
+## AIから利用するローカルMCP
+
+stdio MCPで、ボード解析・syntax生成・ハンド照合・CSV比較・結果出力の11ツールを公開しています。既存UIと同じ生成エンジン・集計を使います。
+
+GitHub Actionsの`PLO-Syntax-Lab-MCP` artifactには依存同梱ZIPを用意します。Node.js 24以上を用意し、対応するAIクライアントに`src/mcp/stdio.cjs`の絶対パスを登録してください。ソースから起動する場合は`npm ci --prefix src/mcp`で依存をインストールします。MCP用の依存は既存Windows/HTMLビルドとは別です。
+
+設定例・CSV読み込み・11ツールの使い方は[MCP利用手順](docs/mcp-usage.md)、入出力は[API仕様](docs/mcp-api-spec.md)に記載しています。Windows/Linuxの公式SDK接続テストをCIで実行し、`v*`タグのReleaseにはMCP ZIPも添付します。HTTPS・クラウド向け接続は後続段階です。
+
 ## CSVの形式・計算
 
 各CSVには`hand`または`combo`列と、0〜1の`weight`列が必要です。例：

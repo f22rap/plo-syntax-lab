@@ -1,8 +1,8 @@
-# PLO Syntax Lab：MCP / AI利用API仕様案 v1
+# PLO Syntax Lab：MCP / AI利用API仕様 v1
 
-作成日：2026-10-08。状態：設計案。API version：1.0.0。
-対象ソース：36b3b47513a57fe3a2bc14140593af86cea10f12。
-この文書とツール定義JSONを追加する。MCPサーバー・プラグインはまだ実装していない。
+作成日：2026-10-08。状態：段階1A・1Bのローカルstdio実装済み。API version：1.0.0。
+設計時のエンジン基準：36b3b47513a57fe3a2bc14140593af86cea10f12。
+11ツールの共通サービスとstdio MCPを実装した。HTTPS・認証・クラウド向けプラグインは後続段階。導入は[mcp-usage.md](mcp-usage.md)を参照。
 
 ## 1. 目的と利用例
 
@@ -31,7 +31,7 @@
 
 プラグインはMCPの上に載せるクライアント用パッケージとして扱い、PLO計算を別実装しない。クライアントごとの配布形式・登録方式は導入時に確定する。どの生成AIでも同じ接続方式やファイル受け渡しが使えるとは扱わない。
 
-ローカル版はWindows・Linux上でNode.js 24を使用する計画。既存の製品exe単体をMCPサーバーとして呼び出す方式にはしない。MCP用依存は専用package.jsonとlockfileで管理し、従来のnpm依存なしのビルド手順を保つ。Node不要のMCP配布は、別途ランタイム同梱パッケージで提供する段階とする。
+ローカル版はWindows・Linux上でNode.js 24以上を使用する。既存の製品exe単体をMCPサーバーとして呼び出す方式にはしない。MCP用依存は専用package.jsonとlockfileで管理し、従来のnpm依存なしのビルド手順を保つ。CIのMCP ZIPにはnpm依存を同梱する。Node不要の配布は、別途Nodeランタイム同梱を検討する段階とする。
 
 クラウド版が利用できるのはアップロード・登録済みのCSVのみ。利用者PCのパスはクラウド側から直接読み取れない。taffy3などの環境でも、stdio起動またはHTTPS接続の可否を確認して接続方式を選ぶ。
 
@@ -45,11 +45,11 @@
 | src/linux/worker.cjs | Workerによる比較・デフォルト生成 | 解析・カスタム条件・ジョブ・中止への対応 |
 | src/linux/server.cjs | ローカルUI用HTTP | 既存のloopback・Origin制限を保持。MCPの通信処理は別アダプターで実装 |
 
-新規ファイルの候補は src/api/service.cjs、src/api/contracts.cjs、src/api/worker.cjs、src/mcp/stdio.cjs、src/mcp/http.cjs。詳細な配置は実装時に調整できる。既存UIのHTTPエンドポイントを外部公開するだけでMCP化したと扱わない。
+実装は src/mcp/service.cjs、contracts.cjs、worker.cjs、stdio.cjs に置く。src/mcp/http.cjs は後続段階。既存UIのHTTPエンドポイントを外部公開するだけでMCP化したと扱わない。
 
 ## 4. MCPプロトコルと接続
 
-2026-10-08時点で公式latestが指す2026-07-28版を第一候補とし、2025-11-25版のクライアント互換も設計対象とする。公式SDKの対応状況を実装開始時に確認して依存版を固定し、実際に通した版だけをcapabilitiesで「対応済み」と返す。
+ローカル初版は公式SDK 1.32.1を固定し、2025-11-25版を公式SDKクライアントで接続テストした。capabilitiesではこの版だけを検証済みとして返す。設計時に候補とした2026-07-28版は、SDK・対象ホストの検証後に別アダプターとして追加する。
 
 ドメインのAPI versionとMCPのprotocol versionは別物。2026版のリクエストごとのメタデータ・HTTPヘッダーと、2025版の初期化・接続処理を混在させない。wire形式と版別処理はSDK／アダプターが担当し、共通サービスはツール名と引数だけを受け取る。
 
@@ -88,11 +88,11 @@
 
 共通フィールド：
 - apiVersion：1.0.0
-- engine.sourceCommit：実装に組み込まれた40桁commit SHA
+- engine.sourceCommit：配布物の40桁commit SHA。ソース起動はGit HEAD。ビルド情報とGitがない場合はnull＋警告。未コミット変更はHEADに含まれない
 - engine.classificationVersion：2026-10-08-pair-draws-v1
 - engine.game：PLO4
 
-入力JSON/schemaの不正、未定義ツールなどの通信エラーは版に応じたMCPエラーへ変換する。計算・CSV検証などのツール内エラーはisError=trueと上記エラーobjectで返す。出力は宣言したschemaに照合する。
+不正なMCPメッセージはSDKが通信エラーとして返す。ツール引数のschema不一致・未定義ツール・計算・CSV検証などのエラーはisError=trueと上記エラーobjectで返す。出力は宣言したschemaに照合する。
 
 ### 5.2 ボード・条件
 
@@ -156,6 +156,8 @@ generated syntaxは全合法ハンドで内部照合する。Monker実機の受�
 
 local_fileはrealpathを解決して起動時の許可root内か確認し、シンボリックリンク・相対パスの脱出を拒否する。クラウドではこのkindを受け付けない。
 
+以下のupload処理は未実装のHTTPS段階の設計。ローカル版はupload入力をPERMISSION_DENIEDで拒否する。
+
 大きなCSVは、認証済みのPOST /uploadsへtext/csvの本文とファイル名メタデータを送ってuploadIdを取得する。プラグイン側のアップロードUI・ファイル受け渡し機能が担当する。APIレスポンスはuploadId、sizeBytes、expiresAt。取り込み完了後にplo_register_datasetへ渡す。uploadIdは呼び出し元専用で1回の取り込み後に消費する。MCPホストごとのアップロード対応は接続テストで確認し、非対応ホストではローカルファイルまたはinlineを使う。
 
 ツールへ任意URLを渡してサーバーがダウンロードする方法は初期版には含めない。nameはパス区切りのないCSVファイル名、labelは表示名。
@@ -188,7 +190,7 @@ exportはCSVまたはJSON。CSVはUTF-8 BOM・CRLF、既存の列意味を維持
 
 ## 8. 初期制限とデータ管理
 
-以下は実装予定の既定値。既存UIの制限を勝手に変えるものではない。変更する場合はcapabilitiesで公開する。
+以下はローカル版の既定値。upload・HTTPSは後続段階。既存UIの制限を勝手に変えるものではない。変更する場合はcapabilitiesで公開する。
 
 | 項目 | 初期値 |
 | --- | --- |
@@ -201,14 +203,18 @@ exportはCSVまたはJSON。CSVはUTF-8 BOM・CRLF、既存の列意味を維持
 | 1照合のハンド | 100件 |
 | 1ページ | 既定25件、最大100件 |
 | 1workerのメモリー | 512MiB |
-| 同時ジョブ | ownerごと2件。サーバー全体は運用設定で制限 |
+| 同時計算 | プロセスごと2worker。同期ツールも同じ枠を使う |
+| 比較ジョブ | 待機8件、保持32件 |
+| 登録条件 / CSV | 4096条件 / 64データセット |
 | ジョブの実行時間 | 300秒。待ち行列は最大30秒 |
 | 同期ツール呼び出し | 30秒 |
 | MCPツール引数のJSON | 4MiB |
 | 1ツール結果のstructuredContent＋text | 合計256KiB。structuredContent単体128KiBを目安 |
-| exportファイル | 64MiB |
+| 比較結果の保持 | flat/structuredのJSONサイズ合計64MiB |
+| exportファイル | プロセス内合計64MiB |
+| resources/readの結果 | JSONエスケープ後のcontentsで8MiB。SDKの既定10MiBバッファ内に収める |
 | 条件・CSV・ジョブ・成果物 | 発行から1時間。処理中参照は終了まで保持 |
-| engine cache | workerごと最大6ボード。版・boardKeyを含むkey |
+| engine cache | 初版は呼び出しごとにworkerを起動・破棄し、ボードキャッシュを保持しない |
 
 出力上限を超えたらOUTPUT_TOO_LARGEを返し、ページサイズ・requestsの削減またはincludeSyntax=falseを案内する。syntaxを黙って短縮しない。全合法ハンドの列挙は返さず、件数・最大8例・syntaxを返す。
 
@@ -218,19 +224,20 @@ ownerごとのCSV保持量は初期100MiB、ジョブ・条件登録数にも運
 
 ## 9. 認証と権限
 
-ローカルstdioは許可rootと機能設定を起動時に固定する。HTTPS版はMCPの対象版に準拠した認可方式を使用する。クライアント互換を検証して登録手順を文書化する。鍵・認証情報をLLMに入力させない。
+ローカルstdioは許可rootを起動時に固定し、全11機能を提供する。scopesは機能分類の情報で、初版stdioで認証トークンやscopeの選択機構は提供しない。HTTPS版はMCPの対象版に準拠した認可方式を使用する。クライアント互換を検証して登録手順を文書化する。鍵・認証情報をLLMに入力させない。
 
 アプリの権限案：
 - plo:analyze：定義・解析・生成・照合
 - plo:datasets：明示的に指定したCSVの取り込み・一覧
 - plo:compare：比較・ジョブ取得・中止・export
 
-owner検証はscopeとは別に行う。アップロードと成果物URLも同じowner制約を適用する。CSV本文、手札一覧、ローカル絶対パス、トークンを通常ログへ出さず、tool名・時刻・件数・所要時間・結果状態を記録する。出力labelなどのユーザー文字列はデータとして扱う。
+owner検証はscopeとは別に行う。アップロードと成果物URLも同じowner制約を適用する。初版stdioはCSV本文・手札一覧・ローカル絶対パス・トークンを含む通常ログを出さず、プロトコル異常・起動失敗だけを一般化したstderrメッセージで返す。詳細な監査ログはHTTPS段階で追加する。出力labelなどのユーザー文字列はデータとして扱う。
 
 ## 10. エラーコード
 
 | code | 意味・対応 |
 | --- | --- |
+| INVALID_ARGUMENT / UNKNOWN_TOOL | 引数schema・ツール名を修正 |
 | INVALID_BOARD / INVALID_HAND | 枚数・カード・重複・衝突を修正 |
 | INVALID_FILTER / INVALID_SYNTAX | 未定義条件・矛盾・構文を修正 |
 | INVALID_SELECTION | 条件または全ハンド行を選択 |
@@ -243,7 +250,7 @@ owner検証はscopeとは別に行う。アップロードと成果物URLも同�
 | SERVER_BUSY | 空きworkerを待つ。retryable=true |
 | JOB_TIMEOUT / JOB_CANCELLED | ジョブの終端理由 |
 | REQUEST_KEY_CONFLICT | 新しいrequestKeyを使う |
-| INTERNAL_ERROR | 内部例外を秘匿し、サーバーログで調査 |
+| INTERNAL_ERROR | 内部例外を秘匿。初版は合成データで再現して調査 |
 
 schemaにはmessageだけでなくcodeを必須とし、モデルが文字列の部分一致で分岐する必要をなくす。EMPTY/UNSUPPORTEDの生成行はエラーではない。
 
@@ -300,8 +307,8 @@ plo_get_jobへjobIdを渡し、succeeded後にplo_export_resultでCSVを取得�
 
 | 段階 | 作業 | 完了条件 |
 | --- | --- | --- |
-| 1A | 共通サービス＋stdio、最初の5ツール | MCPクライアントから解析・生成・照合が動く |
-| 1B | データセット・比較ジョブ・export | 2/3CSV比較・小数精度・中止・ファイル取得が動く |
+| 1A（実装済み） | 共通サービス＋stdio、最初の5ツール | 公式SDKクライアントから解析・生成・照合が動く |
+| 1B（実装済み） | データセット・比較ジョブ・export | 2/3CSV比較・小数精度・中止・resources/readが動く |
 | 2 | HTTPS、認証、アップロード、プラグイン | 実際の対象クラウドAIから一連の操作が動く |
 | 3 | 結果表・グラフ、保存済み履歴、Tasks等 | 必要な拡張対応を明示し、初期APIの互換を保持 |
 

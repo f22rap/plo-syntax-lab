@@ -34,11 +34,7 @@ function validateSelection(data, board) {
   P.compile(r.syntax); return { cell: r.cell || `CUSTOM${i + 1}`, label: r.label, syntax: r.syntax, count: r.count };
  });
 }
-function compare(input) {
- const boardCards = P.parseBoard(input.board), board = boardCards.map(P.card).join('');
- if (!Array.isArray(input.files) || input.files.length < 2 || input.files.length > 3) throw Error('CSVを2〜3ファイル選択してください。');
- if (new Set(input.files.map(f => f.name)).size !== input.files.length) throw Error('同名のCSVを重複選択できません。');
- const datasets = input.files.map((file, index) => {
+function parseDataset(boardCards, file, index = 0) {
   if (typeof file.text !== 'string' || typeof file.name !== 'string') throw Error('CSVが不正です。');
   const named = file.name.match(/(?:^|_)((?:[AKQJT2-9][shdc]){3,5})(?=_|\.|$)/i);
   if (named) { const b = P.parseBoard(named[1]); if (b.length !== boardCards.length || b.slice(0, 3).sort().join() !== boardCards.slice(0, 3).sort().join() || b.slice(3).join() !== boardCards.slice(3).join()) throw Error(`${file.name}: ボードが一致しません。`); }
@@ -56,7 +52,13 @@ function compare(input) {
     return { cards, weight: decimal(row[weightIndex]) };
    } catch(e) { throw Error(`${file.name}, 行${i + 2}: ${e.message}`); }
   }) };
- });
+
+}
+function compare(input, options = {}) {
+ const boardCards = P.parseBoard(input.board), board = boardCards.map(P.card).join('');
+ if (!Array.isArray(input.files) || input.files.length < 2 || input.files.length > 3) throw Error('CSVを2〜3ファイル選択してください。');
+ if (new Set(input.files.map(f => f.name)).size !== input.files.length) throw Error('同名のCSVを重複選択できません。');
+ const datasets = options.datasets || input.files.map((file,index)=>parseDataset(boardCards,file,index));
  if (!Array.isArray(input.ranges) || input.ranges.length > 500) throw Error('条件が不正です。');
  const filters = input.ranges.map(r => { if (typeof r.label !== 'string' || typeof r.syntax !== 'string' || !r.syntax.trim() || r.syntax.length > 50000) throw Error('空のsyntaxは集計できません。'); return {...r, match: P.compile(r.syntax)}; });
  if (input.all) filters.unshift({cell:'ALL',label:'全ハンド（syntaxなし）',syntax:'',match:()=>true});
@@ -64,9 +66,10 @@ function compare(input) {
  return filters.map(f => {
   const stats = datasets.map(d => { let sum = 0n, count = 0; for (const r of d.rows) if (f.match(r.cards)) { sum += r.weight; count++; } return {sum,count}; });
   const total = stats.reduce((n,s)=>n+s.sum,0n), row = {board,cell:f.cell || '',label:f.label,syntax:f.syntax,csv_count:datasets.length,total_weight:format(total)};
-  datasets.forEach((d,i)=>{const k=`csv${i+1}`; Object.assign(row,{[k+'_label']:d.label,[k+'_path']:d.name,[k+'_source_rows']:d.rows.length,[k+'_matched_hands']:stats[i].count,[k+'_weight_sum']:format(stats[i].sum),[k+'_percent']:total ? Number(stats[i].sum * 10000000000n / total) / 100000000 : null});});
+  datasets.forEach((d,i)=>{const k=`csv${i+1}`; Object.assign(row,{[k+'_label']:d.label,[k+'_path']:d.name,[k+'_source_rows']:d.rows.length,[k+'_matched_hands']:stats[i].count,[k+'_weight_sum']:format(stats[i].sum),[k+'_percent']:total ? (options.percentAsString ? percent(stats[i].sum,total) : Number(stats[i].sum * 10000000000n / total) / 100000000) : null});});
   return {...row,status:total?'OK':'ZeroTotal',note:total?'':'Total weight is zero; percentages are undefined.'};
  });
 }
+function percent(sum,total) { const n=sum*10000000000n/total; return `${n/100000000n}.${String(n%100000000n).padStart(8,'0')}`; }
 function resultCsv(rows) { const keys=Object.keys(rows[0]); const quote=v=>'"'+String(v ?? '').replaceAll('"','""')+'"'; return '\uFEFF'+[keys.map(quote).join(','),...rows.map(r=>keys.map(k=>quote(r[k])).join(','))].join('\r\n')+'\r\n'; }
-module.exports = {compare, csv, decimal, format, validateSelection, resultCsv};
+module.exports = {compare, csv, decimal, format, parseDataset, percent, validateSelection, resultCsv};

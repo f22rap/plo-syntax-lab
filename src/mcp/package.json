@@ -1,0 +1,19 @@
+{
+  "name": "plo-syntax-lab-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local MCP server for PLO Syntax Lab",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node stdio.cjs",
+    "test": "node ../../tests/mcp-tests.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}

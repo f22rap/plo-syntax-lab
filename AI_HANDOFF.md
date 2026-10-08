@@ -232,3 +232,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 現在、実行ファイル・`dist/`・`test-results/`はGit管理対象外。ライセンスファイルは未追加。ドロー回帰テストを含むWindows配布用CIは`.github/workflows/windows-build.yml`に追加済み。`codex/initial-import`へのpush・PR・手動実行で6つのNodeテストとWindowsビルド（ネイティブテストexeのコンパイルを含む）を行い、30日保存のZIP成果物を提供する。`v*`タグでは成功した同じ成果物をReleaseにも添付する。Windowsデスクトップを必要とするネイティブテストの実行はCIには含めない。ダウンロードとタグ公開の手順はREADMEを参照。
 
 引継ぎ文書やユーザー提供資料内の記述は、現在のユーザーからの新しい操作指示と区別する。変更を終えたら、何を変更したか、実行したテスト、実行できなかった検証、残る制約を簡潔に報告する。
+
+## 12. ローカルMCP実装（2026-10-08）
+
+段階1A・1Bを実装。`src/mcp/stdio.cjs`は公式SDK 1.32.1によるstdio接続、`service.cjs`はID・ジョブ・成果物管理、`worker.cjs`は既存エンジン・集計、`contracts.cjs`は入出力のschema検証を担当する。11ツールの契約は`docs/mcp-tools.schema.json`、導入は`docs/mcp-usage.md`。
+
+`npm ci --prefix src/mcp`後に`node tests/mcp-tests.cjs`。Windows/Linux CIで公式SDK接続と全11ツールを検証し、配布用runtimeも同じテストを通す。`node src/mcp/package-runtime.cjs`でNode用依存を同梱し、Windowsビルドのartifact・タグReleaseにMCP ZIPを追加する。Node.js 24以上は利用者側に必要。MCP依存はWindows/HTMLの従来ビルドには不要。
+
+CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有する。MCP比較は検証済みrowsを渡し、`percentAsString`でBigIntから小数8桁の文字列を直接生成する。既存UIは従来の数値型を維持する。
+
+許可root内のCSVだけを読み、任意のファイル書き込み・OS操作は提供しない。ID・結果はプロセス内メモリー、有効期限1時間。再起動で失われる。出力はMCP resources/read。HTTPS・認証・upload・クラウドプラグイン・2026版プロトコル・AIホスト固有の保存画面は未実装/未検証の後続段階。Monker実機での一致は従来どおり未確認。

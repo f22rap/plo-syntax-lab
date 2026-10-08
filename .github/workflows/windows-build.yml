@@ -12,7 +12,36 @@ permissions:
   contents: read
 
 jobs:
+  mcp:
+    name: MCP tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/mcp/package-lock.json
+      - name: Install locked MCP dependencies
+        run: npm ci --prefix src/mcp
+      - name: Test MCP tools and official SDK transport
+        run: node tests/mcp-tests.cjs
+      - name: Build portable MCP runtime
+        run: node src/mcp/package-runtime.cjs
+      - name: Test packaged runtime
+        run: node dist/PLO-Syntax-Lab-MCP/tests/mcp-tests.cjs
+
   build:
+    needs: mcp
     runs-on: windows-2022
     timeout-minutes: 20
     defaults:
@@ -31,6 +60,16 @@ jobs:
         run: .\test.ps1
       - name: Build Windows executable and native test executable
         run: .\build.ps1 -WithTests
+      - name: Install and package MCP runtime
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --prefix src/mcp
+          if ($LASTEXITCODE -ne 0) { throw 'MCP dependency installation failed' }
+          node src/mcp/package-runtime.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'MCP packaging failed' }
+          Compress-Archive -Path dist\PLO-Syntax-Lab-MCP\* -DestinationPath dist\PLO-Syntax-Lab-MCP.zip
+          $hash = (Get-FileHash dist\PLO-Syntax-Lab-MCP.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  PLO-Syntax-Lab-MCP.zip" | Set-Content dist\MCP-SHA256SUMS.txt -Encoding ASCII
       - name: Package Windows app
         run: |
           $ErrorActionPreference = 'Stop'
@@ -58,6 +97,15 @@ jobs:
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+      - name: Upload downloadable MCP package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: PLO-Syntax-Lab-MCP
+          path: |
+            dist/PLO-Syntax-Lab-MCP.zip
+            dist/MCP-SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -72,6 +120,11 @@ jobs:
         with:
           name: PLO-Syntax-Lab-Windows
           path: package
+      - name: Download tested MCP package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: PLO-Syntax-Lab-MCP
+          path: package
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,8 +133,8 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt --clobber
+            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt --clobber
           else
-            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt \
+            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt \
               --verify-tag --title "PLO Syntax Lab $RELEASE_TAG" --generate-notes
           fi

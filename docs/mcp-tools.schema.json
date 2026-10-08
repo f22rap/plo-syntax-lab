@@ -1,9 +1,9 @@
 {
-  "status": "design-draft",
+  "status": "local-stdio-implemented",
   "apiVersion": "1.0.0",
   "sourceCommit": "36b3b47513a57fe3a2bc14140593af86cea10f12",
   "notes": [
-    "このJSONは実装用の契約案。サーバーは未実装。",
+    "ローカルstdioサーバーで使用する入力・出力契約。HTTPS・upload・クラウドプラグインは後続段階。",
     "ドメインJSON Schemaのみを定義し、MCPのwire形式はSDK／版別アダプターに任せる。",
     "defaultは自動補完ではない。サービス側で明示的に補完する。"
   ],
@@ -32,10 +32,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -144,6 +150,14 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 1000000
+                      },
+                      "resourceResponseBytes": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "retainedResultsBytes": {
+                        "type": "integer",
+                        "minimum": 1
                       }
                     },
                     "required": [
@@ -156,7 +170,9 @@
                       "synchronousTimeoutSeconds",
                       "inlineCsvBytes",
                       "responseBytes",
-                      "ttlSeconds"
+                      "ttlSeconds",
+                      "resourceResponseBytes",
+                      "retainedResultsBytes"
                     ],
                     "additionalProperties": false
                   },
@@ -351,10 +367,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -698,10 +720,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -1168,10 +1196,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -1663,10 +1697,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -2032,10 +2072,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -2274,10 +2320,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -2574,10 +2626,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -2747,7 +2805,7 @@
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -2796,10 +2854,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -3232,10 +3296,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -3404,7 +3474,7 @@
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -3449,10 +3519,16 @@
             "type": "object",
             "properties": {
               "sourceCommit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[0-9a-f]{40}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "classificationVersion": {
                 "type": "string",
@@ -3658,11 +3734,12 @@
         ]
       },
       "annotations": {
-        "readOnlyHint": true,
+        "readOnlyHint": false,
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
       }
     }
-  ]
+  ],
+  "sourceCommitMeaning": "設計時に基準としたエンジンのコミット。実行中の版は各応答のengine.sourceCommitを参照。"
 }
