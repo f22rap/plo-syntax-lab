@@ -1,7 +1,0 @@
-{
-  "inputRoots": ["data"],
-  "outputRoot": "mcp-output",
-  "allowHistoryDelete": false,
-  "maxCsvBytes": 268435456,
-  "timeoutSeconds": 300
-}

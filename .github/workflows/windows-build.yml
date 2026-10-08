@@ -82,13 +82,6 @@ jobs:
         run: .\test.ps1
       - name: Build Windows executable and native test executable
         run: .\build.ps1 -WithTests
-      - name: Test Windows-native MCP workflow
-        run: |
-          $ErrorActionPreference = 'Stop'
-          npm ci --ignore-scripts
-          if ($LASTEXITCODE -ne 0) { throw 'Windows MCP dependency installation failed' }
-          npm run test:mcp
-          if ($LASTEXITCODE -ne 0) { throw 'Windows MCP integration tests failed' }
       - name: Install and package MCP runtime
         run: |
           $ErrorActionPreference = 'Stop'

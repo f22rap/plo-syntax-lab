@@ -15,7 +15,4 @@ node_modules/
 .idea/
 History/
 src/defaults.html
-/mcp.local.json
-/mcp-output/
-/data/
 /src/mcp/build-info.json

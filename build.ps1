@@ -12,9 +12,6 @@ try {
     $sources = @(Get-ChildItem -LiteralPath src -Filter '*.cs' | ForEach-Object { $_.FullName })
     & $compiler /nologo /target:winexe /optimize+ /out:dist\FlopCommandApp.exe /win32manifest:src\app.manifest @references @resources @sources
     if ($LASTEXITCODE -ne 0) { throw 'Application build failed.' }
-    $coreSources = @('src\Core.cs','src\CompareCommands.cs','src\Execution.cs','src\History.cs','src\LabSelection.cs','src\SyntaxMatcher.cs','mcp\NativeHost.cs')
-    & $compiler /nologo /target:exe /optimize+ /out:dist\PloMcp.Native.exe @references @resources @coreSources
-    if ($LASTEXITCODE -ne 0) { throw 'MCP native host build failed.' }
     if ($WithTests) {
         $testSources = @(Get-ChildItem -LiteralPath tests -Filter '*.cs' | ForEach-Object { $_.FullName })
         & $compiler /nologo /target:winexe /optimize+ /main:FlopCommands.TestProgram /out:dist\FlopCommandApp.Tests.exe /win32manifest:src\app.manifest @references @resources @sources @testSources
