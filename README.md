@@ -16,7 +16,31 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 Excelや元の条件一覧CSVは実行時に不要です。185件の条件名のみを内蔵し、集計用CSVとは独立してsyntaxを生成します。
 
-## 動作環境とビルド
+## Linux版
+
+Node.js 20以上と最新のChrome / Chromium / Firefoxがあれば、Linuxでもボードの条件生成・CSV比較を利用できます。npmパッケージ、PowerShell、.NETは不要です。リポジトリ直下で実行してください。
+
+```bash
+./start-linux.sh --open
+```
+
+`--open`は`xdg-open`でブラウザを開く指定です。ブラウザの自動起動が不要なら`./start-linux.sh`を実行し、端末に表示されるURLを同じPCのブラウザで開きます。終了はCtrl+C。Node.jsプロセスが必要なので、HTMLだけを開く場合と異なりCSV比較・履歴も利用できます。
+
+Linux版では、185件のデフォルト条件を生成して選択するか、syntax生成画面で「比較条件に追加」を押して条件を取り込みます。条件JSONの読み込みにも対応しています。2〜3つのCSVのラベルを指定してweight合計・比率・件数を表示し、結果CSVを保存できます。計算の中止、結果の自動保存、履歴の検索・閲覧・結果CSVの再保存・個別削除にも対応しています。ボード変更時は条件を再生成してください。
+
+CSVはブラウザから同じPCのNode.jsプロセスへ送られ、外部サーバーへ送信されません。サーバーは`127.0.0.1`のランダムポートとランダムトークン付きURLのみで待ち受けます。固定ポートが必要な場合は`PLO_PORT=8080 ./start-linux.sh`を使えます。入力CSVの内容は履歴には保存せず、ファイル名・ラベル・条件・集計結果を保存します。履歴の場所は`${XDG_DATA_HOME:-$HOME/.local/share}/plo-syntax-lab/history`です。Windows版の履歴形式とは独立しています。
+
+Linux版の検証:
+
+```bash
+./test-linux.sh
+```
+
+既存の5つの生成エンジンテストに加え、CSV検証・小数加算・2/3CSV比較・HTTP制限・生成条件の受信・履歴の保存/再取得/削除をテストします。テスト履歴は専用の一時フォルダーを使用します。
+
+weightは小数28桁までを整数に変換して正確に加算し、比率は小数8桁で切り捨てて返します。合計0の比率は未定義です。CSVの合計サイズは画面で30MiB、HTTPリクエスト全体では32MiBまで。同名のCSVは重複として拒否します。Windows版のPowerShellコマンド生成・実行はLinux版には含まれず、Node.jsで集計します。Windowsのexeの生成には以下のWindows環境が引き続き必要です。
+
+## Windows版の動作環境とビルド
 
 Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。**ビルド時のみNode.js 20以上**が必要です。外部のnpmパッケージは不要です。
 

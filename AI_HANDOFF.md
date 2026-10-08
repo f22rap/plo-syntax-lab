@@ -56,6 +56,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 配布するアプリは`dist/FlopCommandApp.exe`。exe単体で動作し、利用者にNode.jsは不要。`dist/PLO-Syntax-Lab.html`は生成画面単独用。生成されたHTMLを直接修正せず、`src/`を修正して再ビルドする。
 
+### Linux版の追加
+
+LinuxではNode.js 20以上で`./start-linux.sh --open`を実行し、同じPCのブラウザから利用する。npm依存は不要。`src/linux/server.cjs`がloopback・ランダムトークン・Origin検証付きHTTPを提供し、`worker.cjs`で生成と比較を実行する。`compare.cjs`は既存JS matcherを使い、小数28桁の整数加算でCSVのweightを集計する。Linux UIは`src/linux/index.html`・`app.js`・`style.css`。既存の生成画面は`lab/`で配信し、比較条件をPOSTで受信する。
+
+185件の条件、カスタム条件、2〜3CSV、CSV出力、履歴検索/閲覧/削除、計算の中止を提供する。WindowsのPowerShellコマンド生成機能とWindows履歴形式は移植対象に含めない。Linux履歴はXDG_DATA_HOME配下（未設定なら`~/.local/share`）の`plo-syntax-lab/history`に保存する。詳細な制限・操作はREADMEのLinux版節を参照。
+
+`./test-linux.sh`は既存5テストと`tests/linux-tests.cjs`を実行する。追加テストではCSV入力、正確なweight合計、比率、HTTPの制限、条件受信、デフォルト生成、独立した一時履歴を検証する。クラウドではNode/API統合とDOMによる画面ロジックを確認した。実ブラウザでの表示・操作は、この環境のChromium sandboxの制約により未確認。Windowsネイティブテストの実行条件は変更していない。
+
 ## 4. ソースの見取り図
 
 | ファイル | 主な責務 |
