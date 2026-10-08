@@ -6,7 +6,13 @@
 
 Sitesの非公開プラグインとして提供します。ChatGPTのPlugins → Personal → Created by youで「PLO Syntax Lab MCP」を選んで接続します。会話に接続カードが表示されている場合はConnectから接続できます。SitesがサインインとOAuthを担当します。APIキーをAIへ入力する必要はありません。
 
-接続先・CSV登録画面は公開完了後に、この文書へ記録します。
+公開済みの非公開サービス：
+
+- [CSV登録画面](https://plo-syntax-lab-mcp.m14socom8011.chatgpt.site)
+- MCP endpoint / OAuth resource：`https://plo-syntax-lab-mcp.m14socom8011.chatgpt.site/mcp`
+- プラグイン名：PLO Syntax Lab MCP（Sitesが作成する同名の接続を使用）
+
+初回公開は2026-10-08。実際のAIホストでのツール呼び出しはプラグイン接続後に確認します。
 
 1. CSV登録画面を開き、ボードを入力する。
 2. 同じボードのUTF-8 CSVを2〜3個選んで「登録する」を押す。
@@ -54,7 +60,7 @@ npm test --prefix cloud
 
 GitHubを開発の正本とし、Sitesの別ソースリポジトリへ対応ソースを保存して公開します。GitHubへpushしただけではクラウドの更新は行いません。Windows/ローカルMCPの配布はGitHub Actionsで自動ビルドされます。
 
-Sites用checkoutのルートpackage.jsonでbuildをnode cloud/build.mjsへ設定し、.openai/hosting.jsonに登録済みproject_id・d1=DB・r2=FILES・capabilities=[mcp]を保存します。cloud/source-info.jsonには対応GitHubコミットを記録します。buildはdist/server/index.jsとhosting metadata、ルートdrizzle/のmigrationを生成し、Sitesの公式ソース保存・packaging手順で同じcommitを公開します。GitHub側だけのbuildではdist/cloud/server/index.jsを生成します。
+Sites用checkoutのルートpackage.jsonでbuildをnode cloud/build.mjsへ設定し、typeはcommonjsまたは未指定とする（従来のsrc/*.jsをCommonJSとして扱うため）。.openai/hosting.jsonに登録済みproject_id・d1=DB・r2=FILES・capabilities=[mcp]を保存します。cloud/source-info.jsonには対応GitHubコミットを記録します。buildはdist/server/index.jsとhosting metadata、ルートdrizzle/のmigrationを生成し、Sitesの公式ソース保存・packaging手順で同じcommitを公開します。GitHub側だけのbuildではdist/cloud/server/index.jsを生成します。
 
 D1 schemaはcloud/db/schema.ts、生成migrationはcloud/drizzle/です。変更時はnpm run db:generate --prefix cloudでDrizzle migrationを追加します。既に公開したmigrationは書き換えません。DBとR2のruntime bindingsはSitesが提供します。Secretsや認証トークンをソース・hosting manifest・ブラウザに書き込みません。
 

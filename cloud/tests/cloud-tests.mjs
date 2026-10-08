@@ -5,10 +5,12 @@ import {fileURLToPath} from 'node:url';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import {CloudService,sha256} from '../service.mjs';
-import {Store} from '../store.mjs';
+import Module from 'node:module';
 import engine from '../../src/lab/engine.js';
 const folder=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),root=path.resolve(folder,'..');
+// Match the build's dependency roots when directly testing shared CommonJS contracts.
+process.env.NODE_PATH=[path.join(folder,'node_modules'),path.join(root,'node_modules'),process.env.NODE_PATH].filter(Boolean).join(path.delimiter);Module._initPaths();
+const {CloudService,sha256}=await import('../service.mjs'),{Store}=await import('../store.mjs');
 let hosted=false;try{hosted=!!JSON.parse(await fs.readFile(path.join(root,'.openai/hosting.json'),'utf8')).project_id;}catch{}
 const output=path.join(root,hosted?'dist/server':'dist/cloud/server');
 const runtime=new Miniflare(convertV4MiniflareOptions({modules:true,modulesRoot:output,scriptPath:path.join(output,'index.js'),compatibilityDate:'2026-10-06',d1Databases:['DB'],r2Buckets:['FILES']}));
