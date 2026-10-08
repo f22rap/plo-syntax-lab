@@ -4,6 +4,8 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 開発を引き継ぐ場合は[AI開発引継ぎ](AI_HANDOFF.md)を参照してください。構成・確定仕様・テスト・未確認事項をまとめています。
 
+AIから条件生成・比較・グラフ／レポート出力・履歴を操作する[ローカルMCP](mcp/README.md)を追加しました。導入手順と接続設定例はリンク先を参照してください。
+
 ## 機能
 
 - **デフォルト**：従来の185件の条件名から選択。syntaxは現在のボードに合わせて生成します。
@@ -18,7 +20,7 @@ Excelや元の条件一覧CSVは実行時に不要です。185件の条件名の
 
 ## 動作環境とビルド
 
-Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。**ビルド時のみNode.js 20以上**が必要です。外部のnpmパッケージは不要です。
+Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。GUIは**ビルド時のみNode.js 20以上**が必要で、外部のnpmパッケージは不要です。MCPを利用する場合は実行時にもNode.jsと公式SDKが必要です。
 
 リポジトリを取得した後、リポジトリ直下で実行します。
 
@@ -66,6 +68,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 - `src/`：Windowsアプリ、PowerShell集計、syntax照合、デフォルト条件。
 - `src/lab/`：生成画面とJavaScriptの生成エンジン。
 - `tests/`：エンジン・生成条件・Windows連携のテスト。
+- `mcp/`：ローカルMCPサーバー、接続設定例、AI向け出力・操作。
 - `docs/`：操作説明と条件の定義。
 - `dist/`：ビルド出力（Git管理対象外）。
 

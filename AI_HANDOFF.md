@@ -3,6 +3,8 @@
 更新日：2026-10-08。対象：v11の公開ソース。
 確認した実装の基準コミット：`22a60e23585fa47ab8be92eea161f5ca92ffc264`。
 
+追記：ローカルMCP 0.1.0を追加。以下のv11説明に加え、[MCPの導入・設計・検証](mcp/README.md)を読むこと。`src/Core.cs`へ`Choice`と`Commands`を切り出し、GUIと`mcp/NativeHost.cs`で同じ生成コマンド・集計・履歴処理を使う。`build.ps1`は`dist/PloMcp.Native.exe`も生成する。履歴schema 1には任意の`Provenance`を追加した。MCP関連のnpm依存は`package-lock.json`で管理する。GUI単体にはNode.jsやnpmの実行時依存を追加していない。
+
 ## 1. 次の開発者が最初に行うこと
 
 1. この文書、[README](README.md)、[操作説明](docs/usage.txt)、[条件の定義](docs/default-conditions.txt)を読む。
@@ -36,7 +38,7 @@ PLO4のボードを入力し、条件に対応するMonker形式のsyntaxを生�
 
 実行環境は64ビットWindows 10/11、.NET Framework 4.8、Windows PowerShell 5.1、EdgeまたはChrome。生成画面はHTML/CSS/JavaScript、比較画面はC# WinForms。Webサーバーへのデプロイを前提としたアプリではない。
 
-ビルドにはNode.js 20以上が必要。引継ぎ前の確認ではNode.js 24.12.0を使用した。npm依存パッケージ、Excel、Visual Studio、.NETの新しいSDKは不要。C#はWindowsの.NET Framework付属`csc.exe`でコンパイルするため、新しいC#構文の導入時は互換性に注意する。
+GUIのビルドにはNode.js 20以上が必要。引継ぎ前の確認ではNode.js 24.12.0を使用した。GUI単体にはnpm依存パッケージ、Excel、Visual Studio、.NETの新しいSDKは不要。追加したMCPサーバーは実行時にもNode.jsとnpmの公式SDKを使用する。C#はWindowsの.NET Framework付属`csc.exe`でコンパイルするため、新しいC#構文の導入時は互換性に注意する。
 
 ```powershell
 git clone https://github.com/f22rap/plo-syntax-lab.git
@@ -62,6 +64,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 | --- | --- |
 | `src/Program.cs` | 通常起動・例外表示・生成用ブラウザの終了処理 |
 | `src/App.cs` | `MainForm`、ボード入力、モード・条件選択、集計実行、表示状態 |
+| `src/Core.cs` | GUIとMCPで共有する`Choice`・`Commands`、ボード正規化とCSVヘッダー検証 |
 | `src/default-labels.json` | 185件の`cell`・`label`。条件の安定した識別子と順番 |
 | `src/defaults.js` | 旧条件名を新エンジンの役・追加条件に対応付ける |
 | `src/lab/engine.js` | 合法ハンド列挙、役・ドロー判定、symbolic syntax生成・照合 |

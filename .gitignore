@@ -15,3 +15,6 @@ node_modules/
 .idea/
 History/
 src/defaults.html
+/mcp.local.json
+/mcp-output/
+/data/
