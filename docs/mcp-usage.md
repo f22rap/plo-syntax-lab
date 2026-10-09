@@ -1,5 +1,7 @@
 # PLO Syntax Lab：ローカルMCPの使い方
 
+この文書は`src/mcp/stdio.cjs`のWindows/Linux共通11ツール版を説明します。Windowsアプリと同じ永続履歴、PowerShell出力、SVGグラフ・Markdown保存が必要な場合は[Windowsアプリ連携15ツール版](../mcp/README.md)を使用してください。両版のIDは相互利用できません。
+
 Node.js 24以上と、ローカルstdio MCPを起動できるAIクライアントを使用します。Windows・Linux向けです。既存のWindows exe・HTML画面とは独立して起動できます。
 
 ## 起動と接続

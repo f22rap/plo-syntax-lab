@@ -4,7 +4,7 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 開発を引き継ぐ場合は[AI開発引継ぎ](AI_HANDOFF.md)を参照してください。構成・確定仕様・テスト・未確認事項をまとめています。
 
-AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)とHTTPSの[クラウド版](docs/mcp-cloud-usage.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
+AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)、既存Windowsアプリの履歴・PowerShell・グラフ／レポートまで操作する[Windowsアプリ連携版](mcp/README.md)、HTTPSの[クラウド版](docs/mcp-cloud-usage.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
 
 ## 機能
 
@@ -68,7 +68,7 @@ git push origin v1.0.0
 
 ## Windows版の動作環境とビルド
 
-Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。**ビルド時のみNode.js 20以上**が必要です。外部のnpmパッケージは不要です。
+Windows 10/11（64ビット）、.NET Framework 4.8、Windows PowerShell 5.1、Microsoft EdgeまたはGoogle Chromeを使用します。GUIは**ビルド時のみNode.js 20以上**が必要で、外部のnpmパッケージは不要です。MCPを利用する場合は実行時にもNode.jsと公式SDKが必要です。
 
 リポジトリを取得した後、リポジトリ直下で実行します。
 
@@ -80,6 +80,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 `dist/FlopCommandApp.exe`は単体で利用できます。`dist/PLO-Syntax-Lab.html`は生成画面のみを単独で使うファイルです。生成・集計はPC内で行います。比較アプリとの連携にはランダムなトークン付きのローカル接続を使います。
 
 ## AIから利用するローカルMCP
+
+| 版 | 入口 | 主な違い |
+| --- | --- | --- |
+| Windows/Linux共通版 | `src/mcp/stdio.cjs` | 11ツール。Node.jsのみで生成・照合・比較。ID・結果は1時間のメモリ保持 |
+| Windowsアプリ連携版 | `mcp/server.mjs` | 15ツール。Windowsの既存集計・永続履歴・PowerShell・SVG／Markdown保存に対応 |
+
+Windowsアプリ連携版は`PLO-Syntax-Lab-Windows-MCP` artifactの専用ZIPから導入できます。ネイティブexe・npm依存を同梱し、利用時のビルドは不要です（Node.jsは必要）。[専用の導入手順](mcp/README.md)を参照してください。以下は共通版の説明です。
 
 stdio MCPで、ボード解析・syntax生成・ハンド照合・CSV比較・結果出力の11ツールを公開しています。既存UIと同じ生成エンジン・集計を使います。
 
@@ -130,6 +137,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 - `src/`：Windowsアプリ、PowerShell集計、syntax照合、デフォルト条件。
 - `src/lab/`：生成画面とJavaScriptの生成エンジン。
 - `tests/`：エンジン・生成条件・Windows連携のテスト。
+- `mcp/`：ローカルMCPサーバー、接続設定例、AI向け出力・操作。
 - `docs/`：操作説明と条件の定義。
 - `dist/`：ビルド出力（Git管理対象外）。
 

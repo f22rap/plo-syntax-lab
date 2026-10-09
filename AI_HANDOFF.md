@@ -3,6 +3,8 @@
 更新日：2026-10-08。対象：v11の公開ソース。
 確認した実装の基準コミット：`22a60e23585fa47ab8be92eea161f5ca92ffc264`。
 
+追記：ローカルWindows連携MCP 0.2.0を復元・配布。以下のv11説明に加え、[MCPの導入・設計・検証](mcp/README.md)を読むこと。`src/Core.cs`へ`Choice`と`Commands`を切り出し、GUIと`mcp/NativeHost.cs`で同じ生成コマンド・集計・履歴処理を使う。`build.ps1`は`dist/PloMcp.Native.exe`も生成する。履歴schema 1には任意の`Provenance`を追加した。MCP関連のnpm依存は`package-lock.json`で管理する。GUI単体にはNode.jsやnpmの実行時依存を追加していない。
+
 ## 1. 次の開発者が最初に行うこと
 
 1. この文書、[README](README.md)、[操作説明](docs/usage.txt)、[条件の定義](docs/default-conditions.txt)を読む。
@@ -36,7 +38,7 @@ PLO4のボードを入力し、条件に対応するMonker形式のsyntaxを生�
 
 実行環境は64ビットWindows 10/11、.NET Framework 4.8、Windows PowerShell 5.1、EdgeまたはChrome。生成画面はHTML/CSS/JavaScript、比較画面はC# WinForms。Webサーバーへのデプロイを前提としたアプリではない。
 
-ビルドにはNode.js 20以上が必要。引継ぎ前の確認ではNode.js 24.12.0を使用した。npm依存パッケージ、Excel、Visual Studio、.NETの新しいSDKは不要。C#はWindowsの.NET Framework付属`csc.exe`でコンパイルするため、新しいC#構文の導入時は互換性に注意する。
+GUIのビルドにはNode.js 20以上が必要。引継ぎ前の確認ではNode.js 24.12.0を使用した。GUI単体にはnpm依存パッケージ、Excel、Visual Studio、.NETの新しいSDKは不要。追加したMCPサーバーは実行時にもNode.jsとnpmの公式SDKを使用する。C#はWindowsの.NET Framework付属`csc.exe`でコンパイルするため、新しいC#構文の導入時は互換性に注意する。
 
 ```powershell
 git clone https://github.com/f22rap/plo-syntax-lab.git
@@ -70,6 +72,7 @@ LinuxではNode.js 20以上で`./start-linux.sh --open`を実行し、同じPC�
 | --- | --- |
 | `src/Program.cs` | 通常起動・例外表示・生成用ブラウザの終了処理 |
 | `src/App.cs` | `MainForm`、ボード入力、モード・条件選択、集計実行、表示状態 |
+| `src/Core.cs` | GUIとMCPで共有する`Choice`・`Commands`、ボード正規化とCSVヘッダー検証 |
 | `src/default-labels.json` | 185件の`cell`・`label`。条件の安定した識別子と順番 |
 | `src/defaults.js` | 旧条件名を新エンジンの役・追加条件に対応付ける |
 | `src/lab/engine.js` | 合法ハンド列挙、役・ドロー判定、symbolic syntax生成・照合 |
@@ -235,6 +238,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -Native
 
 ## 12. ローカルMCP実装（2026-10-08）
 
+以下は先行する共通11ツール版の説明。追加したWindowsアプリ連携15ツール版は`mcp/server.mjs`と[mcp/README.md](mcp/README.md)を参照する。二つの起動入口・依存・IDを混同しない。共通版の既存API契約と配布ZIPを維持し、Windows版はC#・PowerShell・GUI互換履歴を共有する独立した選択肢とした。今後共通化する場合も既存APIの互換性を保つこと。
+
 段階1A・1Bを実装。`src/mcp/stdio.cjs`は公式SDK 1.32.1によるstdio接続、`service.cjs`はID・ジョブ・成果物管理、`worker.cjs`は既存エンジン・集計、`contracts.cjs`は入出力のschema検証を担当する。11ツールの契約は`docs/mcp-tools.schema.json`、導入は`docs/mcp-usage.md`。
 
 `npm ci --prefix src/mcp`後に`node tests/mcp-tests.cjs`。Windows/Linux CIで公式SDK接続と全11ツールを検証し、配布用runtimeも同じテストを通す。`node src/mcp/package-runtime.cjs`でNode用依存を同梱し、Windowsビルドのartifact・タグReleaseにMCP ZIPを追加する。Node.js 24以上は利用者側に必要。MCP依存はWindows/HTMLの従来ビルドには不要。
@@ -259,3 +264,12 @@ CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有�
 クラウド用依存はcloud/package.jsonとlockfile。Windows/HTML/Linuxの従来ビルドには不要。既存CIはMCPのWindows/Linuxテストにクラウドテストを追加し、全て成功した後にexe・MCP ZIPをビルドする。Sites公開は別の管理ソースリポジトリから行う。GitHub変更だけでは自動再デプロイされない。Sites用checkoutのcloud/source-info.jsonに対応するGitHubコミットを記録し、版と出力の来歴を一致させる。
 
 適用済みD1 migrationは変更しない。Drizzleで追加migrationを生成する。稼働中WorkerはSites dispatchのみに公開し、認証IDヘッダーを信用できない直結の経路へそのまま公開しない。実AIホストの接続完了を、公式SDKのテスト成功だけで主張しない。
+
+
+### 15ツール版の復元（2026-10-09）
+
+ユーザーが「15ツール版を実装せよ」と明示したため、取り消されていたWindowsアプリ連携版を復元した。15ツールはWindows専用のstdio。`mcp/server.mjs`、`mcp/README.md`、`tests/mcp.test.mjs`を参照。共通11ツール・公開済みクラウド11ツールの契約を変更しない。
+
+`npm run package:windows-mcp`は事前にビルドした`dist/PloMcp.Native.exe`とNode用依存・対応ソースを`dist/PLO-Syntax-Lab-Windows-MCP`へコピーする。CIはソース版・同梱版の実stdio接続、全15機能、8ドロー条件、同一フロップ順序、2/3CSV、小数精度、永続履歴、削除制約、全出力形式を検証し、専用ZIPとSHA-256をartifact／タグReleaseへ添付する。通常利用はZIP展開・設定だけでよく、Node.jsを別途用意する。
+
+ユーザーのCSV・GUI履歴は移行・削除しない。設定のallowHistoryDeleteは初期false。削除ツールはユーザーの明示的な削除依頼がある場合だけ使う。テストは合成CSVと独立した一時履歴を使用する。クラウド11ツールにWindows用exe・PowerShellを持ち込まない。

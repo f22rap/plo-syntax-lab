@@ -82,6 +82,25 @@ jobs:
         run: .\test.ps1
       - name: Build Windows executable and native test executable
         run: .\build.ps1 -WithTests
+      - name: Test Windows-native MCP workflow
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { throw 'Windows MCP dependency installation failed' }
+          npm run test:mcp
+          if ($LASTEXITCODE -ne 0) { throw 'Windows MCP integration tests failed' }
+      - name: Package and test Windows-native 15-tool MCP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm run package:windows-mcp
+          if ($LASTEXITCODE -ne 0) { throw 'Windows-native MCP packaging failed' }
+          $env:PLO_MCP_TEST_ROOT = Join-Path $env:RUNNER_TEMP 'plo-windows-mcp-package-tests'
+          node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/mcp.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged Windows-native MCP tests failed' }
+          Remove-Item Env:PLO_MCP_TEST_ROOT
+          Compress-Archive -Path dist\PLO-Syntax-Lab-Windows-MCP\* -DestinationPath dist\PLO-Syntax-Lab-Windows-MCP.zip
+          $hash = (Get-FileHash dist\PLO-Syntax-Lab-Windows-MCP.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  PLO-Syntax-Lab-Windows-MCP.zip" | Set-Content dist\WINDOWS-MCP-SHA256SUMS.txt -Encoding ASCII
       - name: Install and package MCP runtime
         run: |
           $ErrorActionPreference = 'Stop'
@@ -128,6 +147,15 @@ jobs:
             dist/MCP-SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+      - name: Upload downloadable Windows-native 15-tool MCP package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: PLO-Syntax-Lab-Windows-MCP
+          path: |
+            dist/PLO-Syntax-Lab-Windows-MCP.zip
+            dist/WINDOWS-MCP-SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -147,6 +175,11 @@ jobs:
         with:
           name: PLO-Syntax-Lab-MCP
           path: package
+      - name: Download tested Windows-native 15-tool MCP package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: PLO-Syntax-Lab-Windows-MCP
+          path: package
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -155,8 +188,8 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt --clobber
+            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt --clobber
           else
-            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt \
+            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt \
               --verify-tag --title "PLO Syntax Lab $RELEASE_TAG" --generate-notes
           fi
