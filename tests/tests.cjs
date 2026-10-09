@@ -22,10 +22,10 @@ function verifyEnumeration(e,filter){const out=e.syntax(filter);const expected=n
  for(const value of ['bdNut','bdSecond','bdLow','bdTriple']){const out=verifyEnumeration(e,{role:'set:14',bdfd:value});assert.equal(out.format,'compact');checks++;}
  const hs=[['AhAdQsJs',P.F.fd|P.F.sd],['AhAcQd9d',P.F.bdfd],['AhAd9c8c',0],['AhAdKc7c',0]];
  for(const [h,bits]of hs){const i=indexOf(e,h);ok((e.flags[i]&bits)===bits,h);const truth=truthDraw(cards(h),e.board);assert.equal(e.outs[i],truth.outs.length);checks++;}
- assert.equal(e.query({role:'set:14',clean:'all'}).count,1950);checks++;
- ok(e.matches(indexOf(e,'AhAd9c8c'),{role:'set:14',clean:'all'}),'two-card straight potential is not excluded');
+ assert.equal(e.query({role:'set:14',clean:'all'}).count,855);checks++;
+ ok(!e.matches(indexOf(e,'AhAd9c8c'),{role:'set:14',clean:'all'}),'BDSD is excluded from all draws absent');
  ok(!e.matches(indexOf(e,'AhAcQd9d'),{role:'set:14',clean:'all'}),'BDFD remains excluded');
- ok(!Object.hasOwn(e.query().counts,'bdsd'),'removed draw has no output category');
+ ok(Object.hasOwn(e.query().counts,'bdsd'),'BDSD has its own output category');
  for(const f of [{role:'set:14',clean:'regular'},{role:'set:14',clean:'all'},{role:'set:14',fd:'fdSecond'},{role:'set:14',bdfd:'bdTriple'},{role:'set:13',blockers:[{rank:14,mode:'no'}]},{role:'two:14:13',sd:'wrap'}])verifyEnumeration(e,f);
  const turn=new P.Engine();console.time('turn');await turn.prepare(P.parseBoard('Ks 8s 5d 2d'));console.timeEnd('turn');assert.equal(turn.hands.length,194580);checks++;const ti=indexOf(turn,'AsQsAdQd');ok(!!(turn.flags[ti]&P.F.dualFd),'dual FD');ok(!!(turn.flags[ti]&P.F.fdNut),'nut FD');ok(!(turn.flags[ti]&P.F.bdfd),'turn no backdoor');verifyEnumeration(turn,{role:'all',fd:'dualFd',sd:'none'});
  for(const fd of ['fdNut','fdSecond','fdThird','fdLow','fdTriple','dualFd']){const out=verifyEnumeration(turn,{role:'all',fd});assert.equal(out.format,'compact');checks++;}
@@ -41,4 +41,5 @@ function verifyEnumeration(e,filter){const out=e.syntax(filter);const expected=n
  assert.equal(P.category(P.evaluate(cards('KsKhQdJc'),P.parseBoard('As Ah Ad Ac 2d'))),6);checks++;
  console.log(JSON.stringify({checks,flopTopSet:e.query({role:'set:14'}).count,flopNoRegularDraw:no.count,syntax:no.syntax,turnHands:turn.hands.length,riverHands:river.hands.length,status:'passed'}));
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
 

@@ -22,15 +22,16 @@ async function compute(action,input,options={}) {
   const cache=new Map();
   return input.requests.map(request=>{
    check();
-   const f={role:'all',fd:'all',sd:'all',bdfd:'all',clean:'',blockers:[],...request.filter};
+   const f={role:'all',fd:'all',sd:'all',bdfd:'all',bdsd:'all',clean:'',blockers:[],...request.filter};
    if(f.pocket==null)delete f.pocket;
    if(!/^cat:[0-8]$/.test(f.role)&&f.role!=='all'&&!engine.roleIndex.has(f.role))fail('INVALID_FILTER','このボードに存在しない役です。',{role:f.role});
    const names=new Set();for(const blocker of f.blockers){if(names.has(blocker.rank))fail('INVALID_FILTER','同じランクのブロッカー指定は1つだけです。');names.add(blocker.rank);}
    const wanted=k=>f[k]!=='all';
-   if(f.clean&&(['fd','sd'].some(k=>wanted(k)&&f[k]!=='none')||(f.clean==='all'&&wanted('bdfd')&&f.bdfd!=='none')))fail('INVALID_FILTER','ドローなし条件と個別ドローが矛盾しています。');
+   if(f.clean&&(['fd','sd'].some(k=>wanted(k)&&f[k]!=='none')||(f.clean==='all'&&['bdfd','bdsd'].some(k=>wanted(k)&&f[k]!=='none'))))fail('INVALID_FILTER','ドローなし条件と個別ドローが矛盾しています。');
    let reason=null;
-   if(b.length===5&&['fd','sd','bdfd'].some(wanted))reason='リバーにドロー条件はありません。';
+   if(b.length===5&&['fd','sd','bdfd','bdsd'].some(wanted))reason='リバーにドロー条件はありません。';
    else if(b.length!==3&&wanted('bdfd'))reason='BDFDはフロップ限定です。';
+   else if(b.length!==3&&wanted('bdsd'))reason='BDSDはフロップ限定です。';
    if(reason)return {label:request.label,filter:f,count:0,syntax:'',status:'UNSUPPORTED',reason,examples:[]};
    try {const key=JSON.stringify(f);let result=cache.get(key);if(!result){result=engine.syntax(f);cache.set(key,result);}return {label:request.label,filter:f,...result,examples:result.examples.map(x=>x.cards.join('')),status:result.count?'MATCHES':'EMPTY',reason:result.count?null:'このボードでは該当なし'};}
    catch(e){fail('INTERNAL_ERROR','条件の生成または照合に失敗しました。');}
@@ -50,3 +51,4 @@ async function compute(action,input,options={}) {
  fail('INTERNAL_ERROR','未知の処理です。');
 }
 module.exports={compute};
+

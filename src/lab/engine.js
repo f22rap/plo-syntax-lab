@@ -4,7 +4,7 @@ const R='23456789TJQKA', S='shdc', BASE=759375;
 const rank=c=>(c>>2)+2, suit=c=>c&3, card=c=>R[c>>2]+S[c&3];
 const deck=Array.from({length:52},(_,i)=>i);
 const CAT=['ハイカード','ワンペア','2ペア','スリーカード','ストレート','フラッシュ','フルハウス','クワッズ','ストレートフラッシュ'];
-const F={fd:1,fdNut:2,fdSecond:4,fdThird:65536,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdTriple:32768,dualFd:131072};
+const F={fd:1,fdNut:2,fdSecond:4,fdThird:65536,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdTriple:32768,dualFd:131072,bdsd:262144,bdsd9:524288,bdsd8:1048576,bdsd4:2097152,bdsdOther:4194304};
 const straightMasks=[];
 for(let h=5;h<=14;h++) {let m=0;for(let k=0;k<5;k++)m|=1<<((h-k===1)?14:h-k);straightMasks.push([m,h]);}
 function combos(a,n) {const out=[];function walk(start,b){if(b.length===n){out.push(b);return;}for(let i=start;i<=a.length-(n-b.length);i++)walk(i+1,b.concat(a[i]));}walk(0,[]);return out;}
@@ -61,6 +61,130 @@ function coverPatterns(rows,wanted,patternsFor){
  while(uncovered.size){let best,score=-1;for(const c of pool){let n=0;for(const i of c.yes)if(uncovered.has(i))n++;const value=n/(c.text.length+2);if(value>score&&n){score=value;best=c;}}if(!best)throw Error('条件式で分類を表現できませんでした');terms.push(best.text==='*'?YES:atom(best.text));for(const i of best.yes)uncovered.delete(i);}
  return or(...terms);
 }
+// Straight-only backdoors depend on rank multiplicities, never on suits. Every
+// state still removes all known physical cards before testing opponent pairs.
+function straightRequirements(boardRanks, requiredIndices=[]) {
+ const rows=[];
+ for(const [mask,high] of straightMasks.slice().reverse()) {
+  const pairs=new Set();
+  for(const ix of combos(boardRanks.map((_,i)=>i),3)) {
+   if(!requiredIndices.every(i=>ix.includes(i)))continue;
+   let bm=0;for(const i of ix)bm|=1<<boardRanks[i];
+   if(pop(bm)!==3||(bm&mask)!==bm)continue;
+   pairs.add(mask^bm);
+  }
+  for(const pair of pairs)rows.push([pair,high]);
+ }
+ return rows;
+}
+function straightFromMask(rows,heldMask){for(const [pair,high] of rows)if((pair&heldMask)===pair)return high;return 0;}
+function parseHand(text,board){
+ const raw=String(text).replace(/10/g,'T').replace(/♠/g,'s').replace(/♥/g,'h').replace(/♦/g,'d').replace(/♣/g,'c').replace(/[\s,|/・]+/g,'');
+ if(!/^(?:[2-9TJQKA][shdc]){2}(?:(?:[2-9TJQKA][shdc]){2})?$/i.test(raw))throw Error('手札を4枚入力してください。暫定判定は2枚でも入力できます。');
+ const h=raw.match(/../g).map(x=>R.indexOf(x[0].toUpperCase())*4+S.indexOf(x[1].toLowerCase()));
+ if(new Set([...h,...board]).size!==h.length+board.length)throw Error('手札の重複、またはボードとのカード重複があります。');
+ return h;
+}
+class BackdoorStraight {
+ constructor(board){
+  if(board.length!==3)throw Error('BDSDはフロップ（3枚）のみ判定できます。');
+  this.board=board.slice();this.br=board.map(rank);this.bc=new Uint8Array(15);for(const r of this.br)this.bc[r]++;
+  this.flop=straightRequirements(this.br);this.turn=[];this.river=[];this.backdoor=[];this.cache=new Map();
+  for(let t=2;t<=14;t++){
+   this.turn[t]=straightRequirements([...this.br,t]);this.river[t]=[];this.backdoor[t]=[];
+   for(let r=2;r<=14;r++){
+    this.river[t][r]=straightRequirements([...this.br,t,r]);
+    this.backdoor[t][r]=straightRequirements([...this.br,t,r],[3,4]);
+   }
+  }
+ }
+ classify(rs,detail=false){
+  const key=rs.slice().sort((a,b)=>a-b).join(',');if(!detail&&this.cache.has(key))return this.cache.get(key);
+  const left=Array.from({length:15},(_,r)=>r<2?0:4-this.bc[r]);let hm=0;
+  for(const r of rs){left[r]--;hm|=1<<r;}let availableMask=0;for(let r=2;r<=14;r++)if(left[r]>0)availableMask|=1<<r;
+  const made=straightFromMask(this.flop,hm),regularTurns=[];
+  for(let t=2;t<=14;t++)if(left[t]&&straightFromMask(this.turn[t],hm))regularTurns.push(t);
+  const regular=!made&&regularTurns.length>0;
+  // Exclude the entire hand before considering any backdoor combination.
+  if(made||regular){const result={flags:0,primary:made?'madeStraight':'sd',madeHigh:made,regular,regularTurns:made?[]:regularTurns,excludedAtFlop:true,turns:[]};if(!detail)this.cache.set(key,result);return result;}
+  const distinct=[...new Set(rs)].sort((a,b)=>a-b),combinations=[];
+  for(let size=2;size<=Math.min(4,distinct.length);size++)for(const selected of combos(distinct,size))combinations.push({ranks:selected,size,mask:selected.reduce((m,r)=>m|(1<<r),0)});
+  let flags=0;const turns=[],combinationSets={};
+  for(let t=2;t<=14;t++){
+   if(!left[t])continue;
+   const row={rank:t,turnCount:left[t],status:'noOuts',outCount:0,valid:[],excluded:[],groups:[],excludedGroups:[],categories:[]};
+   const after=left.slice();after[t]--;let tm=availableMask;if(!after[t])tm&=~(1<<t);
+   const oppTurn=straightFromMask(this.turn[t],tm),oppRiver=[];
+   for(let r=2;r<=14;r++)if(after[r])oppRiver[r]=straightFromMask(this.river[t][r],after[r]===1?tm&~(1<<r):tm);
+   const evaluated=[];let maxFuture=0;
+   for(const combo of combinations){
+    const group={...combo,status:'noOuts',outCount:0,outMask:0,valid:[],excluded:[]};let groupMax=0;
+    for(let r=2;r<=14;r++)if(after[r])groupMax=Math.max(groupMax,straightFromMask(this.river[t][r],combo.mask));
+    maxFuture=Math.max(maxFuture,groupMax);
+    if(oppTurn>groupMax){group.status='opponentOnTurn';group.opponentHigh=oppTurn;group.maxFutureHigh=groupMax;}
+    else for(let r=2;r<=14;r++){
+     if(!after[r])continue;
+     const via=straightFromMask(this.backdoor[t][r],combo.mask);if(!via)continue;
+     // Other hole cards are blockers only; they cannot rescue a weaker pair.
+     const high=straightFromMask(this.river[t][r],combo.mask),opponentHigh=oppRiver[r];
+     const out={rank:r,count:after[r],high,backdoorHigh:via,opponentHigh};
+     if(opponentHigh>high){if(detail)group.excluded.push(out);continue;}
+     group.outCount+=after[r];group.outMask|=1<<r;if(detail)group.valid.push(out);
+    }
+    if(group.outCount)group.status='valid';
+    // 4/8 are fixed two-card combinations. Never label an eight-out union of
+    // different pairs as BDSD 8. 9+ must genuinely need at least three cards.
+    if(combo.size===2&&group.outCount>0){
+     group.category=group.outCount===8?'bdsd8':group.outCount===4?'bdsd4':'bdsdOther';
+    }else if(combo.size>=3&&group.outCount>=9){
+     const redundant=evaluated.some(g=>(g.mask&combo.mask)===g.mask&&g.outMask===group.outMask);
+     if(!redundant)group.category='bdsd9';
+    }
+    evaluated.push(group);
+    if(group.category){(combinationSets[group.category]??=new Set()).add(combo.mask);flags|=F.bdsd|F[group.category];if(!row.categories.includes(group.category))row.categories.push(group.category);if(detail)row.groups.push(group);}
+    else if(detail&&combo.size===2&&(group.status==='opponentOnTurn'||group.excluded.length))row.excludedGroups.push(group);
+   }
+   if(row.categories.length)row.status='valid';
+   else if(oppTurn>maxFuture){row.status='opponentOnTurn';row.opponentHigh=oppTurn;row.maxFutureHigh=maxFuture;}
+   if(detail){
+    // A turn-level union is for inspection only, never for the 4/8 classifier.
+    const outMap=new Map();for(const g of row.groups)for(const o of g.valid){const prev=outMap.get(o.rank);if(!prev||prev.high<o.high)outMap.set(o.rank,o);}
+    row.valid=[...outMap.values()].sort((a,b)=>a.rank-b.rank);row.outCount=row.valid.reduce((n,o)=>n+o.count,0);
+    turns.push(row);
+   }
+  }
+  const primary=flags&F.bdsd9?'bdsd9':flags&F.bdsd8?'bdsd8':flags&F.bdsd4?'bdsd4':flags&F.bdsdOther?'bdsdOther':'none';
+  const qualifyingCombinations=Object.fromEntries(Object.entries(combinationSets).map(([key,value])=>[key,[...value]]));
+  const result={flags,primary,madeHigh:made,regular:false,regularTurns:[],excludedAtFlop:false,turns,combinations:qualifyingCombinations};if(!detail)this.cache.set(key,{...result,turns:[]});return result;
+ }
+ details(hand){
+  const h=parseHand(hand,this.board),raw=this.classify(h.map(rank),true),remaining=deck.filter(c=>!h.includes(c)&&!this.board.includes(c));
+  function witness(board,high,holding,required=[]){
+   if(!high)return null;
+   for(const pair of combos(holding,2))for(const triple of combos(board,3)){
+    if(!required.every(c=>triple.includes(c)))continue;
+    const ranks=[...pair,...triple].map(rank),mask=ranks.reduce((m,r)=>m|(1<<r),0);
+    if(new Set(ranks).size===5&&straightMasks.some(([m,v])=>m===mask&&v===high))return {hand:pair.map(card),board:triple.map(card),high};
+   }return null;
+  }
+  const turns=raw.turns.map(row=>{
+   const physical=remaining.filter(c=>rank(c)===row.rank),turn=physical[0],board=[...this.board,turn],opponentCards=remaining.filter(c=>c!==turn);
+   const outcomes=(list,holding=h)=>list.map(out=>{
+    const rivers=opponentCards.filter(c=>rank(c)===out.rank),river=rivers[0],full=[...board,river];
+    return {...out,rank:rname(out.rank),cards:rivers.map(card),self:witness(full,out.high,holding),backdoor:witness(full,out.backdoorHigh,holding,[turn,river]),opponent:witness(full,out.opponentHigh,opponentCards.filter(c=>c!==river))};
+   });
+   const groupDetails=g=>{
+    const hands=combos(h,g.size).filter(cs=>new Set(cs.map(rank)).size===g.size&&cs.every(c=>g.ranks.includes(rank(c))));
+    const holding=hands[0];
+    return {ranks:g.ranks.map(rname),size:g.size,hands:hands.map(cs=>cs.map(card)),status:g.status,category:g.category||null,outCount:g.outCount,valid:outcomes(g.valid,holding),excluded:outcomes(g.excluded,holding),maxFutureHigh:g.maxFutureHigh||0,opponent:g.opponentHigh?witness(board,g.opponentHigh,opponentCards):null};
+   };
+   return {...row,rank:rname(row.rank),turnCards:physical.map(card),representativeTurn:card(turn),valid:outcomes(row.valid),groups:row.groups.map(groupDetails),excludedGroups:row.excludedGroups.map(groupDetails),opponent:row.opponentHigh?witness(board,row.opponentHigh,opponentCards):null};
+  });
+  const normalTurns=remaining.filter(c=>raw.regularTurns.includes(rank(c))).map(c=>({card:card(c),self:witness([...this.board,c],straightFromMask(this.turn[rank(c)],h.reduce((m,c)=>m|(1<<rank(c)),0)),h)}));
+  return {board:this.board.map(card),hand:h.map(card),provisional:h.length!==4,unknownHoleCards:4-h.length,remainingCards:remaining.length,primary:raw.primary,madeHigh:raw.madeHigh,regular:raw.regular,excludedAtFlop:raw.excludedAtFlop,flopMade:raw.madeHigh?witness(this.board,raw.madeHigh,h):null,normalTurns,turns};
+ }
+}
+
 class Engine {
  async prepare(board,progress=()=>{}){
   // Normalize public input before building the remaining deck: board cards must
@@ -129,6 +253,14 @@ class Engine {
    progress({percent:40+Math.round(index/total*60),message:'全ての4枚ハンドを判定中'});await pause();
   }
   this.rankProfiles=new Map();for(let i=0;i<this.hands.length;i++){const h=unpack(this.hands[i]),key=rankKey(h),f=this.flags[i],features={sd:!!(f&F.sd),wrap:!!(f&F.wrap)};const old=this.rankProfiles.get(key);if(!old)this.rankProfiles.set(key,{rs:h.map(rank).sort((a,b)=>b-a),features});else for(const k of Object.keys(features))if(features[k]!==old.features[k])throw Error('ランク条件の整合性エラー');}
+  this.backdoor=board.length===3?new BackdoorStraight(board):null;
+  if(this.backdoor){
+   let done=0;for(const profile of this.rankProfiles.values()){
+    const result=this.backdoor.classify(profile.rs);profile.bdsdCombinations=result.combinations||{};for(const name of ['bdsd','bdsd9','bdsd8','bdsd4','bdsdOther'])profile.features[name]=!!(result.flags&F[name]);
+    if(++done%200===0){progress({percent:100,message:'バックドアストレートと上位ストレートを照合中'});await pause();}
+   }
+   for(let i=0;i<this.hands.length;i++)this.flags[i]|=this.backdoor.classify(unpack(this.hands[i]).map(rank)).flags;
+  }
   this.ready=true;return this.summary();
  }
  roleOf(score,p){
@@ -143,21 +275,22 @@ class Engine {
   else{key='high';label='ハイカード';order=0;}
   return {key,label,cat,order};
  }
+ bdsdDetails(hand){if(!this.backdoor)throw Error('BDSDはフロップ（3枚）のみ判定できます。');return this.backdoor.details(hand);}
  summary(){return {board:this.board.map(card),total:this.hands.length,roles:this.roles.map((r,i)=>({...r,count:this.roleCounts[i]})),ranks:this.ranks.map(r=>({value:r,label:rname(r)})),street:this.board.length};}
  matches(i,filter={}){
   const role=this.roles[this.handRoles[i]];
   if(filter.role&&filter.role!=='all'&&(filter.role.startsWith('cat:')?role.cat!==Number(filter.role.slice(4)):role.key!==filter.role))return false;
   const f=this.flags[i];
-  for(const name of ['fd','sd','bdfd']){const value=filter[name];if(!value||value==='all')continue;if(this.board.length===5||(this.board.length!==3&&name==='bdfd'))return false;if(value==='none'){if(f&F[name])return false;}else if(!(f&F[value]))return false;}
+  for(const name of ['fd','sd','bdfd','bdsd']){const value=filter[name];if(!value||value==='all')continue;if(this.board.length===5||(this.board.length!==3&&(name==='bdfd'||name==='bdsd')))return false;if(value==='none'){if(f&F[name])return false;}else if(!(f&F[value]))return false;}
   if(filter.clean==='regular'&&(f&(F.fd|F.sd)))return false;
-  if(filter.clean==='all'&&(f&(F.fd|F.sd|F.bdfd)))return false;
+  if(filter.clean==='all'&&(f&(F.fd|F.sd|F.bdfd|F.bdsd)))return false;
   if(filter.pocket&&filter.pocket!=='all'&&unpack(this.hands[i]).filter(c=>rank(c)===Number(filter.pocket)).length<2)return false;
   if(filter.blockers?.length){const h=unpack(this.hands[i]);for(const b of filter.blockers){const n=h.filter(c=>rank(c)===Number(b.rank)).length;if(b.mode==='yes'&&!n||b.mode==='no'&&n||b.mode==='one'&&n!==1||b.mode==='two'&&n<2)return false;}}
   return true;
  }
  query(filter={}){
   const ids=[],counts={regularNone:0,allNone:0};for(const k of Object.keys(F))counts[k]=0;let min=99,max=0,nmin=99,nmax=0;const byRole={};const entries=Object.entries(F);
-  for(let i=0;i<this.hands.length;i++)if(this.matches(i,filter)){ids.push(i);for(const [k,v] of entries)if(this.flags[i]&v)counts[k]++;if(!(this.flags[i]&(F.fd|F.sd)))counts.regularNone++;if(!(this.flags[i]&(F.fd|F.sd|F.bdfd)))counts.allNone++;min=Math.min(min,this.outs[i]);max=Math.max(max,this.outs[i]);nmin=Math.min(nmin,this.nutOuts[i]);nmax=Math.max(nmax,this.nutOuts[i]);const key=this.roles[this.handRoles[i]].key;byRole[key]=(byRole[key]||0)+1;}
+  for(let i=0;i<this.hands.length;i++)if(this.matches(i,filter)){ids.push(i);for(const [k,v] of entries)if(this.flags[i]&v)counts[k]++;if(!(this.flags[i]&(F.fd|F.sd)))counts.regularNone++;if(!(this.flags[i]&(F.fd|F.sd|F.bdfd|F.bdsd)))counts.allNone++;min=Math.min(min,this.outs[i]);max=Math.max(max,this.outs[i]);nmin=Math.min(nmin,this.nutOuts[i]);nmax=Math.max(nmax,this.nutOuts[i]);const key=this.roles[this.handRoles[i]].key;byRole[key]=(byRole[key]||0)+1;}
   this.lastIds=ids;const examples=Array.from({length:Math.min(8,ids.length)},(_,k)=>ids[Math.floor(k*ids.length/Math.min(8,ids.length))]);return {count:ids.length,total:this.hands.length,counts,byRole,outs:ids.length?[min,max]:[0,0],nutOuts:ids.length?[nmin,nmax]:[0,0],examples:examples.map(i=>({cards:unpack(this.hands[i]).map(card),outs:this.outs[i],nutOuts:this.nutOuts[i]}))};
  }
  pairExpression(predicate){
@@ -165,7 +298,7 @@ class Engine {
   const n=coverPatterns(this.pairList,predicate,patterns);return n===NO?null:render(n);
  }
  compact(filter){
-  if(filter.sd&&!['all','none','sd'].includes(filter.sd)||filter.clean==='all')return null;
+  if(filter.bdsd&&filter.bdsd!=='all'||filter.sd&&!['all','none','sd'].includes(filter.sd)||filter.clean==='all')return null;
   const pos=[],neg=[];let currentMax=-1;
   if(filter.role&&filter.role!=='all'){
    const selected=this.pairList.filter(p=>filter.role.startsWith('cat:')?category(p.score)===Number(filter.role.slice(4)):p.role===filter.role);
@@ -201,9 +334,51 @@ class Engine {
   for(const b of filter.blockers||[]){const r=rname(Number(b.rank));if(b.mode==='yes')pos.push(r);else if(b.mode==='no')neg.push(r);else if(b.mode==='one'){pos.push(r);neg.push(r+r);}else if(b.mode==='two')pos.push(r+r);}
   let text=pos.length?pos.join(':'):'*';if(neg.length)text+='!('+neg.join(',')+')';return text;
  }
+ bdsdExpression(feature,context='*'){
+  if(this.board.length!==3)return NO;
+  const cacheKey='bdsd:'+feature+':'+context;if(this.expressionCache.has(cacheKey))return this.expressionCache.get(cacheKey);
+  // Restrict simplification to rank profiles that can actually satisfy the
+  // other selected conditions (role, suits, pockets, blockers, SD, etc.).
+  let profiles;
+  if(context==='*')profiles=[...this.rankProfiles.values()];
+  else{
+   const contextBits=this.expressionSet(context),keys=new Set();
+   for(let i=0;i<this.hands.length;i++)if(contextBits[i>>>5]&(1<<(i&31)))keys.add(rankKey(unpack(this.hands[i])));
+   profiles=[...keys].map(key=>this.rankProfiles.get(key));
+  }
+  const combinations=p=>feature==='bdsd'?[...new Set(Object.values(p.bdsdCombinations).flat())]:(p.bdsdCombinations[feature]||[]);
+  const seeds=[...new Set(profiles.flatMap(combinations))].sort((a,b)=>a-b),branches=[];
+  for(const mask of seeds){
+   const selected=[];for(let r=14;r>=2;r--)if(mask&(1<<r))selected.push(r);
+   const seed=selected.map(rname).join(''),rows=[];
+   for(const p of profiles){
+    if(!selected.every(r=>p.rs.includes(r)))continue;
+    const remaining=p.rs.slice();for(const r of selected)remaining.splice(remaining.indexOf(r),1);
+    rows.push({rs:remaining,yes:combinations(p).includes(mask)});
+   }
+   // Learn only the necessary conditions on the unused hole cards. Convert a
+   // residual rank back to its full-hand multiplicity: an extra 6 beside 65
+   // means 66, not just 6. This preserves exact blockers without listing 4-card
+   // rank patterns as the BDSD itself.
+   const lift=n=>{
+    if(n.kind==='const')return n;
+    if(n.kind==='not')return not(lift(n.child));
+    if(n.kind==='and'||n.kind==='or')return join(n.kind,n.children.map(lift));
+    const counts=new Map();for(const c of n.text)counts.set(c,(counts.get(c)||0)+1);
+    const atoms=[...counts].map(([c,count])=>c.repeat(count+(seed.includes(c)?1:0)));
+    return atoms.join('').length<=2?atom(atoms.join('')):and(...atoms.map(atom));
+   };
+   const positive=lift(coverPatterns(rows,p=>p.yes,p=>subsets(p.rs)));
+   const negative=not(lift(coverPatterns(rows,p=>!p.yes,p=>subsets(p.rs))));
+   const guard=render(negative).length<render(positive).length?negative:positive;
+   branches.push(and(atom(seed),guard));
+  }
+  const result=or(...branches);this.expressionCache.set(cacheKey,result);return result;
+ }
  rankExpression(feature){
+  if(feature.startsWith('bdsd'))return this.bdsdExpression(feature);
   const cacheKey='rank:'+feature;if(this.expressionCache.has(cacheKey))return this.expressionCache.get(cacheKey);
-  if(this.board.length===5)return NO;
+  if(this.board.length===5||(feature.startsWith('bdsd')&&this.board.length!==3))return NO;
   const pairNode=predicate=>{const text=this.pairExpression(predicate);return text?parseExpression(text):NO;};
   if(feature==='sd'){
    const made=pairNode(p=>p.sh>0),raw=pairNode(p=>!!(p.lo||p.hi));
@@ -242,7 +417,7 @@ class Engine {
   this.expressionCache.set(cacheKey,result);return result;
  }
  symbolic(filter){
-  const basic={...filter,sd:'all',clean:''};
+  const basic={...filter,sd:'all',bdsd:'all',clean:''};
   if(filter.clean&&this.board.length<5){basic.fd='none';if(filter.clean==='all')basic.bdfd=this.board.length===3?'none':'all';}
   const base=this.compact(basic);if(!base)throw Error('基本条件の構文を生成できませんでした');const parts=[parseExpression(base)];
   const sd=filter.clean?'none':filter.sd;
@@ -252,6 +427,8 @@ class Engine {
    else parts.push(this.drawExpression(sd));
   }
 
+  const bdsd=filter.clean==='all'&&this.board.length===3?'none':filter.bdsd;
+  if(bdsd&&bdsd!=='all'){const context=render(and(...parts)),expression=this.bdsdExpression(bdsd==='none'?'bdsd':bdsd,context);parts.push(bdsd==='none'?not(expression):expression);}
   return render(and(...parts));
  }
  expressionSet(expression){
@@ -289,6 +466,7 @@ function compile(source){
   return h=>{function match(t,used){if(t===tokens.length)return true;const [r,s]=tokens[t];for(let j=0;j<h.length;j++)if(!(used&(1<<j))&&(!r||rank(h[j])===r)&&(s<0||suit(h[j])===s)&&match(t+1,used|(1<<j)))return true;return false;}return match(0,0);};
  }return node(parseExpression(source));
 }
-const api={Engine,parseBoard,card,rank,suit,evaluate,five,category,combos,compile,unpack,F,CAT};root.PLO=api;if(typeof module!=='undefined')module.exports=api;
+const api={BackdoorStraight,parseHand,Engine,parseBoard,card,rank,suit,evaluate,five,category,combos,compile,unpack,F,CAT};root.PLO=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof self!=='undefined'?self:globalThis);
+
 

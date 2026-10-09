@@ -344,11 +344,12 @@
                 "sd",
                 "syntax",
                 "csv",
-                "limits"
+                "limits",
+                "bdsd"
               ]
             },
             "minItems": 1,
-            "maxItems": 7,
+            "maxItems": 8,
             "default": [
               "roles",
               "fd",
@@ -356,7 +357,8 @@
               "sd",
               "syntax",
               "csv",
-              "limits"
+              "limits",
+              "bdsd"
             ]
           }
         },
@@ -422,7 +424,8 @@
                             "sd",
                             "syntax",
                             "csv",
-                            "limits"
+                            "limits",
+                            "bdsd"
                           ]
                         },
                         "text": {
@@ -436,7 +439,7 @@
                       ],
                       "additionalProperties": false
                     },
-                    "maxItems": 7
+                    "maxItems": 8
                   },
                   "examples": {
                     "type": "array",
@@ -464,6 +467,7 @@
                                 "fd",
                                 "fdNut",
                                 "fdSecond",
+                                "fdThird",
                                 "fdLow",
                                 "fdTriple",
                                 "dualFd",
@@ -545,6 +549,19 @@
                               "minItems": 0,
                               "maxItems": 13,
                               "default": []
+                            },
+                            "bdsd": {
+                              "type": "string",
+                              "enum": [
+                                "all",
+                                "bdsd",
+                                "bdsd9",
+                                "bdsd8",
+                                "bdsd4",
+                                "bdsdOther",
+                                "none"
+                              ],
+                              "default": "all"
                             }
                           },
                           "required": [],
@@ -1029,6 +1046,7 @@
                         "fd",
                         "fdNut",
                         "fdSecond",
+                        "fdThird",
                         "fdLow",
                         "fdTriple",
                         "dualFd",
@@ -1110,6 +1128,19 @@
                       "minItems": 0,
                       "maxItems": 13,
                       "default": []
+                    },
+                    "bdsd": {
+                      "type": "string",
+                      "enum": [
+                        "all",
+                        "bdsd",
+                        "bdsd9",
+                        "bdsd8",
+                        "bdsd4",
+                        "bdsdOther",
+                        "none"
+                      ],
+                      "default": "all"
                     }
                   },
                   "required": [],
@@ -1330,6 +1361,7 @@
                                     "fd",
                                     "fdNut",
                                     "fdSecond",
+                                    "fdThird",
                                     "fdLow",
                                     "fdTriple",
                                     "dualFd",
@@ -1411,6 +1443,19 @@
                                   "minItems": 0,
                                   "maxItems": 13,
                                   "default": []
+                                },
+                                "bdsd": {
+                                  "type": "string",
+                                  "enum": [
+                                    "all",
+                                    "bdsd",
+                                    "bdsd9",
+                                    "bdsd8",
+                                    "bdsd4",
+                                    "bdsdOther",
+                                    "none"
+                                  ],
+                                  "default": "all"
                                 }
                               },
                               "required": [],

@@ -2,13 +2,13 @@
 const $=id=>document.getElementById(id), nf=new Intl.NumberFormat('ja-JP');
 const symbols={s:'♠',h:'♥',d:'♦',c:'♣'}, suitClass={s:'spades',h:'hearts',d:'diamonds',c:'clubs'};
 let worker,sequence=0,pending=new Map(),summary,role='all',lastResult,rows=[],refreshVersion=0,analyzeVersion=0,timer,pickerSlot=0,pendingCards=['As','Kd','7s'];
-const labels={fd:'全てのFD',fdNut:'ナッツFD',fdSecond:'セカンドナッツFD',fdThird:'サードナッツFD',fdLow:'それ以下のFD',fdTriple:'同スート3枚以上のFD',dualFd:'2スートのFD',sd:'全てのSD',wrap:'ラップ（9アウト以上）',nutGut:'ナッツガットショット',nutOpen:'ナッツオープンエンド',nonGut:'アンナッツガットショット',nonOpen:'アンナッツオープンエンド',bdfd:'全てのBDFD',bdNut:'ナッツBDFD',bdSecond:'セカンドナッツBDFD',bdLow:'それ以下のBDFD',bdTriple:'同スート3枚以上のBDFD'};
+const labels={fd:'全てのFD',fdNut:'ナッツFD',fdSecond:'セカンドナッツFD',fdThird:'サードナッツFD',fdLow:'それ以下のFD',fdTriple:'同スート3枚以上のFD',dualFd:'2スートのFD',sd:'全てのSD',wrap:'ラップ（9アウト以上）',nutGut:'ナッツガットショット',nutOpen:'ナッツオープンエンド',nonGut:'アンナッツガットショット',nonOpen:'アンナッツオープンエンド',bdfd:'全てのBDFD',bdNut:'ナッツBDFD',bdSecond:'セカンドナッツBDFD',bdLow:'それ以下のBDFD',bdTriple:'同スート3枚以上のBDFD',bdsd:'全てのBDSD',bdsd9:'BDSD 9+',bdsd8:'BDSD 8',bdsd4:'BDSD 4',bdsdOther:'その他のBDSD'};
 function toast(s){$('toast').textContent=s;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,3500);}
 function showError(e){$('error').textContent=e.message||String(e);$('error').hidden=false;}
 function initWorker(){
  if(worker)worker.terminate();for(const p of pending.values())p.reject(Error('計算を更新しました'));pending.clear();
  const inline=$('engine-inline').textContent.trim();
- if(inline){const source=inline+'\nlet engine;onmessage=async({data})=>{const{id,type}=data;try{let result;if(type==="prepare"){engine=new PLO.Engine();result=await engine.prepare(PLO.parseBoard(data.board),p=>postMessage({type:"progress",...p}));}else if(!engine?.ready)throw Error("先にボードを解析してください");else if(type==="query")result=engine.query(data.filter);else if(type==="syntax")result=engine.syntax(data.filter);else if(type==="export")result=data.rows.map(item=>{const r=engine.syntax(item.filter);return{label:item.label,filter:item.filter,count:r.count,syntax:r.syntax}});postMessage({id,result})}catch(e){postMessage({id,error:e.message})}};';const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);}
+ if(inline){const source=inline+'\nlet engine;onmessage=async({data})=>{const{id,type}=data;try{let result;if(type==="prepare"){engine=new PLO.Engine();result=await engine.prepare(PLO.parseBoard(data.board),p=>postMessage({type:"progress",...p}));}else if(!engine?.ready)throw Error("先にボードを解析してください");else if(type==="query")result=engine.query(data.filter);else if(type==="syntax")result=engine.syntax(data.filter);else if(type==="bdsdDetails")result=engine.bdsdDetails(data.hand);else if(type==="export")result=data.rows.map(item=>{const r=engine.syntax(item.filter);return{label:item.label,filter:item.filter,count:r.count,syntax:r.syntax}});postMessage({id,result})}catch(e){postMessage({id,error:e.message})}};';const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);}
  else worker=new Worker('worker.js');
  worker.onmessage=({data})=>{if(data.type==='progress'){$('progress-bar').value=data.percent;$('progress-pct').textContent=data.percent+'%';$('progress-text').textContent=data.message;return;}const p=pending.get(data.id);if(!p)return;pending.delete(data.id);data.error?p.reject(Error(data.error)):p.resolve(data.result);};
  worker.onerror=e=>{for(const p of pending.values())p.reject(Error(e.message||'計算を開始できませんでした。'));pending.clear();};
@@ -21,11 +21,11 @@ function selectionLabel(key=role){const pocket=$('pocket').value;return roleLabe
 function renderRoles(){const wrap=$('roles');wrap.replaceChildren();function button(key,label,count,parent=wrap,sub=false){const b=document.createElement('button');b.className='role-button'+(key===role?' active':'')+(sub?' role-sub':'');b.dataset.role=key;b.setAttribute('aria-pressed',String(key===role));const title=document.createElement('div');title.textContent=label;const n=document.createElement('span');n.textContent=nf.format(count);b.append(title,n);b.onclick=()=>{role=key;renderRoles();scheduleRefresh();};parent.append(b);}
  button('all','全てのハンド',summary.total);for(let cat=8;cat>=0;cat--){const list=summary.roles.filter(r=>r.cat===cat),count=list.reduce((a,b)=>a+b.count,0);const group=document.createElement('div');group.className='role-group';button('cat:'+cat,PLO.CAT[cat],count,group);for(const r of list)button(r.key,r.label,r.count,group,true);wrap.append(group);}}
 function renderBlockers(){const wrap=$('blockers');wrap.replaceChildren();for(const r of summary.ranks){const label=document.createElement('label');label.className='blocker';const b=document.createElement('b');b.textContent=r.label;const select=document.createElement('select');select.dataset.rank=r.value;select.setAttribute('aria-label',r.label+'のブロッカー');for(const [v,t] of [['all','指定なし'],['yes','あり'],['no','なし'],['one','ちょうど1枚'],['two','2枚以上']])select.add(new Option(t,v));select.onchange=scheduleRefresh;label.append(b,select);wrap.append(label);}}
-function filter(){return {role,pocket:$('pocket').value,fd:$('fd').value,sd:$('sd').value,bdfd:$('bdfd').value,clean:document.querySelector('input[name=clean]:checked').value,blockers:[...document.querySelectorAll('#blockers select')].filter(s=>s.value!=='all').map(s=>({rank:Number(s.dataset.rank),mode:s.value}))};}
-function resetFilters(){$('pocket').value='all';for(const k of ['fd','sd','bdfd'])$(k).value='all';document.querySelector('input[name=clean][value=""]').checked=true;document.querySelectorAll('#blockers select').forEach(s=>s.value='all');}
-function syncAvailability(){const street=summary.street,clean=document.querySelector('input[name=clean]:checked').value;for(const k of ['fd','sd'])$(k).disabled=street===5||!!clean;for(const k of ['bdfd'])$(k).disabled=street!==3||clean==='all';for(const r of document.querySelectorAll('input[name=clean]'))r.disabled=street===5;const note=$('street-note');note.hidden=street===3;note.textContent=street===4?'ターン：バックドアは対象外。現在の通常ドローを判定します。':'リバー：ドローは対象外。完成役とブロッカーを判定します。';$('export-all').textContent=street===5?'完成役をまとめて保存':'分類をまとめて保存';}
+function filter(){return {role,pocket:$('pocket').value,fd:$('fd').value,sd:$('sd').value,bdfd:$('bdfd').value,bdsd:$('bdsd').value,clean:document.querySelector('input[name=clean]:checked').value,blockers:[...document.querySelectorAll('#blockers select')].filter(s=>s.value!=='all').map(s=>({rank:Number(s.dataset.rank),mode:s.value}))};}
+function resetFilters(){$('pocket').value='all';for(const k of ['fd','sd','bdfd','bdsd'])$(k).value='all';document.querySelector('input[name=clean][value=""]').checked=true;document.querySelectorAll('#blockers select').forEach(s=>s.value='all');}
+function syncAvailability(){const street=summary.street,clean=document.querySelector('input[name=clean]:checked').value;for(const k of ['fd','sd'])$(k).disabled=street===5||!!clean;for(const k of ['bdfd','bdsd'])$(k).disabled=street!==3||clean==='all';for(const r of document.querySelectorAll('input[name=clean]'))r.disabled=street===5;$('analyze-bdsd').disabled=street!==3;$('bdsd-hand').disabled=street!==3;const note=$('street-note');note.hidden=street===3;note.textContent=street===4?'ターン：バックドアは対象外。現在の通常ドローを判定します。':'リバー：ドローは対象外。完成役とブロッカーを判定します。';$('export-all').textContent=street===5?'完成役をまとめて保存':'分類をまとめて保存';}
 async function analyze(text){
- refreshVersion++;invalidateTransfer();
+ refreshVersion++;invalidateTransfer();clearBdsdReport();
  let parsed;try{parsed=PLO.parseBoard(text);}catch(e){showError(e);return false;}
  const generation=++analyzeVersion;
  clearTimeout(timer);refreshVersion++;$('error').hidden=true;$('analyze').disabled=true;$('progress').hidden=false;$('progress-bar').value=0;$('progress-pct').textContent='0%';$('progress-text').textContent='ボードを解析しています';$('workspace').setAttribute('aria-busy','true');pendingCards=parsed.map(PLO.card);$('board-input').value=pendingCards.join(' ');renderCards();initWorker();
@@ -39,18 +39,18 @@ async function refresh(){invalidateTransfer();const version=++refreshVersion;syn
  }catch(e){if(version===refreshVersion){showError(e);$('syntax-format').textContent='生成できませんでした';}}
 }
 function renderResult(r){$('match-count').textContent=nf.format(r.count);$('match-percent').textContent=(r.count/r.total*100).toFixed(2)+'%';$('syntax').value=r.syntax.length>30000?r.syntax.slice(0,30000)+'\n…（表示のみ省略。コピー・保存は全文）':r.syntax;$('syntax').placeholder=r.count?'':'該当するハンドがありません。条件を変更してください。';$('syntax-format').textContent=r.count?'条件構文':'該当なし';$('syntax-meta').textContent=r.count?`${nf.format(r.syntax.length)}文字 · このボード専用${r.syntax.length>5000?' · 長い式は.txt保存を推奨':''}`:'空集合のsyntaxは生成しません';$('copy-syntax').disabled=!r.count;$('download-syntax').disabled=!r.count;$('out-range').textContent=summary.street<5&&r.count?`手札全体 SD ${r.outs[0]}–${r.outs[1]} outs / nut ${r.nutOuts[0]}–${r.nutOuts[1]}`:'';
- const wrap=$('examples');wrap.replaceChildren();for(const example of r.examples){const box=document.createElement('div');box.className='example';const cs=document.createElement('div');cs.className='mini-cards';for(const c of example.cards.slice().reverse()){const el=document.createElement('span');el.className='mini '+suitClass[c[1]];el.textContent=c[0]+symbols[c[1]];cs.append(el);}box.append(cs);if(summary.street<5){const p=document.createElement('p');p.textContent=`手札全体 SD ${example.outs} / nut ${example.nutOuts}`;box.append(p);}wrap.append(box);}if(!r.count)wrap.innerHTML='<p class="empty-state">該当ハンドなし</p>';
+ const wrap=$('examples');wrap.replaceChildren();for(const example of r.examples){const box=document.createElement('div');box.className='example';const cs=document.createElement('div');cs.className='mini-cards';for(const c of example.cards.slice().reverse()){const el=document.createElement('span');el.className='mini '+suitClass[c[1]];el.textContent=c[0]+symbols[c[1]];cs.append(el);}box.append(cs);if(summary.street<5){const p=document.createElement('p');p.textContent=`手札全体 SD ${example.outs} / nut ${example.nutOuts}`;box.append(p);if(summary.street===3){const b=document.createElement('button');b.className='text-button';b.textContent='BDSD詳細';b.onclick=()=>{$('bdsd-hand').value=example.cards.join(' ');inspectBdsd();$('bdsd-section').scrollIntoView({behavior:'smooth',block:'start'});};box.append(b);}}wrap.append(box);}if(!r.count)wrap.innerHTML='<p class="empty-state">該当ハンドなし</p>';
 }
 function renderBreakdowns(base,result){rows=[];const wrap=$('breakdowns');wrap.replaceChildren();if(summary.street===5){wrap.innerHTML='<p class="no-draws">リバーではドローを分類しません。左の完成役と上のポケットペア・ブロッカー条件を使えます。</p>';return;}
- const note=document.createElement('p');note.className='muted';note.style.marginBottom='10px';note.textContent='選択した完成役・ポケットペア・ブロッカーを基準にした内訳です。追加ドロー条件を付ける前の件数を表示。SDの2枚組分類は重複するため合計できません。';wrap.append(note);
- const groups=[['フラッシュドロー','fd',['fd','fdNut','fdSecond','fdThird','fdLow','fdTriple',...(summary.street===4?['dualFd']:[]),'none']],['ストレートドロー','sd',['sd','wrap','nutGut','nutOpen','nonGut','nonOpen','none']]];if(summary.street===3)groups.push(['バックドアフラッシュ','bdfd',['bdfd','bdNut','bdSecond','bdLow','bdTriple','none']]);groups.push(['ドローなし','clean',['regular','all']]);
- for(const [title,key,values] of groups){const group=document.createElement('div');group.className='breakdown-group';const heading=document.createElement('div');heading.className='breakdown-title';heading.textContent=title;group.append(heading);for(const value of values){let count,label;if(key==='clean'){count=result.counts[value==='all'?'allNone':'regularNone'];label=value==='all'?'BDFDも含めて全てなし':'通常SD・FDなし';}else if(value==='none'){count=result.count-result.counts[key];label=key.toUpperCase()+'なし';}else{count=result.counts[value];label=labels[value];}const item={label:selectionLabel()+' / '+label,filter:{...base,[key]:value},count,key,value};rows.push(item);const row=document.createElement('div');row.className='breakdown-row'+(!count?' zero':'');const text=document.createElement('span');text.textContent=label;const number=document.createElement('span');number.className='row-count';number.textContent=nf.format(count);const actions=document.createElement('div');actions.className='row-actions';const view=document.createElement('button');view.textContent='表示';view.disabled=!count;view.onclick=()=>{resetDrawFilters();if(key==='clean')document.querySelector(`input[name=clean][value="${value}"]`).checked=true;else $(key).value=value;refresh();$('syntax').scrollIntoView({behavior:'smooth',block:'center'});};const copy=document.createElement('button');copy.textContent='コピー';copy.disabled=!count;copy.onclick=async()=>{copy.disabled=true;copy.textContent='…';try{const r=await request('syntax',{filter:item.filter});await copyText(r.syntax);}catch(e){toast(e.message);}finally{copy.disabled=false;copy.textContent='コピー';}};actions.append(view,copy);row.append(text,number,actions);group.append(row);}wrap.append(group);}
+ const note=document.createElement('p');note.className='muted';note.style.marginBottom='10px';note.textContent='選択した完成役・ポケットペア・ブロッカーを基準にした内訳です。追加ドロー条件を付ける前の件数を表示。SDの2枚組分類・BDSD分類は重複するため合計できません。BDSDはフロップで通常SDがあるハンドを除外。4・8は2枚の組、9+は3枚以上の組です。';wrap.append(note);
+ const groups=[['フラッシュドロー','fd',['fd','fdNut','fdSecond','fdThird','fdLow','fdTriple',...(summary.street===4?['dualFd']:[]),'none']],['ストレートドロー','sd',['sd','wrap','nutGut','nutOpen','nonGut','nonOpen','none']]];if(summary.street===3)groups.push(['バックドアフラッシュ','bdfd',['bdfd','bdNut','bdSecond','bdLow','bdTriple','none']]);if(summary.street===3)groups.push(['バックドアストレート','bdsd',['bdsd','bdsd9','bdsd8','bdsd4','bdsdOther','none']]);groups.push(['ドローなし','clean',['regular','all']]);
+ for(const [title,key,values] of groups){const group=document.createElement('div');group.className='breakdown-group';const heading=document.createElement('div');heading.className='breakdown-title';heading.textContent=title;group.append(heading);for(const value of values){let count,label;if(key==='clean'){count=result.counts[value==='all'?'allNone':'regularNone'];label=value==='all'?'BDFD・BDSDも含めて全てなし':'通常SD・FDなし';}else if(value==='none'){count=result.count-result.counts[key];label=key.toUpperCase()+'なし';}else{count=result.counts[value];label=labels[value];}const item={label:selectionLabel()+' / '+label,filter:{...base,[key]:value},count,key,value};rows.push(item);const row=document.createElement('div');row.className='breakdown-row'+(!count?' zero':'');const text=document.createElement('span');text.textContent=label;const number=document.createElement('span');number.className='row-count';number.textContent=nf.format(count);const actions=document.createElement('div');actions.className='row-actions';const view=document.createElement('button');view.textContent='表示';view.disabled=!count;view.onclick=()=>{resetDrawFilters();if(key==='clean')document.querySelector(`input[name=clean][value="${value}"]`).checked=true;else $(key).value=value;refresh();$('syntax').scrollIntoView({behavior:'smooth',block:'center'});};const copy=document.createElement('button');copy.textContent='コピー';copy.disabled=!count;copy.onclick=async()=>{copy.disabled=true;copy.textContent='…';try{const r=await request('syntax',{filter:item.filter});await copyText(r.syntax);}catch(e){toast(e.message);}finally{copy.disabled=false;copy.textContent='コピー';}};actions.append(view,copy);row.append(text,number,actions);group.append(row);}wrap.append(group);}
 }
-function resetDrawFilters(){for(const k of ['fd','sd','bdfd'])$(k).value='all';document.querySelector('input[name=clean][value=""]').checked=true;}
+function resetDrawFilters(){for(const k of ['fd','sd','bdfd','bdsd'])$(k).value='all';document.querySelector('input[name=clean][value=""]').checked=true;}
 async function copyText(text){if(!text){toast('該当する構文がありません');return;}try{await navigator.clipboard.writeText(text);}catch{const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.left='-9999px';document.body.append(t);t.select();const ok=document.execCommand('copy');t.remove();if(!ok)throw Error('コピーできませんでした。.txt保存をご利用ください。');}toast('syntaxをコピーしました');}
 function saveFile(name,text,type='text/plain;charset=utf-8'){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('board-form').onsubmit=e=>{e.preventDefault();analyze($('board-input').value);};document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>analyze(b.dataset.board));for(const key of ['fd','sd','bdfd','pocket'])$(key).onchange=scheduleRefresh;
-document.querySelectorAll('input[name=clean]').forEach(r=>r.onchange=()=>{if(r.value){$('fd').value='all';$('sd').value='all';if(r.value==='all'){$('bdfd').value='all';}}scheduleRefresh();});
+$('board-form').onsubmit=e=>{e.preventDefault();analyze($('board-input').value);};document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>analyze(b.dataset.board));for(const key of ['fd','sd','bdfd','bdsd','pocket'])$(key).onchange=scheduleRefresh;
+document.querySelectorAll('input[name=clean]').forEach(r=>r.onchange=()=>{if(r.value){$('fd').value='all';$('sd').value='all';if(r.value==='all'){$('bdfd').value='all';$('bdsd').value='all';}}scheduleRefresh();});
 $('reset').onclick=()=>{resetFilters();refresh();};$('help-button').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();$('close-cards').onclick=()=>$('card-dialog').close();$('remove-card').onclick=()=>{pendingCards=pendingCards.slice(0,pickerSlot);$('board-input').value=pendingCards.join(' ');renderCards();$('card-dialog').close();};
 $('copy-syntax').onclick=()=>copyText(lastResult?.syntax).catch(e=>toast(e.message));$('download-syntax').onclick=()=>saveFile('PLO_'+summary.board.join('')+'_'+role.replaceAll(':','-')+'.txt',lastResult.syntax);
 $('export-all').onclick=async()=>{const b=$('export-all');b.disabled=true;b.textContent='まとめています…';try{const f=filter();const list=summary.street===5?summary.roles.map(r=>({label:selectionLabel(r.key),filter:{role:r.key,pocket:f.pocket,blockers:f.blockers}})):[{label:selectionLabel()+' / 現在の複合条件',filter:f},...rows];const out=await request('export',{rows:list});saveFile('PLO_'+summary.board.join('')+'_ranges.json',JSON.stringify({app:'PLO Syntax Lab',board:summary.board,game:'PLO4',note:'各syntaxを個別にコピーして使用。Monker実機での受理・抽出結果は未確認。',ranges:out},null,2),'application/json');toast('分類別のsyntaxを保存しました');}catch(e){toast(e.message);}finally{b.disabled=false;b.textContent=summary.street===5?'完成役をまとめて保存':'分類をまとめて保存';}};
@@ -61,8 +61,8 @@ const connected=location.protocol==='http:'&&location.hostname==='127.0.0.1'&&/^
 if(!connected){$('send-comparison').textContent='比較条件を保存';$('transfer-note').textContent='CSV・Excelなしで生成できます。保存した条件JSONを比較アプリの「条件JSONを読み込む」で追加できます。';}
 function invalidateTransfer(){transferSelection=null;$('send-comparison').disabled=true;$('save-selection').disabled=true;}
 function describeFilter(f){
- const parts=[selectionLabel()];for(const k of ['fd','sd','bdfd'])if(f[k]!=='all')parts.push($(k).selectedOptions[0].textContent);
- if(f.clean)parts.push(f.clean==='all'?'FD・SD・BDFDなし':'通常FD・SDなし');
+ const parts=[selectionLabel()];for(const k of ['fd','sd','bdfd','bdsd'])if(f[k]!=='all')parts.push($(k).selectedOptions[0].textContent);
+ if(f.clean)parts.push(f.clean==='all'?'FD・SD・BDFD・BDSDなし':'通常FD・SDなし');
  const modes={yes:'あり',no:'なし',one:'ちょうど1枚',two:'2枚以上'};
  for(const b of f.blockers)parts.push('23456789TJQKA'[b.rank-2]+' '+modes[b.mode]);return parts.join(' / ');
 }
@@ -83,6 +83,71 @@ $('send-comparison').onclick=async()=>{
  finally{transferBusy=false;$('send-comparison').disabled=!transferSelection;}
 };
 
+// Per-hand report, separate from the range filter and its export.
+let bdsdReport=null,bdsdVersion=0;
+const bdsdNames={madeStraight:'ストレート完成',sd:'通常のストレートドロー',bdsd:'全てのBDSD',bdsd9:'BDSD 9+',bdsd8:'BDSD 8',bdsd4:'BDSD 4',bdsdOther:'その他',none:'なし'};
+function clearBdsdReport(){bdsdVersion++;bdsdReport=null;$('analyze-bdsd').disabled=summary?.street!==3;$('bdsd-report').replaceChildren();$('save-bdsd').disabled=true;}
+function bdsdText(parent,tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;parent.append(el);return el;}
+function witnessText(w){return w?`手札 ${w.hand.join(' ')} ＋ ボード ${w.board.join(' ')} → ${'23456789TJQKA'[w.high-2]}ハイ`:'';}
+function renderBdsdReport(report){
+ const wrap=$('bdsd-report');wrap.replaceChildren();
+ bdsdText(wrap,'h3',`主判定：${bdsdNames[report.primary]}${report.provisional?'（暫定）':''}`);
+ bdsdText(wrap,'p',`ボード ${report.board.join(' ')} ／ 手札 ${report.hand.join(' ')}`,'muted');
+ if(report.provisional)bdsdText(wrap,'p','手札の残り2枚が不明です。以下は既知2枚だけで仮計算した結果で、枚数は確定値ではありません。残り2枚に通常SDがあればBDSD対象外となり、ブロッカーでも結果が変わります。','bdsd-warning');
+ if(report.excludedAtFlop){
+  bdsdText(wrap,'p',report.regular?'フロップで通常のストレートドローがあるため、このハンド全体をBDSDから除外します。':'フロップで既にストレートが完成しているため、BDSD対象外です。','bdsd-warning');
+  if(report.flopMade)bdsdText(wrap,'p',witnessText(report.flopMade));
+  if(report.normalTurns.length){
+   bdsdText(wrap,'p','1枚で完成するターン：'+report.normalTurns.map(t=>t.card).join(' '));
+   const d=document.createElement('details');wrap.append(d);bdsdText(d,'summary','通常SDの完成例');
+   for(const t of report.normalTurns)bdsdText(d,'p',`ターン ${t.card}：${witnessText(t.self)}`);
+  }return;
+ }
+ if(!report.provisional)bdsdText(wrap,'p',`全${report.remainingCards}枚のターンを個別に判定。各ターン後は44枚のリバーを検証。同じランクは同じ結果になるためまとめて表示します。`,'muted');
+ bdsdText(wrap,'p','4・8は固定した手札2枚の組ごとに判定。9+は3枚以上の組み合わせで成立するアウツを重複なく数えます。残りの手札もブロッカーとして反映します。','muted');
+ for(const key of ['bdsd9','bdsd8','bdsd4','bdsdOther']){
+  const turns=report.turns.filter(t=>t.groups.some(g=>g.category===key)),section=bdsdText(wrap,'section','','bdsd-group');
+  bdsdText(section,'h4',bdsdNames[key]);
+  if(!turns.length){bdsdText(section,'p','該当なし','muted');continue;}
+  bdsdText(section,'p',`成立ターン：${turns.map(t=>t.rank).join('・')} ／ 物理ターンカード合計 ${turns.reduce((n,t)=>n+t.turnCount,0)}枚${report.provisional?'（暫定）':''}`);
+  for(const t of turns)for(const group of t.groups.filter(g=>g.category===key)){
+   const d=document.createElement('details');section.append(d);
+   bdsdText(d,'summary',`ターン ${t.rank} ／ 手札の組 ${group.ranks.join('')}（${group.size}枚） ／ 有効リバー ${group.outCount}枚${report.provisional?'（暫定）':''}`);
+   bdsdText(d,'p',`使用する手札${group.size}枚の組：${group.hands.map(cs=>cs.join(' ')).join(' ／ ')}`);
+   bdsdText(d,'p',`成立ターンカード：${t.turnCards.join(' ')}（${t.turnCount}枚）`);
+   bdsdText(d,'p',`以下はターン ${t.representativeTurn}、手札の組 ${group.hands[0].join(' ')} の場合。${group.size>=3?'各ストレートには、この組のうち必ず2枚だけを使います。':''}`,'muted');
+   const ul=document.createElement('ul');d.append(ul);
+   for(const out of group.valid){
+    const li=bdsdText(ul,'li',`リバー ${out.cards.join(' ')}（${out.count}枚）：${'23456789TJQKA'[out.high-2]}ハイ。${out.opponentHigh===out.high?'相手の同率ストレートは可。':'相手の上位ストレートなし。'}`);
+    bdsdText(li,'p',witnessText(out.backdoor),'muted');
+   }
+  }
+ }
+ const excluded=document.createElement('details');wrap.append(excluded);bdsdText(excluded,'summary','除外したカード・判定理由');
+ bdsdText(excluded,'h4','ターンで相手に上位ストレートが成立可能');let turnExclusions=0;
+ for(const t of report.turns)for(const group of t.excludedGroups.filter(g=>g.status==='opponentOnTurn')){
+  turnExclusions++;bdsdText(excluded,'p',`ターン ${t.turnCards.join(' ')} ／ 手札の組 ${group.hands.map(cs=>cs.join(' ')).join(' ／ ')}：相手 ${witnessText(group.opponent)}。この組での将来最高：${group.maxFutureHigh?'23456789TJQKA'[group.maxFutureHigh-2]+'ハイ':'完成なし'}。`);
+ }
+ if(!turnExclusions)bdsdText(excluded,'p','該当なし','muted');
+ bdsdText(excluded,'h4','リバーで相手に上位ストレートが成立可能');let riverExclusions=0;
+ for(const t of report.turns)for(const group of [...t.groups,...t.excludedGroups])for(const out of group.excluded){
+  riverExclusions++;bdsdText(excluded,'p',`ターン ${t.turnCards.join(' ')} → リバー ${out.cards.join(' ')} ／ 手札の組 ${group.ranks.join('')}：自分 ${'23456789TJQKA'[out.high-2]}ハイより相手 ${'23456789TJQKA'[out.opponentHigh-2]}ハイが上位。`);
+  bdsdText(excluded,'p',`例（ターン ${t.representativeTurn}）：自分 ${witnessText(out.self)} ／ 相手 ${witnessText(out.opponent)}`,'muted');
+ }
+ if(!riverExclusions)bdsdText(excluded,'p','該当なし','muted');
+ const none=report.turns.filter(t=>t.status==='noOuts');if(none.length){bdsdText(excluded,'h4','有効な組み合わせなし');bdsdText(excluded,'p',none.flatMap(t=>t.turnCards).join(' '));}
+}
+async function inspectBdsd(){
+ const version=++bdsdVersion;$('analyze-bdsd').disabled=true;$('save-bdsd').disabled=true;
+ try{const report=await request('bdsdDetails',{hand:$('bdsd-hand').value});if(version!==bdsdVersion)return;bdsdReport=report;renderBdsdReport(report);$('save-bdsd').disabled=false;}
+ catch(e){if(version===bdsdVersion){bdsdReport=null;$('bdsd-report').replaceChildren();bdsdText($('bdsd-report'),'p',e.message,'error');}}
+ finally{if(version===bdsdVersion)$('analyze-bdsd').disabled=summary?.street!==3;}
+}
+$('bdsd-form').onsubmit=e=>{e.preventDefault();inspectBdsd();};
+$('bdsd-hand').oninput=clearBdsdReport;
+$('save-bdsd').onclick=()=>{if(bdsdReport)saveFile('PLO_'+bdsdReport.board.join('')+'_'+bdsdReport.hand.join('')+'_BDSD.json',JSON.stringify(bdsdReport,null,2),'application/json');};
+
 const requestedBoard=new URLSearchParams(location.search).get('board');if(requestedBoard){try{PLO.parseBoard(requestedBoard);$('board-input').value=requestedBoard;}catch{}}
 renderCards();analyze($('board-input').value);
+
 

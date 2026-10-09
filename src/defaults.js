@@ -36,7 +36,7 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
    const value=suffix.split(' ').pop();if(value==='A'){exact(over.includes(14)?'A':'!*',h=>over.includes(14)&&has(14)(h));}
    else{const negate=value==='no';exact((negate?'!':'')+union(over.map(rn)),h=>negate?!over.some(r=>has(r)(h)):over.some(r=>has(r)(h)));}
   }else if(suffix.startsWith('SD ')){
-   const kind=suffix.slice(3);if(kind==='BDSD')throw Error('バックドアストレートは新仕様では対象外です。');
+   const kind=suffix.slice(3);if(kind==='BDSD'){if(engine.board.length!==3)throw Error('BDSDはフロップのみです。');filters=filters.map(f=>({...f,sd:'none',bdsd:'bdsd'}));return {filters,extras,predicates};}
    if(/blocker/i.test(kind))throw Error('SDブロッカーは新仕様で未定義です。');
    if(engine.board.length===5)throw Error('リバーにドロー条件はありません。');
    let variants={all:['sd'],no:['none'],'nuts oe':['nutOpen'],'nuts gut':['nutGut'],oe:['nonOpen'],gut:['nonGut']}[kind];
@@ -62,3 +62,4 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
 };
 if(typeof module!=='undefined')module.exports=root.generateDefaults;
 })(typeof self!=='undefined'?self:globalThis);
+
