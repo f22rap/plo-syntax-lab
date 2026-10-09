@@ -4,7 +4,7 @@ const R='23456789TJQKA', S='shdc', BASE=759375;
 const rank=c=>(c>>2)+2, suit=c=>c&3, card=c=>R[c>>2]+S[c&3];
 const deck=Array.from({length:52},(_,i)=>i);
 const CAT=['ハイカード','ワンペア','2ペア','スリーカード','ストレート','フラッシュ','フルハウス','クワッズ','ストレートフラッシュ'];
-const F={fd:1,fdNut:2,fdSecond:4,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdTriple:32768,dualFd:131072};
+const F={fd:1,fdNut:2,fdSecond:4,fdThird:65536,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdTriple:32768,dualFd:131072};
 const straightMasks=[];
 for(let h=5;h<=14;h++) {let m=0;for(let k=0;k<5;k++)m|=1<<((h-k===1)?14:h-k);straightMasks.push([m,h]);}
 function combos(a,n) {const out=[];function walk(start,b){if(b.length===n){out.push(b);return;}for(let i=start;i<=a.length-(n-b.length);i++)walk(i+1,b.concat(a[i]));}walk(0,[]);return out;}
@@ -64,7 +64,7 @@ function coverPatterns(rows,wanted,patternsFor){
 class Engine {
  async prepare(board,progress=()=>{}){
   // Normalize public input before building the remaining deck: board cards must
-  // never be eligible as the nut or second-nut suited hole card.
+  // never be eligible as one of the top suited hole cards.
   if(typeof board==='string')board=parseBoard(board);
   else if(Array.isArray(board)&&board.every(c=>typeof c==='string'))board=parseBoard(board.join(''));
   else if(!Array.isArray(board)||board.length<3||board.length>5||board.some(c=>!Number.isInteger(c)||c<0||c>=52)||new Set(board).size!==board.length)throw Error('ボードを重複のない3〜5枚で入力してください。');
@@ -104,7 +104,7 @@ class Engine {
      for(let s=0;s<4;s++){
       const suited=h.filter(c=>suit(c)===s);if(suited.length<2)continue;
       const top=Math.max(...suited),tier=this.topSuit[s].indexOf(top);
-      if(this.bs[s]===2){fdSuits++;flags|=F.fd|(tier===0?F.fdNut:tier===1?F.fdSecond:F.fdLow);if(suited.length>=3)flags|=F.fdTriple;}
+      if(this.bs[s]===2){fdSuits++;flags|=F.fd|(tier===0?F.fdNut:tier===1?F.fdSecond:tier===2?F.fdThird:F.fdLow);if(suited.length>=3)flags|=F.fdTriple;}
       if(board.length===3&&this.bs[s]===1){flags|=F.bdfd|(tier===0?F.bdNut:tier===1?F.bdSecond:F.bdLow);if(suited.length>=3)flags|=F.bdTriple;}
      }
      if(fdSuits>=2)flags|=F.dualFd;
@@ -136,7 +136,7 @@ class Engine {
   if(cat===3){const set=this.bc[r]===1&&rank(p[0])===r&&rank(p[1])===r;key=(set?'set:':'trips:')+r;const pos=this.ranks.indexOf(r);const place=pos===0?'トップ':pos===this.ranks.length-1?'ボトム':this.ranks.length===3?'ミドル':`第${pos+1}位`;label=set?`${place}セット (${rname(r)}${rname(r)})`:`トリップス (${rname(r)})`;order=cat*10000+r*100;}
   else if(cat===2){key=`two:${r}:${s}`;const positions=[this.ranks.indexOf(r),this.ranks.indexOf(s)];let name=positions[0]===0&&positions[1]===1?'トップ2':positions[0]===0&&positions[1]===this.ranks.length-1?'トップ＆ボトム':positions[0]===1&&positions[1]===2&&this.ranks.length===3?'ミドル＆ボトム':'2ペア';label=`${name} (${rname(r)}・${rname(s)})`;if(this.bc[r]>1||this.bc[s]>1)label+=' / ボードペア利用';}
   else if(cat===6){key=`full:${r}:${s}`;label=`${rname(r)}フル・${rname(s)}`;}
-  else if(cat===5){const fs=suit(p[0]),top=Math.max(...p),tier=this.topSuit[fs].indexOf(top);key=`flush:${Math.min(tier,2)}`;label=tier===0?'ナッツフラッシュ':tier===1?'セカンドナッツフラッシュ':'その他のフラッシュ';order=cat*10000+(2-Math.min(tier,2))*100;}
+  else if(cat===5){const fs=suit(p[0]),top=Math.max(...p),tier=this.topSuit[fs].indexOf(top);key=tier===2?'flush:third':`flush:${Math.min(tier,2)}`;label=tier===0?'ナッツフラッシュ':tier===1?'セカンドナッツフラッシュ':tier===2?'サードナッツフラッシュ':'その他のフラッシュ';order=cat*10000+(3-Math.min(tier,3))*100;}
   else if(cat===4||cat===8){key=`${cat===4?'straight':'sf'}:${r}`;label=`${rname(r)}ハイ・${CAT[cat]}`;order=cat*10000+r*100;}
   else if(cat===7){key=`quads:${r}`;label=`${rname(r)}のクワッズ`;order=cat*10000+r*100;}
   else if(cat===1){key=`pair:${r}`;const pos=this.ranks.indexOf(r);label=this.bc[r]===1?`${pos===0?'トップ':pos===this.ranks.length-1?'ボトム':this.ranks.length===3?'ミドル':`第${pos+1}位`}ペア (${rname(r)})`:`${rname(r)}のワンペア`;order=cat*10000+r*100;}
@@ -183,7 +183,8 @@ class Engine {
     if(val===key||val==='none')expr=symbol.repeat(2);
     else if(val==='fdNut'||val==='bdNut')expr=card(top[0])+symbol;
     else if(val==='fdSecond'||val==='bdSecond')expr=card(top[1])+symbol+':!'+card(top[0]).toLowerCase();
-    else if(val==='fdLow'||val==='bdLow')expr=symbol.repeat(2)+':!('+top.slice(0,2).map(c=>card(c).toLowerCase()).join(',')+')';
+    else if(val==='fdThird')expr=card(top[2])+symbol+':!('+top.slice(0,2).map(c=>card(c).toLowerCase()).join(',')+')';
+    else if(val==='fdLow'||val==='bdLow')expr=symbol.repeat(2)+':!('+top.slice(0,val==='fdLow'?3:2).map(c=>card(c).toLowerCase()).join(',')+')';
     else if(val==='fdTriple'||val==='bdTriple')expr=symbol.repeat(3);
     else return null;
     branches.push(expr);
@@ -290,3 +291,4 @@ function compile(source){
 }
 const api={Engine,parseBoard,card,rank,suit,evaluate,five,category,combos,compile,unpack,F,CAT};root.PLO=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof self!=='undefined'?self:globalThis);
+
