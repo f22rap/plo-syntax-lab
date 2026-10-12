@@ -7,7 +7,7 @@ Push-Location -LiteralPath $PSScriptRoot
 try {
     node src/make-offline.cjs
     if ($LASTEXITCODE -ne 0) { throw 'HTML build failed.' }
-    $references = @('System','System.Core','System.Xml','System.IO.Compression','System.IO.Compression.FileSystem','System.Drawing','System.Windows.Forms','System.Web.Extensions') | ForEach-Object { '/reference:' + $_ + '.dll' }
+    $references = @('System','System.Core','System.Xml','System.IO.Compression','System.IO.Compression.FileSystem','System.Drawing','System.Windows.Forms','System.Web.Extensions','System.Runtime.Serialization') | ForEach-Object { '/reference:' + $_ + '.dll' }
     $resources = @('/resource:src\compare-runtime.ps1,compare-runtime.ps1','/resource:src\SyntaxMatcher.cs,SyntaxMatcher.cs','/resource:dist\PLO-Syntax-Lab.html,Lab.html','/resource:dist\defaults.html,Defaults.html')
     $sources = @(Get-ChildItem -LiteralPath src -Filter '*.cs' | ForEach-Object { $_.FullName })
     & $compiler /nologo /target:winexe /optimize+ /out:dist\FlopCommandApp.exe /win32manifest:src\app.manifest @references @resources @sources

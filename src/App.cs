@@ -37,6 +37,9 @@ namespace FlopCommands {
         readonly TabControl mainTabs=new TabControl();
         readonly HistoryStore historyStore;
         readonly HistoryPanel historyPanel;
+        readonly EquityPanel equityPanel;
+        public EquityPanel EquityView {get{return equityPanel;}}
+        bool EquityBusy {get{return equityPanel!=null&&equityPanel.IsBusy;}}
         readonly CheckBox includeAll=new CheckBox{Text="全ハンド（syntaxなし）を集計",Checked=true,Dock=DockStyle.Fill,Margin=new Padding(0,0,0,4),AccessibleName="全ハンドのweight合計・比率も集計"};
         readonly DataGridView grid=new DataGridView();
         readonly TextBox command=new TextBox();
@@ -68,7 +71,7 @@ namespace FlopCommands {
         public RunResult LastResult {get{return lastResult;}}
         public string ResultMessage {get{return resultStatus.Text+"\n"+errorOutput.Text;}}
         public bool IsBusy {get{return busy;}}
-        public bool UseDefaults {get{return defaultMode.Checked;}set{if(busy)throw new Exception("集計中は切り替えできません。");if(value)defaultMode.Checked=true;else generatedMode.Checked=true;}}
+        public bool UseDefaults {get{return defaultMode.Checked;}set{if(busy||EquityBusy)throw new Exception("計算中は切り替えできません。");if(value)defaultMode.Checked=true;else generatedMode.Checked=true;}}
         public bool IncludeAll {get{return includeAll.Checked;}set{includeAll.Checked=value;}}
         public string[] GraphLabels {get{return chart.LegendLabels;}}
         public int GraphRowCount {get{return chart.RowCount;}}
@@ -150,10 +153,12 @@ namespace FlopCommands {
             copy.Click+=(s,e)=>CopyCommand();save.Click+=(s,e)=>SaveCommand();
             run.Click+=async(s,e)=>await ExecuteAsync();cancel.Click+=(s,e)=>{if(cancellation!=null){cancel.Enabled=false;resultStatus.Text="中止しています…";cancellation.Cancel();}};export.Click+=(s,e)=>SaveResults();
             executionTimer.Interval=500;executionTimer.Tick+=(s,e)=>{if(busy&&cancellation!=null&&!cancellation.IsCancellationRequested)resultStatus.Text=board+" · weight合計・比率"+"\r\n実行中（"+(int)elapsed.Elapsed.TotalSeconds+"秒）…";};
-            FormClosing+=(s,e)=>{if(busy){e.Cancel=true;closeWhenDone=true;if(cancellation!=null)cancellation.Cancel();}};
+            FormClosing+=(s,e)=>{if(busy||EquityBusy){e.Cancel=true;closeWhenDone=true;if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();}};
             var tip=new ToolTip();tip.SetToolTip(search,"条件名またはsyntaxで絞り込みます。非表示になった選択も保持します。");tip.SetToolTip(boardInput,"ランクとスートを3〜5枚。スペース・10・スート記号にも対応します。");
             boardInput.Text="AsKd7s";
             Shown+=(s,e)=>QueueDefaults();FormClosed+=(s,e)=>{CancelDefaults();DefaultRunner.StopAll();if(bridge!=null)bridge.Dispose();};
+            equityPanel=new EquityPanel(()=>mainTabs.SelectedIndex=0,new Equity.EquityHistoryStore(Path.Combine(historyStore.Root,"EQ")));var equityPage=new TabPage("EQ");equityPage.Controls.Add(equityPanel);mainTabs.TabPages.Add(equityPage);
+            equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy;filtersArea.Enabled=!value&&!busy;run.Enabled=!value&&!busy&&command.Text.Length>0&&ActivePaths().Length>=2;if(!value&&closeWhenDone&&!IsDisposed)BeginInvoke(new Action(Close));};
             starting=false;SwitchSyntaxMode();ApplyBoard();
         }
         static Label Label(string text,float size,Color color){return new Label{Text=text,AutoSize=false,Dock=DockStyle.Top,Height=27,Font=new Font("Yu Gothic UI",size,FontStyle.Regular),ForeColor=color,Margin=Padding.Empty};}
@@ -201,13 +206,13 @@ namespace FlopCommands {
         }
         public void CancelExecution(){if(cancellation!=null){cancel.Enabled=false;resultStatus.Text="中止しています…";cancellation.Cancel();}}
         public async Task ExecuteAsync(){
-            if(busy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
+            if(busy||EquityBusy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
             mainTabs.SelectedIndex=0;
             // Self-hosted invocations also need the form's UI context for awaited updates.
             if(InvokeRequired)throw new InvalidOperationException("実行はアプリの画面から開始してください。");
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
             string code=command.Text, context=board+" · weight合計・比率"; string[] sources=ActivePaths();
-            ClearResults();busy=true;settingsArea.Enabled=false;filtersArea.Enabled=false;run.Enabled=false;cancel.Enabled=true;
+            ClearResults();busy=true;equityPanel.Enabled=false;settingsArea.Enabled=false;filtersArea.Enabled=false;run.Enabled=false;cancel.Enabled=true;
             outputTabs.SelectedTab=resultsPage;resultStatus.Text=context+"\r\n実行中…";progress.Style=ProgressBarStyle.Marquee;progress.Visible=true;
             cancellation=new System.Threading.CancellationTokenSource();elapsed.Restart();executionTimer.Start();
             RunResult completed=null;string failure=null;bool canceled=false;
@@ -216,7 +221,7 @@ namespace FlopCommands {
             }catch(OperationCanceledException){canceled=true;}
             catch(Exception ex){failure=string.IsNullOrWhiteSpace(ex.Message)?ex.ToString():ex.Message;}
             finally{
-                elapsed.Stop();executionTimer.Stop();progress.Visible=false;busy=false;settingsArea.Enabled=true;filtersArea.Enabled=true;cancel.Enabled=false;run.Enabled=command.Text.Length>0&&ActivePaths().Length>=2;
+                elapsed.Stop();executionTimer.Stop();progress.Visible=false;busy=false;equityPanel.Enabled=true;settingsArea.Enabled=true;filtersArea.Enabled=true;cancel.Enabled=false;run.Enabled=command.Text.Length>0&&ActivePaths().Length>=2;
                 cancellation.Dispose();cancellation=null;
             }
             ClearResults();
@@ -278,7 +283,7 @@ namespace FlopCommands {
         string ReceiveSelection(string json){var data=LabSelection.Read(json);if(data.mode!="defaults")return AcceptSelection(json);if(data.job!=defaultJob||defaultCompletion==null)throw new Exception("この生成結果は更新済みです。");defaultCompletion.TrySetResult(data);return "デフォルト条件を受け取りました。";}
         void CancelDefaults(){defaultJob=null;var previous=defaultCancellation;defaultCancellation=null;defaultCompletion=null;if(previous!=null)previous.Cancel();defaultBusy=false;}
         public async void QueueDefaults(bool force=false){
-            if(starting||!Visible||!UseDefaults||string.IsNullOrEmpty(board)||busy)return;
+            if(starting||!Visible||!UseDefaults||string.IsNullOrEmpty(board)||busy||EquityBusy)return;
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
             if(!force&&defaultBoard==board&&(defaultBusy||defaultChoices.Count>0))return;
             CancelDefaults();string target=board;defaultBoard=target;defaultChoices.Clear();defaultSelected.Clear();
@@ -299,7 +304,7 @@ namespace FlopCommands {
         void OpenGenerator(){try{ApplyBoard();if(board.Length==0)return;Process.Start(new ProcessStartInfo(GeneratorUrl){UseShellExecute=true});}catch(Exception ex){SetStatus("生成画面を開けません："+ex.Message,true);}}
         void ImportSelection(){using(var dialog=new OpenFileDialog{Filter="PLO Syntax Labの条件|*.json"})if(dialog.ShowDialog(this)==DialogResult.OK)try{SetStatus(AcceptSelection(File.ReadAllText(dialog.FileName,Encoding.UTF8)),false);}catch(Exception ex){SetStatus(ex.Message,true);}}
         public string AcceptSelection(string json){
-            if(busy)throw new Exception("集計中です。完了後に条件を追加してください。");var data=LabSelection.Read(json);var incoming=data.Choices();if(incoming.Count==0)throw new Exception("該当ハンドのある条件がありません。");
+            if(busy||EquityBusy)throw new Exception("計算中です。完了後に条件を追加してください。");var data=LabSelection.Read(json);var incoming=data.Choices();if(incoming.Count==0)throw new Exception("該当ハンドのある条件がありません。");
             string next=data.NormalizedBoard;if(!Commands.SameBoard(board,next)){generatedChoices.Clear();generatedSelected.Clear();defaultChoices.Clear();defaultSelected.Clear();defaultBoard=null;}board=next;
             starting=true;boardInput.Text=board;starting=false;debounce.Stop();
             foreach(var c in incoming){var existing=generatedChoices.FirstOrDefault(x=>x.Filter.Syntax==c.Filter.Syntax&&x.Filter.Label==c.Filter.Label);if(existing==null){generatedChoices.Add(c);existing=c;}generatedSelected.Add(existing.Filter.Cell);}
@@ -328,7 +333,17 @@ namespace FlopCommands {
         }
         void UpdateSelectionSummary(){selectionSummary.Text=choices.Count(c=>c.Available&&selected.Contains(c.Filter.Cell))+"件選択"+(includeAll.Checked?" ＋ 全ハンド":"")+"  ·  "+grid.Rows.Count+" / "+choices.Count+"件表示";}
         void SetStatus(string text,bool error){status.Text=text;status.ForeColor=error?Color.FromArgb(171,57,37):Muted;}
-        void InvalidateCommand(){command.Clear();copy.Enabled=false;save.Enabled=false;run.Enabled=false;codeSummary.Text="";if(!busy)ClearResults();}
+        void InvalidateCommand(){command.Clear();copy.Enabled=false;save.Enabled=false;run.Enabled=false;codeSummary.Text="";if(!busy)ClearResults();SyncEquityContext();}
+        void SyncEquityContext(){
+            if(equityPanel==null)return;
+            try{
+                if(starting||string.IsNullOrEmpty(board)||(UseDefaults&&defaultBusy)||!Commands.SameBoard(Commands.NormalizeBoard(boardInput.Text),board)){equityPanel.SetContext(null);return;}
+                var conditions=choices.Where(c=>selected.Contains(c.Filter.Cell)&&c.Available).Select(c=>new Equity.EquityCondition{Label=c.Filter.Label,Syntax=c.Filter.Syntax}).ToList();
+                if(includeAll.Checked)conditions.Insert(0,new Equity.EquityCondition{Label="全ハンド",Syntax="*"});
+                var active=Enumerable.Range(0,3).Where(i=>!string.IsNullOrWhiteSpace(csvPaths[i].Text)).ToArray();
+                equityPanel.SetContext(new Equity.EquityJobRequest{Board=board,Conditions=conditions.ToArray(),ActionPaths=active.Select(i=>csvPaths[i].Text).ToArray(),ActionLabels=active.Select(i=>string.IsNullOrWhiteSpace(csvLabels[i].Text)?"CSV"+(i+1):csvLabels[i].Text).ToArray()});
+            }catch(Exception){equityPanel.SetContext(null);}
+        }
         void RefreshCommand(){
             InvalidateCommand();UpdateSelectionSummary();
             if(starting||board=="")return;
@@ -336,7 +351,7 @@ namespace FlopCommands {
             try {
                 var selection=choices.Where(c=>selected.Contains(c.Filter.Cell)).ToList();
                 var paths=ActivePaths();command.Text=CompareCommands.Build(board,paths,selection,includeAll.Checked,csvLabels.Take(paths.Length).Select(t=>t.Text).ToArray());
-                copy.Enabled=true;save.Enabled=true;run.Enabled=!busy&&paths.Length>=2;codeSummary.Text=(selection.Count+(includeAll.Checked?1:0))+"集計 · "+ActivePaths().Length+" CSV";
+                copy.Enabled=true;save.Enabled=true;run.Enabled=!busy&&!EquityBusy&&paths.Length>=2;codeSummary.Text=(selection.Count+(includeAll.Checked?1:0))+"集計 · "+ActivePaths().Length+" CSV";
                 SetStatus(paths.Length<2?"syntax生成・コマンド保存はCSV不要です。集計時にCSV1・CSV2を選択してください。":board+" · "+choices.Count+"条件 · 集計できます",false);
             }catch(Exception ex){SetStatus(ex.Message,true);}
         }

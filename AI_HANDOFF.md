@@ -273,3 +273,16 @@ CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有�
 `npm run package:windows-mcp`は事前にビルドした`dist/PloMcp.Native.exe`とNode用依存・対応ソースを`dist/PLO-Syntax-Lab-Windows-MCP`へコピーする。CIはソース版・同梱版の実stdio接続、全15機能、8ドロー条件、同一フロップ順序、2/3CSV、小数精度、永続履歴、削除制約、全出力形式を検証し、専用ZIPとSHA-256をartifact／タグReleaseへ添付する。通常利用はZIP展開・設定だけでよく、Node.jsを別途用意する。
 
 ユーザーのCSV・GUI履歴は移行・削除しない。設定のallowHistoryDeleteは初期false。削除ツールはユーザーの明示的な削除依頼がある場合だけ使う。テストは合成CSVと独立した一時履歴を使用する。クラウド11ツールにWindows用exe・PowerShellを持ち込まない。
+
+## EQ機能の追加（2026-10-12）
+
+Windows EXEの「EQ」タブに、双方のアクション前レンジから選択syntaxごとのエクイティを計算する機能を追加した。`src/EquityEngine.cs`、`EquityInput.cs`、`EquityJob.cs`、`EquityPlot.cs`、`EquityPanel.cs`、`EquityScatterChart.cs`、`EquityArchive.cs`、`EquityHistoryForm.cs`を参照。
+
+- EQは合法な対戦組の自分weight×相手weightで正規化。現在の局面のベット／チェックで相手レンジや自分のレンジを絞らない。
+- 自分のレンジは均等・手入力・共通基準の全アクションCSV合計から選択。相手レンジはテキスト／CSV入力。
+- サイズ別ベット頻度は各ハンドのアクション比率を自分のアクション前レンジで平均。CSV情報のないハンドを勝手に除外・再正規化しない。
+- CSV／JSON／SVGの出力と、既存比較履歴から分離した `History/EQ` の自動保存・閲覧・削除。履歴は保存時の結果であり、元CSVを再読込しない。
+- `test.ps1`は新しい`test-equity.ps1`も実行。C# 5／.NET Framework 4.8を維持し、追加参照はSystem.Runtime.Serializationのみ。
+- Linuxの.NET 8で計20,722チェック通過。製品と画面テストの.NET Framework参照でのクロスコンパイル成功。Windows実機での起動・EQ画面操作は未確認。過去のWindows検証を今回のEQ機能の確認として扱わない。
+- 詳細：[入力](docs/equity-ui.md)、[計算](docs/equity-engine.md)、[散布図](docs/equity-plot.md)、[保存・検証](docs/equity-save.md)。ステップ2〜4文書の未実装記述は各段階時点の記録。
+

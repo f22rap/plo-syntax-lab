@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>5</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/EquityEngine.cs" />
+    <Compile Include="../../src/EquityInput.cs" />
+    <Compile Include="../../src/EquityJob.cs" />
+    <Compile Include="../../src/EquityPlot.cs" />
+    <Compile Include="../../src/EquityArchive.cs" />
+    <Compile Include="../../src/SyntaxMatcher.cs" />
+    <Compile Include="EquityEngineTests.cs" />
+    <Compile Include="EquityInputTests.cs" />
+    <Compile Include="EquityPlotTests.cs" />
+    <Compile Include="EquityArchiveTests.cs" />
+  </ItemGroup>
+</Project>

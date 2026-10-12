@@ -6,6 +6,7 @@ try {
         node (Join-Path 'tests' $test)
         if ($LASTEXITCODE -ne 0) { throw ('Failed: ' + $test) }
     }
+    & .\test-equity.ps1
     if ($Native) {
         & .\build.ps1 -WithTests
         $process = Start-Process -FilePath (Join-Path $PSScriptRoot 'dist\FlopCommandApp.Tests.exe') -WorkingDirectory $PSScriptRoot -WindowStyle Hidden -Wait -PassThru

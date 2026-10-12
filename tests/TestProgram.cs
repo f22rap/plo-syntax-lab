@@ -14,7 +14,7 @@ namespace FlopCommands {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Control.CheckForIllegalCrossThreadCalls = true;
-            try { return ModesTest(output); }
+            try { int result=ModesTest(output);if(result==0)EquityUiTests.Run(output);return result; }
             catch (Exception ex) { File.WriteAllText(Path.Combine(output, "test-error.txt"), ex.ToString()); return 1; }
             finally { DefaultRunner.StopAll(); }
         }
