@@ -2,7 +2,7 @@ import {McpServer,ResourceTemplate} from '@modelcontextprotocol/server';
 import {z} from 'zod';
 import {VERSION} from './service.mjs';
 import {ResearchService,researchInstructions} from './research-service.mjs';
-import {registerResearchTools} from './research-tools.mjs';
+import {registerResearchTools,researchToolNames} from './research-tools.mjs';
 
 const text=(description,max=1000)=>z.string().min(1).max(max).describe(description);
 const board=text('3–5 board cards, e.g. JsTd7c',30);
@@ -26,7 +26,7 @@ export function buildServer(service,research=new ResearchService(service.config,
  const tool=(name,description,shape,fn,readOnly=true,destructive=false)=>server.registerTool(name,{
   description,inputSchema:z.object(shape).strict(),annotations:{readOnlyHint:readOnly,destructiveHint:destructive,idempotentHint:readOnly,openWorldHint:false}
  },async args=>{try{const result=await fn(args);return {content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result};}catch(e){return {isError:true,content:[{type:'text',text:e.message}]};}});
- tool('get_status','Get version, configured CSV roots, history location and metric definition.',{},()=>({...service.status(),research:{tools:12,workspace:'GUI-shared Research/workspace.json',engine:'pre-action-joint-v1',host:'Windows local stdio',metric:'Equal-weight board averages; action frequency from summed pre-action weights; missing values remain null.'}}));
+ tool('get_status','Get version, configured CSV roots, history location and metric definition.',{},()=>({...service.status(),research:{tools:researchToolNames.length,workspace:'GUI-shared Research/workspace.json',engine:'pre-action-joint-v1',host:'Windows local stdio',metric:'Equal-weight board averages; action frequency from summed pre-action weights; missing values remain null.'}}));
  tool('list_datasets','Find CSVs inside configured input roots. Returns absolute paths, not CSV contents.',{query:z.string().max(200).default(''),...page},a=>service.listDatasets(a));
  tool('register_dataset','Register a CSV with a label and content hash. Full row validation occurs on comparison.',{path:text('Absolute CSV path',4096),label:text('Label used in results and graphs',200)},a=>service.register(a),false);
  tool('list_conditions','Get default conditions for a board, including unavailable rows. On first call returns a job; poll it, then call this tool again.',{board,query:z.string().max(200).default(''),...page},a=>service.listConditions(a),false);

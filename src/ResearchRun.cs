@@ -55,8 +55,8 @@ namespace FlopCommands.Research {
     public sealed class ResearchPoint {public string Label,Syntax,ActionKey,Action,Details;public double Equity,Frequency;public double? CiLow,CiHigh;}
     public static class ResearchRun {
         public const string TotalBet="total_bet";
-        public static string ActionKey(ResearchAction action){return action.Kind+(action.Kind=="bet"||action.Kind=="raise"?":"+decimal.Parse(action.PotFraction,CultureInfo.InvariantCulture).ToString("G29",CultureInfo.InvariantCulture):"");}
-        public static string ActionLabel(string key){if(key==TotalBet)return "総ベット";var a=key.Split(':');string name=a[0]=="check"?"Check":a[0]=="bet"?"Bet":a[0]=="fold"?"Fold":a[0]=="call"?"Call":"Raise";return a.Length==1?name:name+" "+(decimal.Parse(a[1],CultureInfo.InvariantCulture)*100).ToString("0.####",CultureInfo.InvariantCulture)+"% pot";}
+        public static string ActionKey(ResearchAction action){return action.Kind+(action.Kind=="bet"||action.Kind=="raise"?":"+(action.PotFraction=="allin"?"allin":decimal.Parse(action.PotFraction,CultureInfo.InvariantCulture).ToString("G29",CultureInfo.InvariantCulture)):"");}
+        public static string ActionLabel(string key){if(key==TotalBet)return "総ベット";var a=key.Split(':');string name=a[0]=="check"?"Check":a[0]=="bet"?"Bet":a[0]=="fold"?"Fold":a[0]=="call"?"Call":"Raise";return a.Length==1?name:a[1]=="allin"?name+" All-in":name+" "+(decimal.Parse(a[1],CultureInfo.InvariantCulture)*100).ToString("0.####",CultureInfo.InvariantCulture)+"% pot";}
         public static void ValidateRequest(ResearchCatalog catalog,ResearchConditionSet set,ResearchRunSettings settings){
             ResearchValidation.Catalog(catalog);ResearchValidation.Set(set);if(settings==null||settings.Trials<1||settings.Trials>2000000)throw new ArgumentException("試行数は1〜2,000,000で指定してください。");ResearchFeatures.From("AsKd7c").Group(settings.GroupBy);
             var spots=Targets(catalog,settings).ToArray();int conditions=set.Conditions.Count(c=>c.Enabled);if(spots.Length==0||conditions==0)throw new ArgumentException("対象ボードと使用する条件を1つ以上選択してください。");

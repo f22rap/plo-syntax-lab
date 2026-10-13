@@ -1,12 +1,12 @@
 # AIから複数ボードを調査する（第4ステップ）
 
-Windows MCP 0.3.0は従来15ツールに調査用12ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
+Windows MCP 0.4.0は従来15ツールに調査用15ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 
 ## 起動と設定
 
-配布ZIPを展開し、`dist/FlopCommandApp.exe`で条件セットとボード別CSVを登録する。GUI単体にNode.jsは不要。MCPを利用するPCにはNode.js 20以上と.NET Framework 4.8が必要。SDK依存とネイティブEXEはZIPに同梱する。
+配布ZIPを展開し、`dist/FlopCommandApp.exe`でsyntax条件セットを保存する。CSVは[ディレクトリ取込](directory-import.md)でAIが登録できる。GUI単体にNode.jsは不要。MCPを利用するPCにはNode.js 20以上と.NET Framework 4.8が必要。SDK依存とネイティブEXEはZIPに同梱する。
 
 1. `mcp/config.example.json`をコピーして`mcp.local.json`を作る。
 2. inputRootsを実際のCSVフォルダーに変更し、outputRootに結果の保存先を指定する。historyRootを省略するとGUIと同じ`%LOCALAPPDATA%\FlopCommandApp\History`を使う。GUIで独自の履歴先を使う場合はMCPにも同じ場所を設定する。
@@ -23,7 +23,7 @@ Windows MCP 0.3.0は従来15ツールに調査用12ツールを追加する。�
 }
 ```
 
-4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。27ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
+4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。30ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
 5. AIに「Ahiボードのベット戦略を、ボードの特徴ごとに調査して。登録した○○条件セットを使って」と依頼する。[AI向け手順](../mcp/research-workflow.md)も参照。
 
 AIホスト固有の設定画面・インストール操作は環境によって異なる。WindowsのローカルstdioをWeb版ChatGPTへ直接接続するURLは、このパッケージでは提供しない。クラウド実行には別のEQ実行基盤が必要。特定のAI製品への接続完了をSDK試験だけで判断しない。
@@ -32,6 +32,9 @@ AIホスト固有の設定画面・インストール操作は環境によって
 
 | ツール | 用途 |
 | --- | --- |
+| research_scan_directory | 許可ディレクトリからAhiボード・局面・CSV対応を検出 |
+| research_get_directory_scan | 局面・CSV対応・問題点をページ取得 |
+| research_import_directory | プレビューを照合して局面別カタログを一括登録 |
 | research_list_workspace | 条件セット・カタログ・版の一覧 |
 | research_list_spots | Ahi／ノードで対象を検索し、CSV参照を確認 |
 | research_get_condition_set | ユーザーsyntaxそのものを取得 |
@@ -75,6 +78,6 @@ npm run test:mcp
 npm run package:windows-mcp
 ```
 
-Linuxでは同じC#ソースを.NET 8へコンパイルし、公式SDKの実stdio通信で27ツールの発見、条件・CSV登録、計画、EQ／頻度・集計・出力、入力変更・許可範囲・競合・再起動・中止を試験した。17件のC#ブリッジ検証ではGUI単一ボード計算との数値・シード一致、確定済みボードの保持も確認。既存20,968件の計算検証も維持する。Windows EXEはクロスコンパイルで確認する。
+Linuxでは同じC#ソースを.NET 8へコンパイルし、公式SDKの実stdio通信で30ツールの発見、条件・CSV登録、計画、EQ／頻度・集計・出力、入力変更・許可範囲・競合・再起動・中止を試験した。17件のC#ブリッジ検証ではGUI単一ボード計算との数値・シード一致、確定済みボードの保持も確認。既存20,968件の計算検証も維持する。Windows EXEはクロスコンパイルで確認する。
 
 Windows実機での新しいEXE起動、およびユーザーが選ぶAIホストからの自然文調査は、この環境では未確認。配布物はその接続確認に使うプレビュー。ローカルプレビューには基準コミットとファイル別SHA-256を記録し、未プッシュの内容をそのコミットに含まれるものとして扱わない。

@@ -115,10 +115,10 @@ namespace FlopCommands.Research {
         static void Source(ResearchSource s,bool checkedFiles){Need(s!=null,"CSV参照がありません。");Text(s.Path,"CSVのパス",4096);Need(Path.IsPathRooted(s.Path),"CSVは絶対パスで登録してください。");Need(string.Equals(Path.GetExtension(s.Path),".csv",StringComparison.OrdinalIgnoreCase),"CSVファイルを指定してください。");if(checkedFiles)Need(s.Sha256!=null&&Regex.IsMatch(s.Sha256,@"^[a-f0-9]{64}$"),"CSV検証情報がありません。CSVを再検証してください。");}
         public static void Spot(ResearchSpot spot,bool checkedFiles){
             Need(spot!=null,"ボード登録がありません。");Id(spot.Id);Board(spot.Board);Text(spot.Node,"アクション位置",300);Need(spot.AllActionsCommonScale,"自分の全アクションと共通weight基準を確認してください。");
-            Need(spot.Actions!=null&&spot.Actions.Count>=2&&spot.Actions.Count<=3,"自分のアクションCSVは2〜3個です。");Need(spot.Opponents!=null&&spot.Opponents.Count<=100,"相手CSVは100個までです。");
+            Need(spot.Actions!=null&&spot.Actions.Count>=1&&spot.Actions.Count<=3,"自分のアクションCSVは1〜3個です。");Need(spot.Opponents!=null&&spot.Opponents.Count<=100,"相手CSVは100個までです。");
             var ids=new HashSet<string>();var keys=new HashSet<string>();var paths=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach(var a in spot.Actions){Need(a!=null,"空のアクションがあります。");Id(a.Id);Need(ids.Add(a.Id),"アクションIDが重複しています。");Text(a.Label,"アクション名",200);Need(new[]{"check","bet","fold","call","raise"}.Contains(a.Kind),"アクションの種類が不正です。");string size="";
-                if(a.Kind=="bet"||a.Kind=="raise"){decimal amount;Need(decimal.TryParse(a.PotFraction,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out amount)&&amount>0,"ベット・レイズのポット比率を正の小数で指定してください。");size=amount.ToString("G29",CultureInfo.InvariantCulture);}else Need(string.IsNullOrEmpty(a.PotFraction),"サイズはbet/raiseだけに指定してください。");
+                if((a.Kind=="bet"||a.Kind=="raise")&&a.PotFraction=="allin"){size="allin";}else if(a.Kind=="bet"||a.Kind=="raise"){decimal amount;Need(decimal.TryParse(a.PotFraction,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out amount)&&amount>0,"ベット・レイズのポット比率を正の小数で指定してください。");size=amount.ToString("G29",CultureInfo.InvariantCulture);}else Need(string.IsNullOrEmpty(a.PotFraction),"サイズはbet/raiseだけに指定してください。");
                 Need(keys.Add(a.Kind+":"+size),"同じ種類・サイズのアクションが重複しています。");Source(a.Source,checkedFiles);Need(paths.Add(Path.GetFullPath(a.Source.Path)),"同じCSVを重複指定できません。");
             }
             if(spot.Opponents.Count>0)Need(spot.OpponentCommonScale,"相手レンジの共通weight基準を確認してください。");

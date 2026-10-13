@@ -327,3 +327,7 @@ Windows版mcp/server.mjsは従来15＋研究12の27ツール。server-core.mjs�
 ### Codex接続先の選定とセットアップ
 
 ユーザーの「任せる」により、WindowsローカルCodexを接続先に選定。Setup-Codex.cmd/ps1、mcp/codex-setup.mjs、check-connection.mjsを追加。既存mcp.local.jsonと同名Codex MCP登録は保持し、公式SDKの読込確認後にCLI登録する。CLIなしはTOMLと設定画面での手順を提供。診断のMCP成功とAIホスト実行を区別する。docs/codex-setup.md参照。ユーザーPCへの登録・実Windows操作は引き続き未確認。
+
+## ディレクトリ取込（0.4.0）
+
+ユーザーのCOvsBTN/board/IP・OOP/node/board_position_history_action.csv形式をplo-post-tree-v1として実装。Rはポット比、Aはall-in、全アクションweightは共通基準とユーザー確認済み。research-directory.mjsがハッシュ付きスキャン・局面別プレビュー・直前相手ノードの全CSV対応付けを行い、3つのMCPツールを追加（合計30）。登録は新規カタログのみ、最大200ボード・既存のC#本文検証とatomic saveを通す。OOP ROOTの相手レンジは未出力として扱い、IP/vs_checkを無条件流用しない。ResearchActionのbet/raiseはpot_fraction=allinを許可、1アクション局面にも対応。詳細はdocs/directory-import.md。実ユーザーFドライブのデータとWindows上のAIホスト操作は未確認。

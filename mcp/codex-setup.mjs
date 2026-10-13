@@ -4,11 +4,12 @@ import {fileURLToPath} from 'node:url';
 import {root,loadConfig} from './runtime.mjs';
 
 export const serverName='plo-syntax-lab-windows';
-export const starterPrompt=`PLO Syntax LabのMCPを使い、登録済みAhiボードのベット戦略をボードの特徴ごとに調査してください。
+export const starterPrompt=`PLO Syntax LabのMCPを使い、指定したディレクトリまたは登録済みカタログにあるAhiボードのベット戦略をボードの特徴ごとに調査してください。
 まずresearch_list_workspaceで私の条件セットとカタログを確認してください。候補が複数あって特定できない場合だけ尋ねてください。
+ディレクトリを指定した場合は、research_scan_directory→プレビュー確認→research_import_directoryで局面別にCSV登録まで行ってください。私に各CSVの手動登録を求めないでください。取込規則と共通weightの確認、局面情報が不足している場合だけ尋ねてください。
 ユーザー設定のsyntaxを変更せず、双方のアクション前レンジによるEQと全アクション頻度を比較してください。
 スート構成とペアの有無で分類し、ボード別・特徴別の表、色分けグラフ、対象数、欠損理由を示してください。
-条件定義やCSV登録の追加・変更は勝手に行わず、未登録ボードの戦略は推測しないでください。
+syntaxの定義は変更せず、指定ディレクトリの取込以外のCSV登録は変更せず、未登録ボードの戦略は推測しないでください。
 MCPの検証→実行→結果取得を通して、CSV・JSON・SVG・Markdownを保存し、数値の根拠とresult_idを提示してください。
 `;
 

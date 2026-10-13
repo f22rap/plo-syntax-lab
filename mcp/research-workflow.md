@@ -29,4 +29,8 @@
 
 ## 接続の区別
 
-この手順のresearchツールはWindows版27ツールMCP用。共通11ツール版・クラウド11ツール版では利用できない。AIホストにツールが表示されていなければ計算したふりをせず、接続と`get_status`／`research_list_workspace`を先に確認する。
+この手順のresearchツールはWindows版30ツールMCP用。共通11ツール版・クラウド11ツール版では利用できない。AIホストにツールが表示されていなければ計算したふりをせず、接続と`get_status`／`research_list_workspace`を先に確認する。
+
+## ディレクトリを指定された場合
+
+GUIで個別CSV登録を要求しない。[ディレクトリ取込手順](../docs/directory-import.md)に従い、scan_directory→全プレビューページ→import_directoryの順で実行する。プロファイルの意味・共通weightは既にユーザーが確認していれば再質問しない。位置・サイズ・履歴は確認済みplo-post-tree-v1の規則に限って読み取る。異なるnodeは別カタログとし、OOP ROOTの相手レンジは推測しない。syntaxはユーザー定義を保持する。

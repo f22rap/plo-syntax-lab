@@ -7,6 +7,7 @@ import {Client} from '@modelcontextprotocol/client';
 import {StdioClientTransport} from '@modelcontextprotocol/client/stdio';
 import {root} from '../mcp/runtime.mjs';
 import {researchToolNames} from '../mcp/research-tools.mjs';
+import {makeDirectoryFixture,directoryScenario} from './directory-fixture.mjs';
 import {checkConnection} from '../mcp/check-connection.mjs';
 
 test('Research MCP: real SDK transport, shared settings, immutable plans, numerical results, cancellation and scope',{timeout:180000},async()=>{
@@ -28,8 +29,8 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
  }
  await connect();
  try{
-  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,27);for(const name of researchToolNames)assert.ok(names.includes(name));for(const name of ['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
-  const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,27);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');
+  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,30);for(const name of researchToolNames)assert.ok(names.includes(name));for(const name of ['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
+  const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,30);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');
   assert.equal((await call('research_list_workspace')).workspace_revision,0);
   set=(await call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0})).condition_set;assert.equal(set.revision,1);assert.equal(set.conditions[0].syntax,'*');
   await assert.rejects(()=>call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0}),/updated|更新|changed/);
@@ -67,6 +68,29 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   await client.close();await connect();assert.equal((await call('research_get_result',{result_id:result.result_id,view:'metadata'})).condition_set.revision,1);assert.ok((await call('research_list_history')).items.some(x=>x.result_id===result.result_id));await assert.rejects(()=>call('research_start',{plan_id:plan.plan_id,request_key:'first'}),/Unknown plan/);
   // Cancel during numerical work (not just a queued job).
   const cp=await finish(await call('research_validate',{...request(),settings:{...settings,Trials:2000000,AllowFrequencyOnly:true}}));const cj=await call('research_start',{plan_id:cp.plan_id,request_key:'cancel'});for(let i=0;i<100;i++){const j=await call('research_get_job',{job_id:cj.job_id});if(j.progress?.Message?.includes('計算中'))break;await sleep(10);}await call('research_cancel_job',{job_id:cj.job_id});const cancelled=await terminal(cj);assert.equal(cancelled.state,'cancelled');assert.ok(cancelled.result?.result_id);assert.equal(cancelled.result.status,'cancelled');assert.ok(cancelled.result.completed_spots<2);assert.equal((await call('research_get_result',{result_id:cancelled.result.result_id,view:'metadata'})).status,'cancelled');
+  // The user's directory profile is imported through real MCP into the shared C# store.
+  const tree=path.join(input,'COvsBTN');await makeDirectoryFixture(tree);
+  const scanJob=await finish(await call('research_scan_directory',{directory:tree}));assert.equal(scanJob.board_count,2);assert.equal(scanJob.non_ahi_count,2);
+  const nodes=await call('research_get_directory_scan',{scan_id:scanJob.scan_id});assert.equal(nodes.total,10);const node=nodes.items.find(n=>n.folder==='vs_check');
+  const preview=await call('research_get_directory_scan',{scan_id:scanJob.scan_id,view:'spots',node_id:node.node_id,limit:1});assert.equal(preview.next_offset,1);assert.equal(preview.items[0].spot.opponent_sources.length,2);
+  const importArgs={scan_id:scanJob.scan_id,node_id:node.node_id,catalog_id:'directory-check',name:'Imported Ahi',scenario:directoryScenario,confirm_profile:'plo-post-tree-v1',all_actions_common_scale:true,expected_workspace_revision:(await call('research_list_workspace')).workspace_revision};
+  const imported=await finish(await call('research_import_directory',importArgs));assert.equal(imported.spot_count,2);
+  await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,expected_workspace_revision:imported.workspace_revision}),/revision conflict/);
+  const directoryPlan=await finish(await call('research_validate',{catalog_id:imported.catalog_id,catalog_revision:imported.catalog_revision,set_id:set.set_id,set_revision:set.revision,settings}));
+  const dr=await finish(await call('research_start',{plan_id:directoryPlan.plan_id,request_key:'directory'}));assert.equal(dr.completed_spots,2);
+  const di=(await call('research_get_result',{result_id:dr.result_id,condition_id:'all'})).items;assert.ok(Math.abs(di[0].Actions.find(a=>a.Key==='bet:0.5').Frequency-200/3)<1e-10);assert.ok(di.every(r=>r.Equity.Equity>=0));
+  for(const folder of ['vs_donkraiseAI','vs_L4']){
+   const n=nodes.items.find(n=>n.folder===folder),sc=n.position==='CO'?{...directoryScenario,hero_position:'CO',villain_position:'BTN'}:directoryScenario;
+   const im=await finish(await call('research_import_directory',{...importArgs,node_id:n.node_id,catalog_id:'directory-'+folder,scenario:sc,expected_workspace_revision:(await call('research_list_workspace')).workspace_revision}));
+   const p=await finish(await call('research_validate',{catalog_id:im.catalog_id,catalog_revision:im.catalog_revision,set_id:set.set_id,set_revision:set.revision,settings}));const r=await finish(await call('research_start',{plan_id:p.plan_id,request_key:folder}));
+   const row=(await call('research_get_result',{result_id:r.result_id,condition_id:'all'})).items[0];assert.equal(row.Status,'completed');
+   if(folder==='vs_L4')assert.equal(row.Actions.find(a=>a.Key==='call').Frequency,100);else {assert.ok(Math.abs(row.Actions.find(a=>a.Key==='raise:allin').Frequency-100/3)<1e-10);const art=await call('research_export',{result_id:r.result_id,format:'svg'});assert.match((await call('get_artifact',{artifact_id:art.artifact_id})).text,/All-in/);}
+  }
+  // A valid-looking but malformed CSV fails native row validation atomically.
+  const broken=path.join(tree,'AsKd7c/IP/vs_check/AsKd7c_BTN_C_C.csv');await fs.appendFile(broken,'badhand,1,100,1,0,0,1\n');
+  const rev=(await call('research_list_workspace')).workspace_revision;
+  await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,catalog_id:'changed',expected_workspace_revision:rev}),/changed after preview/);
+  const badScan=await finish(await call('research_scan_directory',{directory:tree}));await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,scan_id:badScan.scan_id,catalog_id:'malformed',expected_workspace_revision:rev}));assert.equal((await call('research_list_workspace')).workspace_revision,rev);
   console.log('Research MCP integration passed: '+base);
   async function callJob(args){return call('research_validate',args);}
   async function finishCall(name,args){return finish(await call(name,args));}
