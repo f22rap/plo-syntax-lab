@@ -331,3 +331,7 @@ Windows版mcp/server.mjsは従来15＋研究12の27ツール。server-core.mjs�
 ## ディレクトリ取込（0.4.0）
 
 ユーザーのCOvsBTN/board/IP・OOP/node/board_position_history_action.csv形式をplo-post-tree-v1として実装。Rはポット比、Aはall-in、全アクションweightは共通基準とユーザー確認済み。research-directory.mjsがハッシュ付きスキャン・局面別プレビュー・直前相手ノードの全CSV対応付けを行い、3つのMCPツールを追加（合計30）。登録は新規カタログのみ、最大200ボード・既存のC#本文検証とatomic saveを通す。OOP ROOTの相手レンジは未出力として扱い、IP/vs_checkを無条件流用しない。ResearchActionのbet/raiseはpot_fraction=allinを許可、1アクション局面にも対応。詳細はdocs/directory-import.md。実ユーザーFドライブのデータとWindows上のAIホスト操作は未確認。
+
+## 最高ランク条件（0.4.1）
+
+Ahi固定を撤廃。scan/list highest_rankと計算settings.HighestRankはall/A/K/Q/J/T/9…2。scan省略=all、登録catalog.highest_rankをlist/計算省略時に継承し、GUIは登録条件が初期選択。ResearchBoardFilterとmcp/board-filter.mjsで最高ランクを判定。旧AhiOnly/ahi_onlyはtrue=A、false=allとして互換維持し新旧矛盾は拒否。結果JSON/Markdownに実効条件を記録。スキャン件数はexcluded_board_countへ汎用化。

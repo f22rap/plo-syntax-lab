@@ -22,7 +22,7 @@ namespace EquityTests {
             var actions=new List<ResearchAction>{new ResearchAction{Id="check",Label="Check",Kind="check",Source=new ResearchSource{Path=c}},new ResearchAction{Id="bet",Label="Bet 33%",Kind="bet",PotFraction="0.33",Source=new ResearchSource{Path=b}}};if(reverse)actions.Reverse();
             return ResearchValidation.ValidateFiles(new ResearchSpot{Id=prefix,Board=board,Node="BB first",AllActionsCommonScale=true,OpponentCommonScale=true,Actions=actions,Opponents=new List<ResearchSource>{new ResearchSource{Path=v}}},CancellationToken.None);
         }
-        static ResearchRunSettings Settings(){return new ResearchRunSettings{Trials=1000,Seed=7123,GroupBy="pair"};}
+        static ResearchRunSettings Settings(){return new ResearchRunSettings{AhiOnly=true,Trials=1000,Seed=7123,GroupBy="pair"};}
         static ResearchRunResult Run(ResearchCatalog c,ResearchConditionSet s=null,ResearchRunSettings settings=null){return ResearchRun.Execute(c,s??Set(),settings??Settings(),CancellationToken.None,null);}
         static ResearchSummary Summary(ResearchRunResult r,string action="check",string id="aa"){return ResearchRun.Summaries(r).Single(s=>s.ActionKey==action&&s.ConditionId==id);}
         static void Features(){
@@ -35,6 +35,7 @@ namespace EquityTests {
         }
         static void Calculations(string dir){
             var c=Catalog();c.Spots.Add(Spot(dir,"one","AsKd7c",.01,.03));c.Spots.Add(Spot(dir,"two","Ah8h3c",.75,.25,true));c.Spots.Add(Spot(dir,"nonace","KsQd7c",.5,.5));
+            RankFilters(c);
             var r=Run(c);ResearchFiles.Validate(r);Check(r.Status=="completed"&&r.CompletedSpots==2&&r.TargetSpots==2&&r.FilteredSpots==1,"Ahi selection excludes non-Ace board");Check(r.Rows.Count==4,"one row per condition per board");
             Near(Summary(r).FrequencyMean,50,"equal board average not pooled CSV weight");Near(Summary(r,"bet:0.33").FrequencyMean,50,"action key unaffected by reversed CSV order");Near(Summary(r,ResearchRun.TotalBet).FrequencyMean,50,"total bet");
             Check(Summary(r).Target==2&&Summary(r).FrequencyCount==2&&Summary(r).PairedCount==2,"summary populations");Near(Summary(r).FrequencyMin,25,"frequency min");Near(Summary(r).FrequencyMax,75,"frequency max");
@@ -53,6 +54,16 @@ namespace EquityTests {
             var blocked=Catalog();var b=Spot(dir,"blocked","AsKd7c",.25,.75);File.WriteAllText(b.Opponents[0].Path,"hand,weight\nAcAd4c5d,1\n");b=ResearchValidation.ValidateFiles(b,CancellationToken.None);blocked.Spots.Add(b);var noPairs=Run(blocked);ResearchFiles.Validate(noPairs);Check(noPairs.Status=="completed_with_gaps"&&noPairs.Rows[0].Status=="equity_unavailable","no legal pair explicit");Near(Summary(noPairs).FrequencyMean,25,"EQ failure preserves frequency");Check(ResearchRun.Points(noPairs,false).Length==0,"no fake EQ plot");
             var snap=Catalog();snap.Spots.Add(c.Spots[0]);var cfg=Settings();var conditions=Set();bool mutated=false;var frozen=ResearchRun.Execute(snap,conditions,cfg,CancellationToken.None,x=>{if(!mutated){snap.Name="after";conditions.Conditions[0].Syntax="KK";cfg.Seed=0;mutated=true;}});Check(frozen.Catalog.Name!="after"&&frozen.ConditionSet.Conditions[0].Syntax=="AA"&&frozen.Settings.Seed==7123,"input snapshot immutable");
             Cancellation(c);Archives(r,dir);ChangedFiles(c,dir);
+        }
+        static void RankFilters(ResearchCatalog c){
+            foreach(char rank in ResearchBoardFilter.Ranks){string board=rank+"s"+rank+"d"+rank+"c";foreach(char other in ResearchBoardFilter.Ranks)Check(ResearchBoardFilter.Matches(board,other.ToString())==(rank==other),"highest rank, including paired/trip boards");Check(ResearchBoardFilter.Matches(board,"all"),"all rank inclusion");}
+            Check(!ResearchBoardFilter.Matches("AsKd2c","K")&&!ResearchBoardFilter.Matches("KsQd2c","Q"),"higher rank exclusion");
+            var all=new ResearchRunSettings{Trials=1000};Check(Run(c,null,all).TargetSpots==3,"new default includes all boards");
+            var selected=ResearchJson.Clone(c);selected.HighestRank="K";var inherited=Run(selected,null,new ResearchRunSettings{Trials=1000});Check(inherited.TargetSpots==1&&inherited.Settings.HighestRank=="K","catalog rank inherited by execution");Check(inherited.Rows.All(row=>row.Board.IndexOf('A')<0),"no aces in Khi results");
+            var loaded=ResearchFiles.Decode(ResearchFiles.Encode(inherited));Check(loaded.Catalog.HighestRank=="K"&&loaded.Settings.HighestRank=="K","rank retained in archive");Check(Encoding.UTF8.GetString(ResearchFiles.Markdown(loaded)).Contains("最高ランク条件：K"),"report exposes filter");
+            var overridden=new ResearchRunSettings{HighestRank="A",Trials=1000};Check(Run(c,null,overridden).TargetSpots==2,"explicit A filter");
+            var old=Run(c);old.Settings.HighestRank=null;Check(ResearchFiles.Decode(ResearchFiles.Encode(old)).TargetSpots==2,"old Ahi-only result remains readable");
+            Reject(()=>Run(c,null,new ResearchRunSettings{HighestRank="K",AhiOnly=true,Trials=1000}),"conflicting new and legacy filters");Reject(()=>Run(c,null,new ResearchRunSettings{HighestRank="X",Trials=1000}),"unknown highest rank");
         }
         static void Cancellation(ResearchCatalog c){
             using(var token=new CancellationTokenSource()){token.Cancel();var before=ResearchRun.Execute(c,Set(),Settings(),token.Token,null);ResearchFiles.Validate(before);Check(before.Status=="cancelled"&&before.Rows.Count==0,"cancel before work has no fabricated rows");Check(Summary(before).Target==2&&Summary(before).FrequencyCount==0,"cancel retains planned denominator");}

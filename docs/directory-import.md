@@ -1,4 +1,4 @@
-# ディレクトリからAIがAhiボードを登録・調査する
+# ディレクトリからAIが指定ボードを登録・調査する
 
 対応する形式は `親ディレクトリ/ボード/IPまたはOOP/局面/ボード_ポジション_履歴_アクション.csv`。親ディレクトリの例：
 
@@ -23,7 +23,7 @@ F:\PLOrange\post\6max\lowstakes_5%4bb\100bb\SRP\COvsBTN
 
 例：AsKd7c_BTN_C_R50.csvはCOチェック後のBTNの50%ベット。履歴はROOT以外をハイフンで区切り、アクターはOOPから交互。CSVは従来のhand,frequency,percent,weight,ev,ev_diff,variations形式。weightは0～1で、同じ判断局面の全アクションが共通基準で出力されていることが必要。各ファイルを別々に正規化したデータは対象外。1～3アクションに対応し、唯一のCALLのみの局面も登録する。
 
-ボードは重複のない物理カード3枚として検証し、Aを含むボードを選ぶ。Ts9d2cとTs9d2dはAhi調査から除外する。同じ物理ボードの並べ替えを二重集計しない。1つの局面内で不明なCSVや不正なファイルが見つかった場合は、その局面全体を停止し、分母から黙って取り除かない。
+ボードは重複のない物理カード3枚として検証し、ユーザー指定の最高ランクで絞り込む。Ts9d2cとTs9d2dはAhi調査から除外する。同じ物理ボードの並べ替えを二重集計しない。1つの局面内で不明なCSVや不正なファイルが見つかった場合は、その局面全体を停止し、分母から黙って取り除かない。
 
 ## 相手レンジとEQの時点
 
@@ -44,7 +44,7 @@ OOP/donk：ROOTには、直前のIP判断局面が存在しない。IP/vs_check�
 ## AIの操作
 
 1. get_statusで許可フォルダー、research_list_workspaceでユーザー条件セットを確認する。
-2. research_scan_directoryにdirectoryとahi_only=trueを渡し、research_get_jobで完了を待つ。
+2. research_scan_directoryにdirectoryとユーザー指定のhighest_rankを渡し、research_get_jobで完了を待つ。
 3. research_get_directory_scanのnodes/spots/issuesを全ページ確認する。局面ごとのCSV、相手の復元元、欠損・不正を確認する。
 4. 依頼に合うnode_idを選ぶ。例：BTNのチェック後ベット戦略ならIP/vs_check。異なる局面は混ぜない。COの戦略かBTNの戦略か特定できない場合は質問する。
 5. 確認済みの規則・共通weightをconfirm_profileとall_actions_common_scaleで指定し、research_import_directoryで新規カタログへ登録する。ポジション、100bb、SRPなど明示された情報をscenarioに設定し、不明なレーキ詳細・ソルバー設定・過去のサイズは創作しない。solution_contextには元フォルダー名など確認できる文字列と不明点を記録する。
@@ -58,3 +58,23 @@ OOP/donk：ROOTには、直前のIP判断局面が存在しない。IP/vs_check�
 「登録したCOvsBTNディレクトリからAhiボードを探し、BTNのチェック後のベット戦略を特徴別に調査して。CSV登録も行って。条件セットは○○を使って。Rはポット比、Aはオールイン、全アクションweightは共通基準です。相手レンジの復元元、除外理由と対象数も示して。」
 
 元ファイルをコピー・分割する必要はなく、既存CSVの絶対パスとハッシュを登録する。元CSVを変更しない。実際のFドライブへのアクセスと利用者のCodexからの実行は、この開発環境では未確認。
+
+## 最高ランクの指定（0.4.1）
+
+Ahi固定ではない。ユーザーの指示を次の値へ変換する。
+
+| 指示 | highest_rank | 条件 |
+| --- | --- | --- |
+| Ahi | A | 最高ランクA |
+| Khi | K | Aを含まず最高ランクK。Kのペア・トリップスも含む |
+| Qhi | Q | A・Kを含まず最高ランクQ |
+| Jhi〜2hi | J, T, 9…2 | 指定ランクが最高 |
+| 全ボード・指定なし | all | ランク制限なし |
+
+スキャンの省略値はall。取込時にhighest_rankをカタログへ保存する。research_list_spotsのhighest_rankとresearch_validateのsettings.HighestRankは、省略時にカタログの条件を継承する。条件のない旧カタログはall。明示的に別の条件を指定した場合は、既存カタログ内だけを再選択するため、取り込まれていないボードが増えるわけではない。対象を広げる場合は元ディレクトリを再探索する。
+
+GUIの「登録条件に従う」が初期値。全ボードまたはAhi〜2hiへ明示的に切り替えられる。計算結果JSONとMarkdownには実際に使用した条件を記録する。
+
+旧ahi_only / AhiOnlyは互換用に保持する。trueはA、falseはall。新旧条件を矛盾して指定した場合はエラーにし、一方を黙って優先しない。以前の保存結果のAhiOnlyはそのまま解釈する。
+
+Khiの依頼例：「COvsBTNディレクトリのKhiボードについて、BTNのチェック後ベット戦略を調査して。条件セット○○を使用し、CSV登録から実行して。」

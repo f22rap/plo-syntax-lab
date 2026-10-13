@@ -9,7 +9,9 @@ using FlopCommands.Equity;
 
 namespace FlopCommands.Research {
     [DataContract] public sealed class ResearchRunSettings {
-        [DataMember] public bool AhiOnly=true,AllowMissingDefinitions,AllowFrequencyOnly;
+        [DataMember(EmitDefaultValue=false)] public bool? AhiOnly;
+        [DataMember(EmitDefaultValue=false)] public string HighestRank;
+        [DataMember] public bool AllowMissingDefinitions,AllowFrequencyOnly;
         [DataMember] public int Trials=50000;
         [DataMember] public uint Seed=7123;
         [DataMember] public string GroupBy="suit_pair";
@@ -63,7 +65,8 @@ namespace FlopCommands.Research {
             if(spots.Length>200||(long)spots.Length*conditions>10000||(long)spots.Length*conditions*settings.Trials>100000000)throw new ArgumentException("一括調査の上限は200ボード・10,000条件行・合計1億試行です。対象か試行数を減らしてください。");
             foreach(var spot in spots){if(!settings.AllowFrequencyOnly&&spot.Opponents.Count==0)throw new ArgumentException(spot.Board+"：相手レンジが未登録です。頻度のみを許可するか、相手CSVを登録してください。");if(!settings.AllowMissingDefinitions){var missing=ResearchValidation.Resolve(set,spot.Board).Where(c=>c.Status!="ready").Select(c=>c.Label).ToArray();if(missing.Length>0)throw new ArgumentException(spot.Board+"：syntaxが未設定です（"+string.Join("、",missing)+"）。");}}
         }
-        static IEnumerable<ResearchSpot> Targets(ResearchCatalog catalog,ResearchRunSettings settings){return catalog.Spots.Where(s=>!settings.AhiOnly||ResearchFeatures.From(s.Board).Aces>0);}
+        public static string BoardRank(ResearchCatalog catalog,ResearchRunSettings settings){return ResearchBoardFilter.Resolve(settings.HighestRank,settings.AhiOnly,catalog.HighestRank);}
+        public static IEnumerable<ResearchSpot> Targets(ResearchCatalog catalog,ResearchRunSettings settings){string rank=BoardRank(catalog,settings);return catalog.Spots.Where(s=>ResearchBoardFilter.Matches(s.Board,rank));}
         static void Report(Action<ResearchProgress> progress,string message,int completed,int total){if(progress!=null)progress(new ResearchProgress{Message=message,Completed=completed,Total=total});}
         static void CheckSources(ResearchSpot spot,CancellationToken token){foreach(var source in spot.Actions.Select(a=>a.Source).Concat(spot.Opponents)){token.ThrowIfCancellationRequested();if(source.Sha256!=ResearchValidation.Hash(source.Path,token))throw new ArgumentException(spot.Board+"：登録後にCSVが変更されています。編集画面で再登録してください："+source.Path);}}
         static ResearchRow Row(ResearchSpot spot,ResolvedResearchCondition condition){return new ResearchRow{SpotId=spot.Id,Board=ResearchValidation.Board(spot.Board),Node=spot.Node.Trim(),ConditionId=condition.Id,Label=condition.Label,Syntax=condition.Syntax,Features=ResearchFeatures.From(spot.Board),Status=condition.Status=="ready"?"pending":"missing_definition",Reason=condition.Status=="ready"?"":"このボードのsyntaxが未設定です。",Actions=spot.Actions.Select(a=>new ResearchActionResult{Key=ActionKey(a),Label=a.Label,SourcePath=a.Source.Path}).Concat(new[]{new ResearchActionResult{Key=TotalBet,Label="総ベット",SourcePath=""}}).ToList()};}
@@ -71,6 +74,7 @@ namespace FlopCommands.Research {
         public static ResearchRunResult Execute(ResearchCatalog catalog,ResearchConditionSet set,ResearchRunSettings settings,CancellationToken token,Action<ResearchProgress> progress){
             // Freeze definitions and registered hashes before any asynchronous work.
             catalog=ResearchJson.Clone(catalog);set=ResearchJson.Clone(set);settings=ResearchJson.Clone(settings);ValidateRequest(catalog,set,settings);
+            settings.HighestRank=BoardRank(catalog,settings);
             var spots=Targets(catalog,settings).ToArray();var result=new ResearchRunResult{Catalog=catalog,ConditionSet=set,Settings=settings,StartedUtc=DateTime.UtcNow.ToString("o"),TargetSpots=spots.Length,FilteredSpots=catalog.Spots.Count-spots.Length};var watch=Stopwatch.StartNew();
             try{
                 // Fail before calculation if any selected source changed since registration.

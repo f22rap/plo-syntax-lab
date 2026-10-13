@@ -15,7 +15,7 @@ export const layout=[
 export async function makeDirectoryFixture(root,boards=['AsKd7c','Ah8h3c','Ts9d2c','Ts9d2d']){
  for(const board of boards)for(const [side,node,position,history,actions] of layout){
   const dir=path.join(root,board,side,node);await fs.mkdir(dir,{recursive:true});
-  for(const [i,action] of actions.entries())await fs.writeFile(path.join(dir,`${board}_${position}_${history}_${action}.csv`),'hand,frequency,percent,weight,ev,ev_diff,variations\n'+(side==='IP'?'AcAd4c5d':'KcKh6h9d')+`,1,100,${(i+1)/6},1.24,.29,1\n`);
+  for(const [i,action] of actions.entries())await fs.writeFile(path.join(dir,`${board}_${position}_${history}_${action}.csv`),'hand,frequency,percent,weight,ev,ev_diff,variations\n'+(side==='IP'?'AcAd4c5d':'JcJd6c7d')+`,1,100,${(i+1)/6},1.24,.29,1\n`);
  }
 }
 export const directoryScenario={game:'PLO4',players:2,hero_position:'BTN',villain_position:'CO',effective_stack_bb:'100',pot_type:'SRP',action_history:'CO checks',solution_context:'Synthetic fixture, not solver data',equity_reference:'Before actions'};

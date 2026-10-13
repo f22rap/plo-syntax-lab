@@ -1,3 +1,4 @@
+import {resolveBoardRank,matchesBoardRank} from './board-filter.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileHash,hash,within,inputFile,checkAbort} from './runtime.mjs';
@@ -12,7 +13,8 @@ export const directoryProfile='plo-post-tree-v1';
 
 // Do not follow links, including linked ancestors. Native validation repeats this check.
 async function plain(file){for(let p=path.resolve(file);;p=path.dirname(p)){if((await fs.lstat(p)).isSymbolicLink())throw Error('Linked paths are not allowed: '+p);if(path.dirname(p)===p)break;}}
-export async function scanDirectory(config,{directory,ahi_only=true}, {signal,progress=()=>{}}={}){
+export async function scanDirectory(config,{directory,highest_rank,ahi_only}, {signal,progress=()=>{}}={}){
+ const selectedRank=resolveBoardRank(highest_rank,ahi_only);
  if(!path.isAbsolute(directory))throw Error('Use an absolute directory.');
  if(!config.inputRoots.some(r=>within(r,path.resolve(directory))))throw Error('Directory is outside configured inputRoots.');
  await plain(directory);const root=await fs.realpath(directory);
@@ -26,7 +28,7 @@ export async function scanDirectory(config,{directory,ahi_only=true}, {signal,pr
   if(entry.isSymbolicLink()){issue(dir,'linked_path');continue;}
   if(!entry.isDirectory())continue;
   if(!boardPattern.test(entry.name)||new Set(entry.name.match(/../g)).size!==3){issue(dir,'not_a_physical_flop_directory');continue;}
-  if(ahi_only&&!entry.name.includes('A')){ignoredBoards.push(entry.name);continue;}
+  if(!matchesBoardRank(entry.name,selectedRank)){ignoredBoards.push(entry.name);continue;}
   boardDirs.push({board:entry.name,path:dir});
   for(const side of await children(dir)){
    const sp=path.join(dir,side.name);
@@ -80,8 +82,8 @@ export async function scanDirectory(config,{directory,ahi_only=true}, {signal,pr
   spots.push({node_id:g.node_id,board:g.board,side:g.side,folder:g.folder,history:g.history,position:g.position,villain_position:villain.length===1?villain[0]:null,problems:g.problems,eq_status:missing||'ready',opponent_node:opponent?[opponent.side,opponent.folder,opponent.history].join('/'):null,spot:{spot_id:id(root+'/'+g.board+'/'+g.node_id),board:g.board,node:[g.side,g.folder,g.history].join('/'),hero_actions:g.hero_actions,opponent_sources:opponent?opponent.files.map(source):[],opponent_percent_unit:false,all_actions_common_scale:true,opponent_common_scale:!!opponent}});
  }
  const nodes=[...new Set(spots.map(s=>s.node_id))].map(key=>{const rows=spots.filter(s=>s.node_id===key),s=rows[0];return {node_id:key,side:s.side,folder:s.folder,history:s.history,position:s.position,villain_position:s.villain_position,boards:rows.length,ready:rows.filter(s=>!s.problems.length&&s.eq_status==='ready').length,blocked:rows.filter(s=>s.problems.length).length,missing_opponent:rows.filter(s=>!s.problems.length&&s.eq_status!=='ready').length};});
- const identity={root,ahi_only,files:files.map(f=>({path:f.path,sha256:f.sha256})),issues,boards:boardDirs};
- return {profile:directoryProfile,directory:root,ahi_only,fingerprint:hash(JSON.stringify(identity)),board_count:boardDirs.length,non_ahi_count:ignoredBoards.length,file_count:files.length,nodes,spots,issues};
+ const identity={root,highest_rank:selectedRank,files:files.map(f=>({path:f.path,sha256:f.sha256})),issues,boards:boardDirs};
+ return {profile:directoryProfile,directory:root,highest_rank:selectedRank,fingerprint:hash(JSON.stringify(identity)),board_count:boardDirs.length,excluded_board_count:ignoredBoards.length,file_count:files.length,nodes,spots,issues};
 }
 
 export function directoryCatalog(scan,a){
@@ -92,5 +94,5 @@ export function directoryCatalog(scan,a){
  const blocked=rows.filter(s=>s.problems.length||!a.allow_frequency_only&&s.eq_status!=='ready');
  if(blocked.length)throw Error('Resolve or explicitly select around blocked boards: '+blocked.map(s=>s.board+': '+[...s.problems,...(s.eq_status==='ready'?[]:[s.eq_status])].join(',')).join('; '));
  if(rows.some(s=>s.position!==a.scenario.hero_position||s.villain_position!==a.scenario.villain_position))throw Error('Scenario positions do not match the CSVs.');
- return {catalog_id:a.catalog_id,revision:0,name:a.name,scenario:{...a.scenario,equity_reference:'Hero: sum of all actions at '+rows[0].spot.node+'; opponent: sum of all actions BEFORE their immediately preceding action. Prior hero actions remain conditioned. Root opponent range is not inferred.'},spots:rows.map(s=>structuredClone(s.spot))};
+ return {catalog_id:a.catalog_id,revision:0,name:a.name,highest_rank:scan.highest_rank,scenario:{...a.scenario,equity_reference:'Hero: sum of all actions at '+rows[0].spot.node+'; opponent: sum of all actions BEFORE their immediately preceding action. Prior hero actions remain conditioned. Root opponent range is not inferred.'},spots:rows.map(s=>structuredClone(s.spot))};
 }

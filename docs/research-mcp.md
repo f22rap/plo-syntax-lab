@@ -1,6 +1,6 @@
 # AIから複数ボードを調査する（第4ステップ）
 
-Windows MCP 0.4.0は従来15ツールに調査用15ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
+Windows MCP 0.4.1は従来15ツールに調査用15ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 
@@ -32,11 +32,11 @@ AIホスト固有の設定画面・インストール操作は環境によって
 
 | ツール | 用途 |
 | --- | --- |
-| research_scan_directory | 許可ディレクトリからAhiボード・局面・CSV対応を検出 |
+| research_scan_directory | 許可ディレクトリから指定最高ランクのボード・局面・CSV対応を検出 |
 | research_get_directory_scan | 局面・CSV対応・問題点をページ取得 |
 | research_import_directory | プレビューを照合して局面別カタログを一括登録 |
 | research_list_workspace | 条件セット・カタログ・版の一覧 |
-| research_list_spots | Ahi／ノードで対象を検索し、CSV参照を確認 |
+| research_list_spots | 最高ランク／ノードで対象を検索し、CSV参照を確認 |
 | research_get_condition_set | ユーザーsyntaxそのものを取得 |
 | research_save_condition_set | 版を照合して条件セットを新規保存／更新 |
 | research_save_catalog | 許可フォルダー内のCSVを本文検証して登録 |
@@ -81,3 +81,5 @@ npm run package:windows-mcp
 Linuxでは同じC#ソースを.NET 8へコンパイルし、公式SDKの実stdio通信で30ツールの発見、条件・CSV登録、計画、EQ／頻度・集計・出力、入力変更・許可範囲・競合・再起動・中止を試験した。17件のC#ブリッジ検証ではGUI単一ボード計算との数値・シード一致、確定済みボードの保持も確認。既存20,968件の計算検証も維持する。Windows EXEはクロスコンパイルで確認する。
 
 Windows実機での新しいEXE起動、およびユーザーが選ぶAIホストからの自然文調査は、この環境では未確認。配布物はその接続確認に使うプレビュー。ローカルプレビューには基準コミットとファイル別SHA-256を記録し、未プッシュの内容をそのコミットに含まれるものとして扱わない。
+
+最高ランクは[ディレクトリ取込](directory-import.md)の指定に従う。スキャンhighest_rank、省略時のカタログ継承、計算settings.HighestRankに対応。Khi/QhiにもAhi限定を適用しない。

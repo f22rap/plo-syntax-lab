@@ -1,6 +1,6 @@
 {
   "name": "plo-syntax-lab-mcp",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Local MCP access to the PLO Syntax Lab engine and Windows comparison runtime",
   "engines": {

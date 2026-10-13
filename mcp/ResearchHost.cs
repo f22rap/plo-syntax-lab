@@ -54,7 +54,7 @@ namespace PloMcp {
             }
             if(q.action=="validate"||q.action=="run"){
                 var w=store.Load();var c=Select(q,w);var s=ResearchJson.Clone(Set(w,q.setId));Need(s.Revision==q.setRevision,"Condition set changed; validate a new plan.");if(q.catalog!=null)Need(J(c)==J(q.catalog),"Catalog snapshot changed; validate again.");if(q.conditionSet!=null)Need(J(s)==J(q.conditionSet),"Condition snapshot changed; validate again.");ResearchRun.ValidateRequest(c,s,q.settings);
-                var targets=ResearchJson.Clone(c);targets.Spots=targets.Spots.Where(x=>!q.settings.AhiOnly||ResearchFeatures.From(x.Board).Aces>0).ToList();
+                var targets=ResearchJson.Clone(c);q.settings.HighestRank=ResearchRun.BoardRank(c,q.settings);targets.Spots=ResearchRun.Targets(c,q.settings).ToList();
                 CheckSources(q,targets,token,q.action=="validate");
                 if(q.action=="validate")return Obj("catalog",J(c),"condition_set",J(s),"settings",J(q.settings),"target_spots",J(targets.Spots.Count),"estimated_trials",J((long)targets.Spots.Count*s.Conditions.Count(x=>x.Enabled)*q.settings.Trials),"resolved",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchValidation.Resolve(s,x.Board))),"features",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchFeatures.From(x.Board))));
                 var r=ResearchRun.Execute(c,s,q.settings,token,progress);Scope(q,targets);PlainPath(runs);ResearchFiles.SaveHistory(r,runs);return Meta(r);

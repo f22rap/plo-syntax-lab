@@ -69,6 +69,7 @@ namespace FlopCommands.Research {
         [DataMember(Name="catalog_id")] public string Id=Guid.NewGuid().ToString("N");
         [DataMember(Name="revision")] public int Revision;
         [DataMember(Name="name")] public string Name="新しい調査カタログ";
+        [DataMember(Name="highest_rank",EmitDefaultValue=false)] public string HighestRank;
         [DataMember(Name="scenario")] public ResearchScenario Scenario=new ResearchScenario();
         [DataMember(Name="spots")] public List<ResearchSpot> Spots=new List<ResearchSpot>();
         public override string ToString(){return Name+"（"+Spots.Count+"ボード・版 "+Revision+"）";}
@@ -81,6 +82,18 @@ namespace FlopCommands.Research {
     }
     public sealed class ResolvedResearchCondition {
         public string Id,Label,Syntax,Status;
+    }
+    public static class ResearchBoardFilter {
+        public const string Ranks="AKQJT98765432";
+        public static string Resolve(string rank,bool? legacyAhi,string inherited){
+            if(rank!=null&&rank!="all"&&(rank.Length!=1||Ranks.IndexOf(rank,StringComparison.Ordinal)<0))throw new ArgumentException("最高ランクはallまたはA〜2で指定してください。");
+            string legacy=legacyAhi.HasValue?(legacyAhi.Value?"A":"all"):null;
+            if(rank!=null&&legacy!=null&&rank!=legacy)throw new ArgumentException("最高ランクと旧Ahi限定設定が矛盾しています。");
+            string selected=rank??legacy??inherited??"all";
+            if(selected!="all"&&(selected.Length!=1||Ranks.IndexOf(selected,StringComparison.Ordinal)<0))throw new ArgumentException("保存された最高ランク条件が不正です。");
+            return selected;
+        }
+        public static bool Matches(string board,string rank){var cards=EquityCards.Parse(board,3,3);rank=Resolve(rank,null,null);return rank=="all"||Ranks[cards.Min(c=>c/4)].ToString()==rank;}
     }
     public static class ResearchJson {
         public const int MaxBytes=16*1024*1024;
@@ -126,6 +139,7 @@ namespace FlopCommands.Research {
             if(checkedFiles)Need(!string.IsNullOrEmpty(spot.ValidatedUtc),"登録前にCSVを検証してください。");
         }
         public static void Catalog(ResearchCatalog c){
+            if(c!=null)ResearchBoardFilter.Resolve(c.HighestRank,null,null);
             Need(c!=null,"カタログがありません。");Id(c.Id);Text(c.Name,"カタログ名",200);Need(c.Revision>=0,"カタログの版が不正です。");var s=c.Scenario;Need(s!=null&&s.Game=="PLO4"&&s.Players==2,"初期版はPLO4の2人の局面に対応します。");
             Text(s.HeroPosition,"自分のポジション",100);Text(s.VillainPosition,"相手のポジション",100);Need(!string.Equals(s.HeroPosition,s.VillainPosition,StringComparison.OrdinalIgnoreCase),"双方のポジションが同じです。");decimal stack;Need(decimal.TryParse(s.StackBb,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out stack)&&stack>0,"実効スタックを正のBB数で入力してください。");Text(s.PotType,"ポット種別",200);Text(s.ActionHistory,"それ以前のアクション",4000);Text(s.SolutionContext,"レーキ・ソルバー設定",4000);Text(s.EquityReference,"EQの基準点",500);
             Need(c.Spots!=null&&c.Spots.Count<=10000,"ボードは10,000件までです。");var ids=new HashSet<string>();var keys=new HashSet<string>();foreach(var spot in c.Spots){Spot(spot,true);Need(ids.Add(spot.Id),"ボードIDが重複しています。");Need(keys.Add(Board(spot.Board)+"\n"+spot.Node.Trim()),"同じボード・アクション位置の二重登録です。");}

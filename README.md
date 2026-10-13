@@ -179,4 +179,4 @@ FD/BDFDの最高・第2位のスートカードはボードを除いたデッキ
 
 [導入・設定](docs/research-mcp.md)。従来15ツールを保ち、ユーザーsyntax・CSV登録・一括調査・結果取得用の15ツールを追加しました。EXEと同じ計算コードを使います。[AI向け調査手順](mcp/research-workflow.md)を添えてAhiボードの比較を依頼できます。Windows上のAIホスト接続は未確認です。
 
-ディレクトリを指定してAIにCSV登録を任せる場合は[ディレクトリ取込](docs/directory-import.md)を参照。ボード/IP・OOP/局面の構造からAhiボードを抽出し、局面別に登録・調査する。
+ディレクトリを指定してAIにCSV登録を任せる場合は[ディレクトリ取込](docs/directory-import.md)を参照。ボード/IP・OOP/局面の構造から指示された最高ランクのボード（Ahi・Khi・Qhiなど、または全ボード）を抽出し、局面別に登録・調査する。

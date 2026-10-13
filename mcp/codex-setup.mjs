@@ -4,7 +4,8 @@ import {fileURLToPath} from 'node:url';
 import {root,loadConfig} from './runtime.mjs';
 
 export const serverName='plo-syntax-lab-windows';
-export const starterPrompt=`PLO Syntax LabのMCPを使い、指定したディレクトリまたは登録済みカタログにあるAhiボードのベット戦略をボードの特徴ごとに調査してください。
+export const starterPrompt=`PLO Syntax LabのMCPを使い、指定したディレクトリまたは登録済みカタログにあるボードのベット戦略をボードの特徴ごとに調査してください。
+対象は私の指示に従ってAhi・Khi・Qhiなどの最高ランクを選び、指定がなければ全ボードにしてください。KhiはAを含まず最高ランクK、QhiはA・Kを含まず最高ランクQです。取込時のhighest_rankを計算まで引き継ぎ、Ahiへ戻さないでください。
 まずresearch_list_workspaceで私の条件セットとカタログを確認してください。候補が複数あって特定できない場合だけ尋ねてください。
 ディレクトリを指定した場合は、research_scan_directory→プレビュー確認→research_import_directoryで局面別にCSV登録まで行ってください。私に各CSVの手動登録を求めないでください。取込規則と共通weightの確認、局面情報が不足している場合だけ尋ねてください。
 ユーザー設定のsyntaxを変更せず、双方のアクション前レンジによるEQと全アクション頻度を比較してください。

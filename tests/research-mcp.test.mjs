@@ -19,7 +19,7 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
  async function call(name,args={}){const r=await client.callTool({name,arguments:args});if(r.isError)throw Error(r.content.map(c=>c.text||'').join('\n'));return r.structuredContent||JSON.parse(r.content[0].text);}
  async function terminal(job){for(let n=0;n<2000;n++){const j=await call('research_get_job',{job_id:job.job_id});if(!['queued','running'].includes(j.state))return j;await sleep(15);}throw Error('Timed out waiting for job.');}
  async function finish(job){const j=await terminal(job);if(j.state!=='completed')throw Error(j.error||j.state);return j.result;}
- const settings={Trials:1000,Seed:7123,GroupBy:'pair'};
+ const settings={AhiOnly:true,Trials:1000,Seed:7123,GroupBy:'pair'};
  const condition=(id,syntax)=>({condition_id:id,label:id,enabled:true,kind:'literal',syntax,by_board:{}});
  let set={set_id:'user-set',revision:0,name:'User syntax',conditions:[condition('all','*'),condition('none','KK')]};
  let catalog={catalog_id:'registered-boards',revision:0,name:'Synthetic Ahi sample',scenario:{game:'PLO4',players:2,hero_position:'BB',villain_position:'BTN',effective_stack_bb:'100',pot_type:'SRP',action_history:'BTN open, BB call',solution_context:'synthetic only',equity_reference:'Before both actions'},spots:[]};
@@ -36,7 +36,7 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   await assert.rejects(()=>call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0}),/updated|更新|changed/);
   catalog=(await call('research_save_catalog',{catalog,expected_workspace_revision:1})).catalog;assert.equal(catalog.revision,1);assert.equal(catalog.spots[0].opponent_hands,2);assert.match(catalog.spots[0].hero_actions[0].source.sha256,/^[a-f0-9]{64}$/);
   const workspace=await call('research_list_workspace',{limit:1});assert.equal(workspace.workspace_revision,2);assert.equal(workspace.catalogs.items[0].spot_count,3);
-  const listed=await call('research_list_spots',{catalog_id:catalog.catalog_id,limit:1});assert.equal(listed.total,2);assert.equal(listed.next_offset,1);assert.equal((await call('research_list_spots',{catalog_id:catalog.catalog_id,ahi_only:false})).total,3);
+  const listed=await call('research_list_spots',{catalog_id:catalog.catalog_id,highest_rank:'A',limit:1});assert.equal(listed.total,2);assert.equal(listed.next_offset,1);assert.equal((await call('research_list_spots',{catalog_id:catalog.catalog_id,ahi_only:false})).total,3);
   assert.deepEqual((await call('research_get_condition_set',{set_id:set.set_id})).condition_set,set);
   const request=()=>({catalog_id:catalog.catalog_id,catalog_revision:catalog.revision,set_id:set.set_id,set_revision:set.revision,settings});
   const plan=await finish(await call('research_validate',request()));assert.equal(plan.target_spots,2);assert.equal(plan.estimated_trials,4000);assert.equal(plan.resolved.one[0].Syntax,'*');assert.equal(plan.features.two.Suit,'ツートーン');
@@ -70,7 +70,7 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   const cp=await finish(await call('research_validate',{...request(),settings:{...settings,Trials:2000000,AllowFrequencyOnly:true}}));const cj=await call('research_start',{plan_id:cp.plan_id,request_key:'cancel'});for(let i=0;i<100;i++){const j=await call('research_get_job',{job_id:cj.job_id});if(j.progress?.Message?.includes('計算中'))break;await sleep(10);}await call('research_cancel_job',{job_id:cj.job_id});const cancelled=await terminal(cj);assert.equal(cancelled.state,'cancelled');assert.ok(cancelled.result?.result_id);assert.equal(cancelled.result.status,'cancelled');assert.ok(cancelled.result.completed_spots<2);assert.equal((await call('research_get_result',{result_id:cancelled.result.result_id,view:'metadata'})).status,'cancelled');
   // The user's directory profile is imported through real MCP into the shared C# store.
   const tree=path.join(input,'COvsBTN');await makeDirectoryFixture(tree);
-  const scanJob=await finish(await call('research_scan_directory',{directory:tree}));assert.equal(scanJob.board_count,2);assert.equal(scanJob.non_ahi_count,2);
+  const scanJob=await finish(await call('research_scan_directory',{directory:tree,highest_rank:'A'}));assert.equal(scanJob.board_count,2);assert.equal(scanJob.excluded_board_count,2);
   const nodes=await call('research_get_directory_scan',{scan_id:scanJob.scan_id});assert.equal(nodes.total,10);const node=nodes.items.find(n=>n.folder==='vs_check');
   const preview=await call('research_get_directory_scan',{scan_id:scanJob.scan_id,view:'spots',node_id:node.node_id,limit:1});assert.equal(preview.next_offset,1);assert.equal(preview.items[0].spot.opponent_sources.length,2);
   const importArgs={scan_id:scanJob.scan_id,node_id:node.node_id,catalog_id:'directory-check',name:'Imported Ahi',scenario:directoryScenario,confirm_profile:'plo-post-tree-v1',all_actions_common_scale:true,expected_workspace_revision:(await call('research_list_workspace')).workspace_revision};
@@ -90,7 +90,22 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   const broken=path.join(tree,'AsKd7c/IP/vs_check/AsKd7c_BTN_C_C.csv');await fs.appendFile(broken,'badhand,1,100,1,0,0,1\n');
   const rev=(await call('research_list_workspace')).workspace_revision;
   await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,catalog_id:'changed',expected_workspace_revision:rev}),/changed after preview/);
-  const badScan=await finish(await call('research_scan_directory',{directory:tree}));await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,scan_id:badScan.scan_id,catalog_id:'malformed',expected_workspace_revision:rev}));assert.equal((await call('research_list_workspace')).workspace_revision,rev);
+  const badScan=await finish(await call('research_scan_directory',{directory:tree,highest_rank:'A'}));await assert.rejects(()=>finishCall('research_import_directory',{...importArgs,scan_id:badScan.scan_id,catalog_id:'malformed',expected_workspace_revision:rev}));assert.equal((await call('research_list_workspace')).workspace_revision,rev);
+  // Explicit user rank survives scanning, storage, default listing, planning and results.
+  const rankTree=path.join(input,'rank-selection');await makeDirectoryFixture(rankTree,['AsKd7c','KsQd2c','KsKd3s','QsJh2c','Ts9d2c']);
+  const inheritedSettings={Trials:1000,Seed:7123,GroupBy:'pair'};
+  for(const rank of ['K','Q','all']){
+   const scan=await finish(await call('research_scan_directory',{directory:rankTree,...(rank==='all'?{}:{highest_rank:rank})}));assert.equal(scan.highest_rank,rank);assert.equal(scan.board_count,rank==='K'?2:rank==='Q'?1:5);
+   const ns=await call('research_get_directory_scan',{scan_id:scan.scan_id});assert.equal(ns.highest_rank,rank);const n=ns.items.find(n=>n.folder==='vs_check');
+   const im=await finish(await call('research_import_directory',{...importArgs,scan_id:scan.scan_id,node_id:n.node_id,catalog_id:'rank-'+rank,expected_workspace_revision:(await call('research_list_workspace')).workspace_revision}));assert.equal(im.highest_rank,rank);
+   const ls=await call('research_list_spots',{catalog_id:im.catalog_id});assert.equal(ls.highest_rank,rank);assert.equal(ls.total,scan.board_count);
+   const p=await finish(await call('research_validate',{catalog_id:im.catalog_id,catalog_revision:im.catalog_revision,set_id:set.set_id,set_revision:set.revision,settings:inheritedSettings}));assert.equal(p.settings.HighestRank,rank);assert.equal(p.target_spots,scan.board_count);
+   const rr=await finish(await call('research_start',{plan_id:p.plan_id,request_key:'rank-'+rank}));assert.equal(rr.completed_spots,scan.board_count);assert.equal(rr.settings.HighestRank,rank);
+   const rows=(await call('research_get_result',{result_id:rr.result_id,condition_id:'all'})).items;assert.equal(rows.length,scan.board_count);assert.ok(rows.every(x=>x.Status==='completed'));if(rank==='K')assert.ok(rows.every(x=>!x.Board.includes('A')));
+   await client.close();await connect();assert.equal((await call('research_get_result',{result_id:rr.result_id,view:'metadata'})).settings.HighestRank,rank);assert.equal((await call('research_list_spots',{catalog_id:im.catalog_id})).highest_rank,rank);
+  }
+  await assert.rejects(()=>finishCall('research_scan_directory',{directory:rankTree,highest_rank:'K',ahi_only:true}),/Conflicting/);
+  await assert.rejects(()=>finishCall('research_validate',{catalog_id:'rank-K',catalog_revision:1,set_id:set.set_id,set_revision:set.revision,settings:{HighestRank:'K',AhiOnly:true}}),/Conflicting/);
   console.log('Research MCP integration passed: '+base);
   async function callJob(args){return call('research_validate',args);}
   async function finishCall(name,args){return finish(await call(name,args));}
