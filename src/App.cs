@@ -38,7 +38,10 @@ namespace FlopCommands {
         readonly HistoryStore historyStore;
         readonly HistoryPanel historyPanel;
         readonly EquityPanel equityPanel;
+        readonly ResearchPanel researchPanel;
+        public ResearchPanel ResearchView {get{return researchPanel;}}
         public EquityPanel EquityView {get{return equityPanel;}}
+        bool ResearchBusy {get{return researchPanel!=null&&researchPanel.IsBusy;}}
         bool EquityBusy {get{return equityPanel!=null&&equityPanel.IsBusy;}}
         readonly CheckBox includeAll=new CheckBox{Text="全ハンド（syntaxなし）を集計",Checked=true,Dock=DockStyle.Fill,Margin=new Padding(0,0,0,4),AccessibleName="全ハンドのweight合計・比率も集計"};
         readonly DataGridView grid=new DataGridView();
@@ -71,7 +74,7 @@ namespace FlopCommands {
         public RunResult LastResult {get{return lastResult;}}
         public string ResultMessage {get{return resultStatus.Text+"\n"+errorOutput.Text;}}
         public bool IsBusy {get{return busy;}}
-        public bool UseDefaults {get{return defaultMode.Checked;}set{if(busy||EquityBusy)throw new Exception("計算中は切り替えできません。");if(value)defaultMode.Checked=true;else generatedMode.Checked=true;}}
+        public bool UseDefaults {get{return defaultMode.Checked;}set{if(busy||EquityBusy||ResearchBusy)throw new Exception("計算中は切り替えできません。");if(value)defaultMode.Checked=true;else generatedMode.Checked=true;}}
         public bool IncludeAll {get{return includeAll.Checked;}set{includeAll.Checked=value;}}
         public string[] GraphLabels {get{return chart.LegendLabels;}}
         public int GraphRowCount {get{return chart.RowCount;}}
@@ -81,19 +84,22 @@ namespace FlopCommands {
         public MainForm():this(new HistoryStore()){}
         public MainForm(HistoryStore store) {
             historyStore=store;
-            Text="PLO Syntax Lab → PowerShell · CSV比較 · 2026.10.13-multi-range";
+            Text="PLO Syntax Lab → PowerShell · CSV比較 · 2026.10.14-research-run";
             ClientSize=new Size(1480,930);MinimumSize=new Size(1240,840);
             StartPosition=FormStartPosition.CenterScreen;BackColor=Canvas;
             Font=new Font("Yu Gothic UI",10F);ForeColor=Ink;
             AutoScaleMode=AutoScaleMode.Dpi;
-            var root=new TableLayoutPanel{Dock=DockStyle.Top,ColumnCount=1,RowCount=6,Margin=Padding.Empty,Height=1375};
+            var root=new TableLayoutPanel{Dock=DockStyle.Top,ColumnCount=1,RowCount=7,Margin=Padding.Empty,Height=1477};
             root.RowStyles.Add(new RowStyle(SizeType.Absolute,88));root.RowStyles.Add(new RowStyle(SizeType.Absolute,245));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute,32));root.RowStyles.Add(new RowStyle(SizeType.Absolute,280));root.RowStyles.Add(new RowStyle(SizeType.Absolute,700));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute,32));root.RowStyles.Add(new RowStyle(SizeType.Absolute,280));root.RowStyles.Add(new RowStyle(SizeType.Absolute,110));root.RowStyles.Add(new RowStyle(SizeType.Absolute,700));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
             mainTabs.Dock=DockStyle.Fill;Controls.Add(mainTabs);computePage=new TabPage("集計"){AutoScroll=true};computePage.Controls.Add(root);mainTabs.TabPages.Add(computePage);
             historyPanel=new HistoryPanel(historyStore);var historyPage=new TabPage("履歴");historyPage.Controls.Add(historyPanel);mainTabs.TabPages.Add(historyPage);
             equityPanel=new EquityPanel(new Equity.EquityHistoryStore(Path.Combine(historyStore.Root,"EQ")));root.Controls.Add(equityPanel,0,3);
+            researchPanel=new ResearchPanel(new Research.ResearchStore(Path.Combine(historyStore.Root,"Research")),ApplyResearchConditions,CaptureResearchConditions);root.Controls.Add(researchPanel,0,4);
             Action resizeEquity=()=>{root.RowStyles[3].Height=equityPanel.InputHeight;root.Height=(int)Math.Ceiling(root.RowStyles.Cast<RowStyle>().Sum(row=>row.Height));};
             equityPanel.InputHeightChanged+=resizeEquity;resizeEquity();
+            Action resizeResearch=()=>{root.RowStyles[4].Height=researchPanel.InputHeight;root.Height=(int)Math.Ceiling(root.RowStyles.Cast<RowStyle>().Sum(row=>row.Height));};
+            researchPanel.InputHeightChanged+=resizeResearch;resizeResearch();
             mainTabs.SelectedIndexChanged+=(s,e)=>{if(mainTabs.SelectedIndex==1)historyPanel.RefreshEntries(historyPanel.CurrentId);};
             var header=new Panel{Dock=DockStyle.Fill,BackColor=Ink,Margin=Padding.Empty,Padding=new Padding(24,12,24,8)};
             var title=Label("PLO Syntax Lab → PowerShell",20,Color.White);title.Dock=DockStyle.Top;title.Height=43;
@@ -132,7 +138,7 @@ namespace FlopCommands {
             files.Controls.Add(Label("比率 = 各CSVのweight合計 ÷ 選択した全CSVのweight合計 × 100",9,Muted),0,5);inputs.Controls.Add(files,1,0);
             status.Dock=DockStyle.Fill;status.Margin=new Padding(24,0,24,0);status.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(status,0,2);
             var split=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Padding=new Padding(24,5,24,0),Margin=Padding.Empty};
-            split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,28));split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,72));root.Controls.Add(split,0,4);
+            split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,28));split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,72));root.Controls.Add(split,0,5);
             var left=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=4,ColumnCount=1,Margin=new Padding(0,0,12,0)};
             filtersArea=left;
             left.RowStyles.Add(new RowStyle(SizeType.Absolute,39));left.RowStyles.Add(new RowStyle(SizeType.Absolute,33));left.RowStyles.Add(new RowStyle(SizeType.Percent,100));left.RowStyles.Add(new RowStyle(SizeType.Absolute,35));
@@ -150,19 +156,20 @@ namespace FlopCommands {
             var codePage=new TabPage("コマンド");codePage.Controls.Add(command);outputTabs.TabPages.Add(codePage);ConfigureResults();outputTabs.TabPages.Add(resultsPage);right.Controls.Add(outputTabs,0,1);
             var actions=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=5,Padding=new Padding(0,8,0,0),Margin=Padding.Empty};actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,74));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,107));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,150));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,72));
             codeSummary.Dock=DockStyle.Fill;codeSummary.TextAlign=ContentAlignment.MiddleLeft;codeSummary.Font=new Font("Yu Gothic UI",9);actions.Controls.Add(codeSummary,0,0);actions.Controls.Add(copy,1,0);actions.Controls.Add(save,2,0);actions.Controls.Add(run,3,0);actions.Controls.Add(cancel,4,0);cancel.Enabled=false;right.Controls.Add(actions,0,2);split.Controls.Add(right,1,0);
-            var footer=Label("PLO4 · 手札2枚＋ボード3枚 · フロップ / ターン / リバー · Monker実機の受理・抽出は未確認",9,Muted);footer.Dock=DockStyle.Fill;footer.Margin=new Padding(24,0,0,0);footer.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(footer,0,5);
+            var footer=Label("PLO4 · 手札2枚＋ボード3枚 · フロップ / ターン / リバー · Monker実機の受理・抽出は未確認",9,Muted);footer.Dock=DockStyle.Fill;footer.Margin=new Padding(24,0,0,0);footer.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(footer,0,6);
             debounce.Interval=350;debounce.Tick+=(s,e)=>{debounce.Stop();ApplyBoard();};boardInput.TextChanged+=(s,e)=>{if(!starting){CancelDefaults();InvalidateCommand();debounce.Stop();debounce.Start();}};
             search.TextChanged+=(s,e)=>RefreshGrid();
             copy.Click+=(s,e)=>CopyCommand();save.Click+=(s,e)=>SaveCommand();
             run.Click+=async(s,e)=>await ExecuteAsync();cancel.Click+=(s,e)=>CancelExecution();export.Click+=(s,e)=>SaveResults();
             executionTimer.Interval=500;executionTimer.Tick+=(s,e)=>{if(busy&&cancellation!=null&&!cancellation.IsCancellationRequested)resultStatus.Text=board+" · weight合計・比率"+"\r\n実行中（"+(int)elapsed.Elapsed.TotalSeconds+"秒）…";};
-            FormClosing+=(s,e)=>{if(busy||EquityBusy){e.Cancel=true;closeWhenDone=true;if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();}};
+            FormClosing+=(s,e)=>{if(busy||EquityBusy||ResearchBusy){e.Cancel=true;closeWhenDone=true;if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();if(ResearchBusy)researchPanel.Cancel();}};
             var tip=new ToolTip();tip.SetToolTip(search,"条件名またはsyntaxで絞り込みます。非表示になった選択も保持します。");tip.SetToolTip(boardInput,"ランクとスートを3〜5枚。スペース・10・スート記号にも対応します。");
             boardInput.Text="AsKd7s";
             Shown+=(s,e)=>QueueDefaults();FormClosed+=(s,e)=>{CancelDefaults();DefaultRunner.StopAll();if(bridge!=null)bridge.Dispose();};
             run.Name="runComparisonEq";cancel.Name="cancelComparisonEq";
-            equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy;filtersArea.Enabled=!value&&!busy;run.Enabled=!value&&!busy&&command.Text.Length>0&&ActivePaths().Length>=2;cancel.Enabled=value||busy;if(!value)FinishClose();};
+            equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy&&!ResearchBusy;filtersArea.Enabled=!value&&!busy&&!ResearchBusy;researchPanel.SetExternalBusy(value||busy);run.Enabled=!value&&!busy&&!ResearchBusy&&command.Text.Length>0&&ActivePaths().Length>=2;cancel.Enabled=value||busy;if(!value)FinishClose();};
             equityPanel.InputChanged+=()=>{if(busy&&cancellation!=null)cancellation.Cancel();};
+            researchPanel.BusyChanged+=value=>{settingsArea.Enabled=filtersArea.Enabled=!value&&!busy&&!EquityBusy;equityPanel.SetExternalBusy(value||busy);run.Enabled=!value&&!busy&&!EquityBusy&&command.Text.Length>0&&ActivePaths().Length>=2;if(!value)FinishClose();};
             starting=false;SwitchSyntaxMode();ApplyBoard();
         }
         static Label Label(string text,float size,Color color){return new Label{Text=text,AutoSize=false,Dock=DockStyle.Top,Height=27,Font=new Font("Yu Gothic UI",size,FontStyle.Regular),ForeColor=color,Margin=Padding.Empty};}
@@ -210,10 +217,10 @@ namespace FlopCommands {
             lastResult=null;lastSources=new string[0];resultsGrid.Rows.Clear();chart.SetData(null);errorOutput.Text="";errorOutput.Visible=false;resultsGrid.Visible=true;resultViews.Visible=true;export.Enabled=false;comparison.Text="";
             resultStatus.Text="「集計＋EQ計算」を押すと、ここに結果を表示します。";
         }
-        void FinishClose(){if(closeWhenDone&&!busy&&!EquityBusy&&!IsDisposed){closeWhenDone=false;BeginInvoke(new Action(Close));}}
-        public void CancelExecution(){cancel.Enabled=false;resultStatus.Text="中止しています…";if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();}
+        void FinishClose(){if(closeWhenDone&&!busy&&!EquityBusy&&!ResearchBusy&&!IsDisposed){closeWhenDone=false;BeginInvoke(new Action(Close));}}
+        public void CancelExecution(){cancel.Enabled=false;resultStatus.Text="中止しています…";if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();if(ResearchBusy)researchPanel.Cancel();}
         public async Task ExecuteAsync(){
-            if(busy||EquityBusy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
+            if(busy||EquityBusy||ResearchBusy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
             mainTabs.SelectedIndex=0;if(InvokeRequired)throw new InvalidOperationException("実行はアプリの画面から開始してください。");
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
             equityPanel.ResetForComparison();var eqRequest=equityPanel.CaptureForComparison();
@@ -290,7 +297,7 @@ namespace FlopCommands {
         string ReceiveSelection(string json){var data=LabSelection.Read(json);if(data.mode!="defaults")return AcceptSelection(json);if(data.job!=defaultJob||defaultCompletion==null)throw new Exception("この生成結果は更新済みです。");defaultCompletion.TrySetResult(data);return "デフォルト条件を受け取りました。";}
         void CancelDefaults(){defaultJob=null;var previous=defaultCancellation;defaultCancellation=null;defaultCompletion=null;if(previous!=null)previous.Cancel();defaultBusy=false;}
         public async void QueueDefaults(bool force=false){
-            if(starting||!Visible||!UseDefaults||string.IsNullOrEmpty(board)||busy||EquityBusy)return;
+            if(starting||!Visible||!UseDefaults||string.IsNullOrEmpty(board)||busy||EquityBusy||ResearchBusy)return;
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
             if(!force&&defaultBoard==board&&(defaultBusy||defaultChoices.Count>0))return;
             CancelDefaults();string target=board;defaultBoard=target;defaultChoices.Clear();defaultSelected.Clear();
@@ -311,7 +318,7 @@ namespace FlopCommands {
         void OpenGenerator(){try{ApplyBoard();if(board.Length==0)return;Process.Start(new ProcessStartInfo(GeneratorUrl){UseShellExecute=true});}catch(Exception ex){SetStatus("生成画面を開けません："+ex.Message,true);}}
         void ImportSelection(){using(var dialog=new OpenFileDialog{Filter="PLO Syntax Labの条件|*.json"})if(dialog.ShowDialog(this)==DialogResult.OK)try{SetStatus(AcceptSelection(File.ReadAllText(dialog.FileName,Encoding.UTF8)),false);}catch(Exception ex){SetStatus(ex.Message,true);}}
         public string AcceptSelection(string json){
-            if(busy||EquityBusy)throw new Exception("計算中です。完了後に条件を追加してください。");var data=LabSelection.Read(json);var incoming=data.Choices();if(incoming.Count==0)throw new Exception("該当ハンドのある条件がありません。");
+            if(busy||EquityBusy||ResearchBusy)throw new Exception("計算中です。完了後に条件を追加してください。");var data=LabSelection.Read(json);var incoming=data.Choices();if(incoming.Count==0)throw new Exception("該当ハンドのある条件がありません。");
             string next=data.NormalizedBoard;if(!Commands.SameBoard(board,next)){generatedChoices.Clear();generatedSelected.Clear();defaultChoices.Clear();defaultSelected.Clear();defaultBoard=null;}board=next;
             starting=true;boardInput.Text=board;starting=false;debounce.Stop();
             foreach(var c in incoming){var existing=generatedChoices.FirstOrDefault(x=>x.Filter.Syntax==c.Filter.Syntax&&x.Filter.Label==c.Filter.Label);if(existing==null){generatedChoices.Add(c);existing=c;}generatedSelected.Add(existing.Filter.Cell);}
@@ -319,6 +326,23 @@ namespace FlopCommands {
             ApplyBoard();mainTabs.SelectedIndex=0;return incoming.Count+"条件を比較画面に追加しました。";
         }
         public void ApplyInput(string input){boardInput.Text=input;debounce.Stop();ApplyBoard();}
+        public Research.ResearchConditionSet CaptureResearchConditions(){
+            if(busy||EquityBusy||ResearchBusy)throw new InvalidOperationException("計算が終わってから条件を保存してください。");string key=Research.ResearchValidation.Board(Commands.NormalizeBoard(boardInput.Text));
+            if(!Commands.SameBoard(board,key))throw new ArgumentException("ボード更新が終わってから保存してください。");
+            var set=new Research.ResearchConditionSet{Name=key+" の選択条件"};
+            foreach(var choice in choices.Where(c=>c.Available&&selected.Contains(c.Filter.Cell)))set.Conditions.Add(new Research.ResearchCondition{Label=choice.Filter.Label,Kind="per_board",Syntax="",ByBoard=new Dictionary<string,string>{{key,choice.Filter.Syntax}}});
+            if(includeAll.Checked)set.Conditions.Insert(0,new Research.ResearchCondition{Label="全ハンド",Syntax="*"});
+            if(set.Conditions.Count==0)throw new ArgumentException("保存する条件を選択してください。");return set;
+        }
+        public void ApplyResearchConditions(Research.ResearchConditionSet set){
+            if(busy||EquityBusy||ResearchBusy)throw new InvalidOperationException("計算が終わってから条件を適用してください。");
+            string next=Commands.NormalizeBoard(boardInput.Text);var resolved=Research.ResearchValidation.Resolve(set,next);var missing=resolved.Where(c=>c.Status!="ready").ToArray();
+            if(missing.Length>0)throw new ArgumentException("このボードのsyntaxが未設定です："+string.Join("、",missing.Select(c=>c.Label)));
+            if(resolved.Length==0)throw new ArgumentException("使用する条件が選択されていません。");
+            UseDefaults=false;ApplyInput(next);generatedChoices.Clear();generatedSelected.Clear();
+            foreach(var c in resolved){string id="RESEARCH_"+c.Id;generatedChoices.Add(new Choice{Filter=new Filter{Cell=id,Label=c.Label,Syntax=c.Syntax}});generatedSelected.Add(id);}
+            includeAll.Checked=false;search.Clear();RefreshGrid();RefreshCommand();SetStatus(set.Name+"（版 "+set.Revision+"）を適用しました。",false);
+        }
         void ApplyBoard(){
             try{
                 string next=Commands.NormalizeBoard(boardInput.Text);if(!Commands.SameBoard(board,next)){CancelDefaults();generatedChoices.Clear();generatedSelected.Clear();defaultChoices.Clear();defaultSelected.Clear();defaultBoard=null;}board=next;
@@ -358,7 +382,7 @@ namespace FlopCommands {
             try {
                 var selection=choices.Where(c=>selected.Contains(c.Filter.Cell)).ToList();
                 var paths=ActivePaths();command.Text=CompareCommands.Build(board,paths,selection,includeAll.Checked,csvLabels.Take(paths.Length).Select(t=>t.Text).ToArray());
-                copy.Enabled=true;save.Enabled=true;run.Enabled=!busy&&!EquityBusy&&paths.Length>=2;codeSummary.Text=(selection.Count+(includeAll.Checked?1:0))+"集計 · "+ActivePaths().Length+" CSV";
+                copy.Enabled=true;save.Enabled=true;run.Enabled=!busy&&!EquityBusy&&!ResearchBusy&&paths.Length>=2;codeSummary.Text=(selection.Count+(includeAll.Checked?1:0))+"集計 · "+ActivePaths().Length+" CSV";
                 SetStatus(paths.Length<2?"syntax生成・コマンド保存はCSV不要です。集計時にCSV1・CSV2を選択してください。":board+" · "+choices.Count+"条件 · 集計できます",false);
             }catch(Exception ex){SetStatus(ex.Message,true);}
         }

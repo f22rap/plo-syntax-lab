@@ -299,3 +299,21 @@ Windows EXEの「EQ」タブに、双方のアクション前レンジから選�
 - 計算・CSV入力・頻度・保存の20,850チェックがLinux .NET 8で通過。製品EXEとWindows操作テストEXEはC# 5／.NET Framework 4.8参照でコンパイル済み。Windows実機での起動、ホバー、パス欄の表示と操作テスト実行は未確認。
 - ウィンドウタイトルの版識別は2026.10.13-multi-range。配布はソースから既存のWindows buildを使用し、ローカル確認用ZIPや個人CSVはGitに追加しない。
 
+
+## ユーザーsyntax・複数ボード登録（2026-10-14、第2ステップ）
+
+ユーザー承認済みの第2ステップとしてResearchData.cs、ResearchPanel.cs、ResearchEditors.csを追加。集計タブ内の条件セット編集・ボードCSV登録を実装した。手入力syntaxはそのまま保持し、literal/per_boardをサポート。未設定ボードは適用を中止し、全ハンドや別ボード定義に置き換えない。生成条件の取込はボード別定義として保存する。
+
+ResearchStoreは履歴ルートのResearch/workspace.jsonへ、版検証・ロック・一時ファイル置換で保存。JSON読込は既存データを置き換えずコピーとして追加する。カタログは共通局面条件1つと複数スポットを持ち、別局面は別カタログ。PLO4・HU・フロップ、2〜3アクション、相手複数CSV。本文検証・全パス・SHA-256・統合ハンド数を登録する。相手省略は頻度調査用。詳細はdocs/research-setup.md。設計段階のJSONと、実装のschema_version=1の読込用JSONを混同しない。
+
+今回の範囲は設定の編集・保存・登録、および現在ボードへのsyntax適用まで。登録カタログの一括計算、ボード特徴による横断調査、MCP公開、クラウド更新は未実装。次のステップはユーザーの承認後に進める。既存の15/11ツール版MCPは変更していない。
+
+既存20,850チェックに研究設定54チェックを追加して20,904チェック通過。Windows製品と操作テストをクロスコンパイル。実際のWindows画面操作は未実施。tests/ResearchUiTests.csはWindowsデスクトップ用であり、コンパイル成功を実行成功とは扱わない。
+
+## ボード横断の一括調査（2026-10-14、第3ステップ）
+
+ResearchRun.cs、ResearchFiles.cs、ResearchPanel.Run.cs、ResearchResultsView.csを追加。既存集計タブから登録カタログを一括計算し、ボード別・特徴別の表と全アクション散布図を表示する。Ahi抽出、スート／ペア／ランク構成の分類、ノードごとの分離、CSV/JSON/SVG/Markdown出力、Research/Runsへの自動保存・復元を実装。細部はdocs/research-run.md。
+
+数値計算は既存EquityInput/EquityRange/EquityFrequencyPlan/EquityEngineを使う。単一ボードEQと同じシード派生・入力で一致する。特徴別は登録された有効ボードの等重み平均、図はEQと頻度が両方ある共通対象。欠損を0にせず、存在しないベットサイズを補わない。総betはraiseを含まない。進行中は入力を固定し、中止では確定したボードだけを保存する。入力ファイルの登録ハッシュと照合する。
+
+64件の新規チェックを含む20,968チェック成功。製品／Windows操作テストはクロスコンパイル。SVG出力はレンダリング確認済み。Windows実画面操作は未実施。MCP公開とAIホスト接続は未着手の第4ステップで、ユーザーの次の承認後に進める。

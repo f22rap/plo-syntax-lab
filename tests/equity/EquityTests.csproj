@@ -13,6 +13,11 @@
     <Compile Include="../../src/EquityPlot.cs" />
     <Compile Include="../../src/EquityArchive.cs" />
     <Compile Include="../../src/SyntaxMatcher.cs" />
+    <Compile Include="../../src/ResearchData.cs" />
+    <Compile Include="ResearchTests.cs" />
+    <Compile Include="../../src/ResearchRun.cs" />
+    <Compile Include="../../src/ResearchFiles.cs" />
+    <Compile Include="ResearchRunTests.cs" />
     <Compile Include="EquityEngineTests.cs" />
     <Compile Include="EquityInputTests.cs" />
     <Compile Include="EquityPlotTests.cs" />

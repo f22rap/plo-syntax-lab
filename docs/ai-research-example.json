@@ -1,0 +1,239 @@
+{
+  "schema_version": "research-design-0.1",
+  "status": "design_example_not_executable",
+  "description": "架空のCSVと局面。パス・戦略・syntaxはユーザーが実データに合わせて設定する。",
+  "catalog": {
+    "catalog_id": "example-ahi-study",
+    "revision": 1,
+    "scenarios": [
+      {
+        "scenario_id": "example-hu-srp-100bb",
+        "game": "PLO4",
+        "players": 2,
+        "hero_position": "BB",
+        "villain_position": "BTN",
+        "effective_stack_bb": "100",
+        "pot_type": "single_raised",
+        "street": "flop",
+        "action_history": {
+          "preflop": "BTN open 2.5bb, BB call",
+          "flop_before_node": "none"
+        },
+        "solution_context": "example-only-rake-and-solver-settings-to-be-specified",
+        "equity_reference": "双方のフロップアクション前"
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "s1-check",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/AsKd7c/check.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s1-bet",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/AsKd7c/bet33.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s1-v1",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/AsKd7c/opponent-part1.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s1-v2",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/AsKd7c/opponent-part2.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s2-check",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/Ah8h3c/check.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s2-bet",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/Ah8h3c/bet33.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s2-v1",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/Ah8h3c/opponent-part1.csv"
+        },
+        "weight_unit": "0_to_1"
+      },
+      {
+        "source_id": "s2-v2",
+        "locator": {
+          "kind": "local_relative",
+          "path": "data/Ah8h3c/opponent-part2.csv"
+        },
+        "weight_unit": "0_to_1"
+      }
+    ],
+    "spots": [
+      {
+        "spot_id": "spot-askd7c",
+        "scenario_id": "example-hu-srp-100bb",
+        "board": "AsKd7c",
+        "node_key": "flop-bb-first-action",
+        "action_set_complete": true,
+        "hero_common_scale_confirmed": true,
+        "hero_actions": [
+          {
+            "action_id": "check",
+            "kind": "check",
+            "label": "Check",
+            "source_id": "s1-check"
+          },
+          {
+            "action_id": "bet33",
+            "kind": "bet",
+            "label": "Bet 33%",
+            "size": {
+              "unit": "pot_fraction",
+              "value": "0.33"
+            },
+            "source_id": "s1-bet"
+          }
+        ],
+        "opponent_pre_action": {
+          "source_ids": [
+            "s1-v1",
+            "s1-v2"
+          ],
+          "common_scale_confirmed": true
+        }
+      },
+      {
+        "spot_id": "spot-ah8h3c",
+        "scenario_id": "example-hu-srp-100bb",
+        "board": "Ah8h3c",
+        "node_key": "flop-bb-first-action",
+        "action_set_complete": true,
+        "hero_common_scale_confirmed": true,
+        "hero_actions": [
+          {
+            "action_id": "check",
+            "kind": "check",
+            "label": "Check",
+            "source_id": "s2-check"
+          },
+          {
+            "action_id": "bet33",
+            "kind": "bet",
+            "label": "Bet 33%",
+            "size": {
+              "unit": "pot_fraction",
+              "value": "0.33"
+            },
+            "source_id": "s2-bet"
+          }
+        ],
+        "opponent_pre_action": {
+          "source_ids": [
+            "s2-v1",
+            "s2-v2"
+          ],
+          "common_scale_confirmed": true
+        }
+      }
+    ]
+  },
+  "condition_set": {
+    "set_id": "my-ahi-conditions",
+    "revision": 1,
+    "name": "自分で設定したAhi調査条件",
+    "conditions": [
+      {
+        "condition_id": "all",
+        "label": "全ハンド",
+        "enabled": true,
+        "kind": "literal",
+        "scope": "all_selected_boards",
+        "syntax": "*"
+      },
+      {
+        "condition_id": "aa",
+        "label": "AAを含む",
+        "enabled": true,
+        "kind": "literal",
+        "scope": "all_selected_boards",
+        "syntax": "AA"
+      },
+      {
+        "condition_id": "a-one",
+        "label": "Aをちょうど1枚含む",
+        "enabled": true,
+        "kind": "literal",
+        "scope": "all_selected_boards",
+        "syntax": "A:!AA"
+      },
+      {
+        "condition_id": "a-second-rank",
+        "label": "Aとボード第2ランクを含む",
+        "enabled": true,
+        "kind": "per_board",
+        "by_board": {
+          "AsKd7c": "AK",
+          "Ah8h3c": "A8"
+        }
+      }
+    ]
+  },
+  "research_request": {
+    "catalog_id": "example-ahi-study",
+    "catalog_revision": 1,
+    "scenario_ids": [
+      "example-hu-srp-100bb"
+    ],
+    "board_filter": {
+      "street": "flop",
+      "contains_rank": "A"
+    },
+    "condition_set_id": "my-ahi-conditions",
+    "condition_set_revision": 1,
+    "condition_ids": [
+      "all",
+      "aa",
+      "a-one",
+      "a-second-rank"
+    ],
+    "group_by": [
+      "suit_texture",
+      "rank_multiplicity"
+    ],
+    "board_weighting": "equal_valid_boards",
+    "missing_definition_policy": "error",
+    "equity_mode": "required",
+    "equity_settings": {
+      "trials": 50000,
+      "seed": 7123,
+      "exact_river": false
+    },
+    "outputs": [
+      "per_board",
+      "category_summary",
+      "eq_action_scatter",
+      "provenance"
+    ]
+  }
+}

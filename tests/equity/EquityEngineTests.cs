@@ -186,6 +186,6 @@ namespace EquityTests {
             }
             Console.WriteLine("Compatibility: random and heavily blocked ranges match independent pair enumeration.");
         }
-        public static int Main(){try{var timer=Stopwatch.StartNew();Evaluator();Ranges();Calculations();WideRangesAndRunouts();CompatibilityOracle();InputTests.Run();PlotTests.Run();ArchiveTests.Run();Console.WriteLine("PASS: "+checks+" engine checks plus input/job checks, "+timer.Elapsed.TotalSeconds.ToString("F2")+" seconds");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
+        public static int Main(){try{var timer=Stopwatch.StartNew();Evaluator();Ranges();Calculations();WideRangesAndRunouts();CompatibilityOracle();InputTests.Run();PlotTests.Run();ArchiveTests.Run();ResearchTests.Run();ResearchRunTests.Run();Console.WriteLine("PASS: "+checks+" engine checks plus input/job checks, "+timer.Elapsed.TotalSeconds.ToString("F2")+" seconds");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
     }
 }

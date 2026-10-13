@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "revision": 0,
+  "condition_sets": [{
+    "set_id": "example-ahi",
+    "revision": 0,
+    "name": "Ahi 調査条件の例",
+    "conditions": [
+      {"condition_id":"all", "label":"全ハンド", "enabled":true, "kind":"literal", "syntax":"*", "by_board":{}},
+      {"condition_id":"aa", "label":"AAを含む", "enabled":true, "kind":"literal", "syntax":"AA", "by_board":{}},
+      {"condition_id":"one-a", "label":"Aをちょうど1枚含む", "enabled":true, "kind":"literal", "syntax":"A:!AA", "by_board":{}},
+      {"condition_id":"a-second-rank", "label":"Aとボード第2ランクを含む", "enabled":true, "kind":"per_board", "syntax":"", "by_board":{"AsKd7c":"AK","Ah8h3c":"A8"}}
+    ]
+  }],
+  "catalogs": []
+}
