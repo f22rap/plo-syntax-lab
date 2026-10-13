@@ -1,6 +1,6 @@
 # EQ入力画面・結果表：ステップ3
 
-> この文書は当該ステップの記録。現在はステップ5まで実装済み。最新の保存機能・検証状況は [equity-save.md](equity-save.md) を参照。
+> この文書は当該ステップの記録。現在の画面では集計タブへ統合し、自分のレンジを全入力CSVの合計に固定。現行操作は [equity-integrated-ui.md](equity-integrated-ui.md)、保存機能は [equity-save.md](equity-save.md) を参照。
 
 ステップ2のアクション前EQエンジンを、Windows EXEの新しい「EQ」タブへ接続した。グラフと結果保存・履歴は後続段階。GitHubへは未プッシュ。
 
@@ -25,7 +25,7 @@
 専用レンジCSVは添付仕様の入力形式を使用する。これは、既存のアクション比較CSVとは別の入力経路。
 
 - 20MiB以下。UTF-8の厳密デコード、失敗時はShift_JIS。BOM、CR/LF/CRLF、引用符とエスケープに対応。
-- hand/combo/range/ハンド/コンボ/レンジ、weight/frequency/freq/重み/頻度の列見出しに対応。列順は自由。
+- hand/combo/range/ハンド/コンボ/レンジ、weight/frequency/freq/重み/頻度の列見出しに対応。列順は自由。`weight`／重みがある場合は優先し、ない場合のみ`frequency`／`freq`／頻度を使用する。ソルバーの7列形式にも対応し、percent・ev・ev_diff・variationsは重みに使用しない。
 - 見出しなしは手札・任意の重みの1〜2列。曖昧な列数変更はエラー。
 - 重みは0〜1または0〜100を選択。%表記は選択に関係なく百分率。空欄は1。
 - weight 0の行もハンドを検証した上で除外。除外行、ハンドセル内の複数条件・@・改行は未対応として拒否。

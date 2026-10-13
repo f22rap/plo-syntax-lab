@@ -41,7 +41,7 @@ namespace FlopCommands.Equity {
                 var r=row.Result;if(r!=null){
                     if(r.CalculationVersion!="pre-action-joint-v1"||!new[]{r.Equity,r.VillainEquity,r.Win,r.Tie,r.Loss,r.CiLow,r.CiHigh}.All(Percent)||r.CiLow>r.Equity||r.CiHigh<r.Equity||Math.Abs(r.Equity+r.VillainEquity-100)>1e-6||r.HeroCount<1||r.VillainCount<1||r.Total<1||r.LegalPairs<1||!Finite(r.ElapsedMs)||r.ElapsedMs<0)throw new ArgumentException("保存したEQ数値が不正です。");
                 }
-                var f=row.Frequency;if(f!=null&&f.Percent!=null&&(f.Percent.Length!=input.ActionPaths.Length||input.BetActions.Length!=f.Percent.Length||!f.Percent.All(Percent)||Math.Abs(f.Percent.Sum()-100)>1e-6))throw new ArgumentException("保存した頻度が不正です。");
+                var f=row.Frequency;if(f!=null&&f.Percent!=null&&(f.Percent.Length!=input.ActionPaths.Length||!f.Percent.All(Percent)||Math.Abs(f.Percent.Sum()-100)>1e-6))throw new ArgumentException("保存した頻度が不正です。");
             }
             if(!j.Rows.Any(r=>r.Result!=null))throw new ArgumentException("確定EQがありません。");
         }
@@ -66,14 +66,14 @@ namespace FlopCommands.Equity {
             using(var stream=new MemoryStream()){
                 using(var x=XmlWriter.Create(stream,new XmlWriterSettings{Encoding=new UTF8Encoding(false),Indent=true,CloseOutput=false})){
                     x.WriteStartElement("svg","http://www.w3.org/2000/svg");x.WriteAttributeString("viewBox","0 0 1100 760");x.WriteAttributeString("width","1100");x.WriteAttributeString("height","760");x.WriteAttributeString("font-family","sans-serif");x.WriteAttributeString("font-size","15");
-                    x.WriteElementString("title","PLO Syntax Lab — EQ vs Bet Frequency");x.WriteElementString("desc","Pre-action equity vs bet frequency. Horizontal bars: Monte Carlo 95% confidence interval. Hover points for syntax details.");
-                    Element(x,"rect","width","1100","height","760","fill","white");Text(x,80,32,record.Job.Input.Board+" · EQ vs Bet Frequency","#162330","start");Text(x,80,55,record.CreatedUtc+" · Base seed "+record.Job.BaseSeed,"#5e6c78","start");
+                    x.WriteElementString("title","PLO Syntax Lab — EQ vs Action Frequency");x.WriteElementString("desc","Pre-action equity vs action frequency. Horizontal bars: Monte Carlo 95% confidence interval. Hover points for syntax details.");
+                    Element(x,"rect","width","1100","height","760","fill","white");Text(x,80,32,record.Job.Input.Board+" · EQ vs Action Frequency","#162330","start");Text(x,80,55,record.CreatedUtc+" · Base seed "+record.Job.BaseSeed,"#5e6c78","start");
                     string[] colors={"#2563eb","#008470","#b45309"};int legend=0;
                     foreach(var group in points.GroupBy(p=>p.ActionIndex)){var p=group.First();Element(x,"rect","x",N(80+legend*325),"y","72","width","12","height","12","fill",colors[p.ActionIndex]);Text(x,100+legend*325,84,p.Action+" (CSV"+(p.ActionIndex+1)+")",colors[p.ActionIndex],"start");legend++;}
                     const double left=90,top=125,width=930,height=510;
                     for(int v=0;v<=100;v+=20){double px=left+width*v/100,py=top+height-height*v/100;Element(x,"line","x1",N(px),"x2",N(px),"y1",N(top),"y2",N(top+height),"stroke","#e1e8ee");Element(x,"line","x1",N(left),"x2",N(left+width),"y1",N(py),"y2",N(py),"stroke","#e1e8ee");Text(x,px,top+height+27,v.ToString(Inv),"#5e6c78","middle");Text(x,left-15,py+5,v.ToString(Inv),"#5e6c78","end");}
-                    Element(x,"rect","x",N(left),"y",N(top),"width",N(width),"height",N(height),"fill","none","stroke","#a0aeb9");Text(x,90,112,"Bet frequency (%)","#162330","start");Text(x,555,695,"Pre-action hero equity (%)","#162330","middle");
-                    foreach(var p in points){double px=left+width*p.Equity/100,py=top+height-height*p.Frequency/100;string color=colors[p.ActionIndex];x.WriteStartElement("g");x.WriteElementString("title",p.Label+" | "+p.Syntax+" | "+p.Action+" (CSV"+(p.ActionIndex+1)+") | EQ "+N(p.Equity)+"% | Bet "+N(p.Frequency)+"% | "+(p.Exact?"Exact":"95% CI "+N(p.CiLow)+"–"+N(p.CiHigh)));
+                    Element(x,"rect","x",N(left),"y",N(top),"width",N(width),"height",N(height),"fill","none","stroke","#a0aeb9");Text(x,90,112,"Action frequency (%)","#162330","start");Text(x,555,695,"Pre-action hero equity (%)","#162330","middle");
+                    foreach(var p in points){double px=left+width*p.Equity/100,py=top+height-height*p.Frequency/100;string color=colors[p.ActionIndex];x.WriteStartElement("g");x.WriteElementString("title",p.Label+" | "+p.Syntax+" | "+p.Action+" (CSV"+(p.ActionIndex+1)+") | EQ "+N(p.Equity)+"% | Frequency "+N(p.Frequency)+"% | "+(p.Exact?"Exact":"95% CI "+N(p.CiLow)+"–"+N(p.CiHigh)));
                         if(!p.Exact)Element(x,"line","x1",N(left+width*p.CiLow/100),"x2",N(left+width*p.CiHigh/100),"y1",N(py),"y2",N(py),"stroke",color,"stroke-width","2","opacity","0.45");
                         if(p.ActionIndex==0)Element(x,"circle","cx",N(px),"cy",N(py),"r","5","fill",color,"stroke","white");
                         else if(p.ActionIndex==1)Element(x,"rect","x",N(px-5),"y",N(py-5),"width","10","height","10","fill",color,"stroke","white");

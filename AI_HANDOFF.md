@@ -274,7 +274,7 @@ CSV集計の登録時検証は`src/linux/compare.cjs`の`parseDataset`を共有�
 
 ユーザーのCSV・GUI履歴は移行・削除しない。設定のallowHistoryDeleteは初期false。削除ツールはユーザーの明示的な削除依頼がある場合だけ使う。テストは合成CSVと独立した一時履歴を使用する。クラウド11ツールにWindows用exe・PowerShellを持ち込まない。
 
-## EQ機能の追加（2026-10-12）
+## EQ機能の追加（2026-10-12時点の記録）
 
 Windows EXEの「EQ」タブに、双方のアクション前レンジから選択syntaxごとのエクイティを計算する機能を追加した。`src/EquityEngine.cs`、`EquityInput.cs`、`EquityJob.cs`、`EquityPlot.cs`、`EquityPanel.cs`、`EquityScatterChart.cs`、`EquityArchive.cs`、`EquityHistoryForm.cs`を参照。
 
@@ -285,4 +285,17 @@ Windows EXEの「EQ」タブに、双方のアクション前レンジから選�
 - `test.ps1`は新しい`test-equity.ps1`も実行。C# 5／.NET Framework 4.8を維持し、追加参照はSystem.Runtime.Serializationのみ。
 - Linuxの.NET 8で計20,722チェック通過。製品と画面テストの.NET Framework参照でのクロスコンパイル成功。Windows実機での起動・EQ画面操作は未確認。過去のWindows検証を今回のEQ機能の確認として扱わない。
 - 詳細：[入力](docs/equity-ui.md)、[計算](docs/equity-engine.md)、[散布図](docs/equity-plot.md)、[保存・検証](docs/equity-save.md)。ステップ2〜4文書の未実装記述は各段階時点の記録。
+
+## EQ集計画面・複数相手CSVへの更新（2026-10-13）
+
+上記の独立したEQタブとレンジ選択方式は更新済み。現行仕様は[集計画面へのEQ統合](docs/equity-integrated-ui.md)を参照。
+
+- 「集計＋EQ計算」でCSV比較とEQ計算を続けて実行し、集計ページのグラフ・表に両方を表示する。共通の中止ボタンを使用する。
+- 自分のアクション前レンジは、集計に入力した全CSVの物理ハンド別weight合計に固定する。ファイルごとの正規化はしない。
+- 相手レンジはテキスト、または複数CSVの一括読込に対応。7列CSVではweight列を優先。同一物理ハンドをファイル間で加算し、全体の比率を維持する。ファイル内の重複は従来の最大weight方式を維持する。
+- 読込済みファイル数・統合ハンド数・全ファイルのフルパスを表示する。不正ファイルや中止時は直前のレンジとパス一覧を保持する。全入力パスを履歴に保存し、結果出力による入力ファイルの上書きを防ぐ。
+- EQ×アクション頻度グラフには入力した全アクションを表示し、CSV1は青・CSV2は緑・CSV3は橙。ホバーで条件名・syntax・アクション・EQ・頻度を表示する。旧BetActionsは互換メタデータとして保持し、グラフの選別には使わない。
+- 合法な対戦組の照合とsyntax抽出を高速化。合成データ・同一シードの比較で結果一致を確認。Linuxでの4条件ジョブは中央値4.871秒から1.987秒。Windows速度は未測定。[測定手順](docs/equity-performance.md)とbenchmark-equity.ps1を参照。
+- 計算・CSV入力・頻度・保存の20,850チェックがLinux .NET 8で通過。製品EXEとWindows操作テストEXEはC# 5／.NET Framework 4.8参照でコンパイル済み。Windows実機での起動、ホバー、パス欄の表示と操作テスト実行は未確認。
+- ウィンドウタイトルの版識別は2026.10.13-multi-range。配布はソースから既存のWindows buildを使用し、ローカル確認用ZIPや個人CSVはGitに追加しない。
 

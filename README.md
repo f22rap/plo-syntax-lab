@@ -13,7 +13,7 @@ AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)、�
 - フロップ・ターン・リバー（ボード3〜5枚）、オマハの手札2枚＋ボード3枚で判定。
 - CSVごとのラベル、weight合計・比率の表とグラフ、結果CSVの保存。
 - 「全ハンド（syntaxなし）」の集計チェックボックス。
-- **EQ（Windows EXE）**：双方のアクション前レンジ入力、選択syntaxごとのEQ計算、ベット頻度との散布図。CSV／JSON／SVGの保存とEQ専用履歴。[EQ入力](docs/equity-ui.md)・[散布図](docs/equity-plot.md)・[保存と検証状況](docs/equity-save.md)。
+- **EQ（Windows EXE）**：「集計＋EQ計算」でCSV比較とEQを連続実行。自分のアクション前レンジは全入力CSVのweight合計に固定。相手レンジも複数CSVのweight合算に対応。集計画面に相手レンジ入力、選択syntaxごとのEQ、比率グラフと全アクションを色分けしたEQ散布図をまとめて表示。[統合画面の操作](docs/equity-integrated-ui.md)・[高速化と速度検証](docs/equity-performance.md)。CSV／JSON／SVGの保存とEQ専用履歴。[EQ入力](docs/equity-ui.md)・[散布図](docs/equity-plot.md)・[保存と検証状況](docs/equity-save.md)。
 - PowerShellコマンドの表示・コピー・保存・実行・中止。
 - 結果の自動保存、履歴タブでの閲覧・検索・個別削除。
 

@@ -86,7 +86,7 @@ namespace FlopCommands.Equity {
         // Only use datasets exported with a shared weight scale and all actions.
         // This operation does NOT normalize each action independently.
         public static EquityRange FromActions(IEnumerable<EquityRange> actions, bool commonScaleConfirmed) {
-            if (!commonScaleConfirmed) throw new ArgumentException("全アクションが共通のweight基準であることを確認してください。別々に正規化されている場合はアクション前レンジを入力してください。");
+            if (!commonScaleConfirmed) throw new ArgumentException("全アクションが共通のweight基準であることを確認してください。別々に正規化されている場合は共通weight基準でCSVを出力し直してください。");
             if (actions == null) throw new ArgumentNullException("actions");
             var sum = new Dictionary<long, double>(); var cards = new Dictionary<long, EquityCombo>();
             foreach (var action in actions) {
@@ -240,6 +240,32 @@ namespace FlopCommands.Equity {
         public int HeroRawCount, VillainRawCount, HeroBoardBlocked, VillainBoardBlocked, HeroNoOpponent, VillainNoOpponent;
         public int HeroCount, VillainCount;
     }
+    // Dense combinatorial indexes avoid hashing physical-card bitmasks. For sorted
+    // a<b<c<d, a+C(b,2)+C(c,3)+C(d,4) uniquely indexes the four-card subset.
+    // Inclusion-exclusion uses counts (not weights), so tiny legal weights survive.
+    internal sealed class ComboCompatibilityCounts {
+        static readonly int[] Choose2=new int[52],Choose3=new int[52],Choose4=new int[52];
+        readonly int[] singles=new int[52],pairs=new int[1326],triples=new int[22100],quads=new int[270725];
+        int total;
+        static ComboCompatibilityCounts(){for(int n=0;n<52;n++){Choose2[n]=n*(n-1)/2;Choose3[n]=n*(n-1)*(n-2)/6;Choose4[n]=n*(n-1)*(n-2)*(n-3)/24;}}
+        internal void Clear(){Array.Clear(singles,0,singles.Length);Array.Clear(pairs,0,pairs.Length);Array.Clear(triples,0,triples.Length);Array.Clear(quads,0,quads.Length);total=0;}
+        internal void Add(EquityCombo combo){
+            int a=combo.Cards[0],b=combo.Cards[1],c=combo.Cards[2],d=combo.Cards[3];
+            int b2=Choose2[b],c2=Choose2[c],d2=Choose2[d],c3=Choose3[c],d3=Choose3[d];
+            singles[a]++;singles[b]++;singles[c]++;singles[d]++;
+            pairs[a+b2]++;pairs[a+c2]++;pairs[a+d2]++;pairs[b+c2]++;pairs[b+d2]++;pairs[c+d2]++;
+            triples[a+b2+c3]++;triples[a+b2+d3]++;triples[a+c2+d3]++;triples[b+c2+d3]++;
+            quads[a+b2+c3+Choose4[d]]++;total++;
+        }
+        internal int Compatible(EquityCombo combo){
+            int a=combo.Cards[0],b=combo.Cards[1],c=combo.Cards[2],d=combo.Cards[3];
+            int b2=Choose2[b],c2=Choose2[c],d2=Choose2[d],c3=Choose3[c],d3=Choose3[d];
+            return total-singles[a]-singles[b]-singles[c]-singles[d]
+                +pairs[a+b2]+pairs[a+c2]+pairs[a+d2]+pairs[b+c2]+pairs[b+d2]+pairs[c+d2]
+                -triples[a+b2+c3]-triples[a+b2+d3]-triples[a+c2+d3]-triples[b+c2+d3]
+                +quads[a+b2+c3+Choose4[d]];
+        }
+    }
     public sealed class EquityPlan {
         internal readonly EquityCombo[] Hero, Villain;
         internal readonly int[] Board;
@@ -264,16 +290,15 @@ namespace FlopCommands.Equity {
             if(h.Length==0||Villain.Length==0)throw new ArgumentException("ボード除外後のレンジが空です。");
             // Inclusion-exclusion with integer counts gives exact existence/pair counts;
             // do NOT subtract floating-point weight sums (tiny valid weights could vanish).
-            var subsets=new Dictionary<long,int>();
+            var subsets=new ComboCompatibilityCounts();
             for(int i=0;i<Villain.Length;i++) {
                 if((i&1023)==0){token.ThrowIfCancellationRequested();Report(progress,"prepare",i,Villain.Length+h.Length);}
-                var c=Villain[i];for(int bits=1;bits<16;bits++) {long key=0;for(int j=0;j<4;j++)if((bits&(1<<j))!=0)key|=1L<<c.Cards[j];int count;subsets.TryGetValue(key,out count);subsets[key]=count+1;}
+                subsets.Add(Villain[i]);
             }
             var valid=new List<EquityCombo>();
             for(int i=0;i<h.Length;i++) {
                 if((i&1023)==0){token.ThrowIfCancellationRequested();Report(progress,"prepare",Villain.Length+i,Villain.Length+h.Length);}
-                var c=h[i];int compatible=Villain.Length;
-                for(int bits=1;bits<16;bits++){long key=0;int parity=0;for(int j=0;j<4;j++)if((bits&(1<<j))!=0){key|=1L<<c.Cards[j];parity++;}int count;subsets.TryGetValue(key,out count);compatible+=(parity%2==0?count:-count);}
+                var c=h[i];int compatible=subsets.Compatible(c);
                 if(compatible>0){valid.Add(c);LegalPairs+=compatible;}
             }
             Hero=valid.ToArray();HeroNoOpponent=h.Length-Hero.Length;
@@ -284,13 +309,12 @@ namespace FlopCommands.Equity {
             subsets.Clear();
             for(int i=0;i<Hero.Length;i++) {
                 if((i&1023)==0){token.ThrowIfCancellationRequested();Report(progress,"compatible",i,Hero.Length+Villain.Length);}
-                var c=Hero[i];for(int bits=1;bits<16;bits++){long key=0;for(int j=0;j<4;j++)if((bits&(1<<j))!=0)key|=1L<<c.Cards[j];int count;subsets.TryGetValue(key,out count);subsets[key]=count+1;}
+                subsets.Add(Hero[i]);
             }
             valid.Clear();
             for(int i=0;i<Villain.Length;i++) {
                 if((i&1023)==0){token.ThrowIfCancellationRequested();Report(progress,"compatible",Hero.Length+i,Hero.Length+Villain.Length);}
-                var c=Villain[i];int compatible=Hero.Length;
-                for(int bits=1;bits<16;bits++){long key=0;int parity=0;for(int j=0;j<4;j++)if((bits&(1<<j))!=0){key|=1L<<c.Cards[j];parity++;}int count;subsets.TryGetValue(key,out count);compatible+=(parity%2==0?count:-count);}
+                var c=Villain[i];int compatible=subsets.Compatible(c);
                 if(compatible>0)valid.Add(c);
             }
             token.ThrowIfCancellationRequested();Report(progress,"compatible",Hero.Length+Villain.Length,Hero.Length+Villain.Length);

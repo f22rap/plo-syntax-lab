@@ -161,6 +161,31 @@ namespace EquityTests {
             Close(full.Equity,50,2,"symmetric random ranges");
             Console.WriteLine("Wide ranges and physical runouts passed. random vs random prepare + 10,000 trials: "+timer.Elapsed.TotalSeconds.ToString("F2")+"s; EQ="+full.Equity.ToString("F2"));
         }
-        public static int Main(){try{var timer=Stopwatch.StartNew();Evaluator();Ranges();Calculations();WideRangesAndRunouts();InputTests.Run();PlotTests.Run();ArchiveTests.Run();Console.WriteLine("PASS: "+checks+" engine checks plus input/job checks, "+timer.Elapsed.TotalSeconds.ToString("F2")+" seconds");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
+        static void CompatibilityOracle(){
+            var rng=new Random(1984);
+            for(int test=0;test<30;test++){
+                int[] board=Deal(rng,3+test%3);long boardMask=EquityCards.Mask(board);
+                var hands=new List<EquityCombo>();
+                for(int i=0;i<90;i++){
+                    int[] cards=Deal(rng,4);
+                    // Shared cards create heavily blocked domains as well as random ones.
+                    if(test%3==0&&!cards.Skip(1).Contains(51))cards[0]=51;
+                    hands.Add(new EquityCombo(cards,i%2==0?1e-100:1));
+                }
+                var hero=new EquityRange(hands.Take(45));var villain=new EquityRange(hands.Skip(30));
+                var h=hero.GetCombos().Where(c=>(c.Mask&boardMask)==0).ToArray();var v=villain.GetCombos().Where(c=>(c.Mask&boardMask)==0).ToArray();
+                long pairs=0;foreach(var a in h)foreach(var b in v)if((a.Mask&b.Mask)==0)pairs++;
+                string text=EquityCards.Text(board);
+                if(pairs==0){Throws<ArgumentException>(()=>EquityEngine.Prepare(text,hero,villain,None,null),"oracle empty legal domain");continue;}
+                var plan=EquityEngine.Prepare(text,hero,villain,None,null);
+                int hc=h.Count(a=>v.Any(b=>(a.Mask&b.Mask)==0)),vc=v.Count(b=>h.Any(a=>(a.Mask&b.Mask)==0));
+                Check(plan.LegalPairs==pairs,"compatibility count matches direct physical-card intersection");
+                Check(plan.HeroCount==hc&&plan.VillainCount==vc,"compatible support matches brute force");
+                Check(plan.HeroNoOpponent==h.Length-hc&&plan.VillainNoOpponent==v.Length-vc,"unpaired combo counts match brute force");
+                Check(plan.HeroBoardBlocked==hero.Count-h.Length&&plan.VillainBoardBlocked==villain.Count-v.Length,"board-blocked counts match brute force");
+            }
+            Console.WriteLine("Compatibility: random and heavily blocked ranges match independent pair enumeration.");
+        }
+        public static int Main(){try{var timer=Stopwatch.StartNew();Evaluator();Ranges();Calculations();WideRangesAndRunouts();CompatibilityOracle();InputTests.Run();PlotTests.Run();ArchiveTests.Run();Console.WriteLine("PASS: "+checks+" engine checks plus input/job checks, "+timer.Elapsed.TotalSeconds.ToString("F2")+" seconds");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
     }
 }

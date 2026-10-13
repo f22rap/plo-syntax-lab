@@ -13,6 +13,7 @@ namespace FlopCommands.Equity {
         public string Board, HeroText, VillainText;
         public EquityHeroMode HeroMode;
         public bool CommonScaleConfirmed;
+        // Legacy archive metadata only; every action is now plotted.
         public bool[] BetActions=new bool[0];
         public EquityCondition[] Conditions;
         public string[] RangeInputPaths=new string[0];
@@ -33,7 +34,7 @@ namespace FlopCommands.Equity {
             if(request.Conditions.Any(c=>string.IsNullOrWhiteSpace(c.Label)||string.IsNullOrWhiteSpace(c.Syntax)))throw new ArgumentException("条件名またはsyntaxが空です。");
             if(request.Settings.Trials<1||request.Settings.Trials>2000000)throw new ArgumentException("試行数は1〜2,000,000で指定してください。");
             Report(progress,"アクション前レンジを読み込み中",0,request.Conditions.Length,null);
-            bool wantsPlot=request.BetActions.Any(b=>b);string plotStatus="散布図：ベットとして表示するCSVを選択してください。";
+            bool wantsPlot=request.ActionPaths.Length>0;string plotStatus="散布図：集計に使うアクションCSVを選択してください。";
             EquityActionData[] datasets=null;EquityFrequencyPlan frequencies=null;
             if(request.HeroMode==EquityHeroMode.AllActions||wantsPlot){
                 try{
@@ -53,8 +54,7 @@ namespace FlopCommands.Equity {
             else if(request.HeroMode==EquityHeroMode.AllActions)hero=EquityRange.FromActions(datasets.Select(d=>d.Range),true);
             else throw new ArgumentException("自分のレンジ指定方法が不正です。");
             if(wantsPlot&&datasets!=null){
-                if(request.BetActions.Length!=datasets.Length)plotStatus="散布図なし：ベットCSVの指定とCSV数が一致しません。";
-                else{frequencies=new EquityFrequencyPlan(datasets,token);plotStatus="ベット頻度は各ハンドのアクション比率を、自分のアクション前レンジの重みで平均。横線はEQの95%区間。";}
+                frequencies=new EquityFrequencyPlan(datasets,token);plotStatus="全CSVのアクション頻度を色分け表示。同じ条件のEQは共通。横線はEQの95%区間。";
             }
             long boardMask=EquityCards.Mask(EquityCards.Parse(request.Board,3,5));
             var villain=EquityRange.Parse(request.VillainText,token);
@@ -66,16 +66,18 @@ namespace FlopCommands.Equity {
                 Action<EquityProgress> notify=p=>{if(timer.ElapsedMilliseconds>=100||p.Completed==p.Target){Report(progress,condition.Label,current,request.Conditions.Length,p);timer.Restart();}};
                 Report(progress,condition.Label,index,request.Conditions.Length,null);
                 try{
+                    // Reuse the same syntax-filtered range for both frequency and EQ.
+                    EquityRange selected=null;
                     if(frequencies!=null){
                         EquityFrequency frequency;
                         if(!frequencyResults.TryGetValue(condition.Syntax,out frequency)){
-                            frequency=frequencies.Calculate(hero.SelectSyntax(condition.Syntax,token),boardMask,token);frequencyResults[condition.Syntax]=frequency;
+                            selected=hero.SelectSyntax(condition.Syntax,token);frequency=frequencies.Calculate(selected,boardMask,token);frequencyResults[condition.Syntax]=frequency;
                         }
                         row.Frequency=frequency;
                     }
                     EquityResult result;
                     if(!results.TryGetValue(condition.Syntax,out result)){
-                        var selected=hero.SelectSyntax(condition.Syntax,token);
+                        if(selected==null)selected=hero.SelectSyntax(condition.Syntax,token);
                         if(selected.Count==0){row.Status="該当なし：アクション前レンジにこのsyntaxのハンドがありません。";rows.Add(row);continue;}
                         var plan=EquityEngine.Prepare(request.Board,selected,villain,token,notify);
                         uint derived=seed;unchecked{foreach(char c in condition.Syntax)derived=(derived^c)*16777619;}

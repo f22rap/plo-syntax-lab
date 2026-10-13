@@ -49,7 +49,7 @@ namespace FlopCommands.Equity {
             if(job==null)return new EquityPlotPoint[0];var points=new List<EquityPlotPoint>();
             for(int i=0;i<job.Rows.Length;i++){
                 var row=job.Rows[i];if(row.Result==null||row.Frequency==null||row.Frequency.Percent==null)continue;
-                for(int a=0;a<job.Input.BetActions.Length;a++)if(job.Input.BetActions[a])points.Add(new EquityPlotPoint{
+                for(int a=0;a<row.Frequency.Percent.Length;a++)points.Add(new EquityPlotPoint{
                     RowIndex=i,ActionIndex=a,Label=row.Label,Syntax=row.Syntax,Action=job.Input.ActionLabels[a],
                     Equity=row.Result.Equity,Frequency=row.Frequency.Percent[a],CiLow=row.Result.CiLow,CiHigh=row.Result.CiHigh,Exact=row.Result.Exact});
             }

@@ -45,7 +45,7 @@ namespace FlopCommands {
         readonly TextBox command=new TextBox();
         readonly Label status=new Label(), selectionSummary=new Label(), codeSummary=new Label();
         readonly Label[] cards={new Label(),new Label(),new Label(),new Label(),new Label()};
-        readonly Button copy=Button("コピー",false), save=Button(".ps1を保存",false), run=Button("実行",true), cancel=Button("中止",false), export=Button("結果をCSV保存",false);
+        readonly Button copy=Button("コピー",false), save=Button(".ps1を保存",false), run=Button("集計＋EQ計算",true), cancel=Button("中止",false), export=Button("結果をCSV保存",false);
         readonly TabControl outputTabs=new TabControl();
         readonly TabPage resultsPage=new TabPage("結果");
         readonly DataGridView resultsGrid=new DataGridView();
@@ -56,7 +56,7 @@ namespace FlopCommands {
         readonly ProgressBar progress=new ProgressBar();
         readonly Timer executionTimer=new Timer();
         readonly Stopwatch elapsed=new Stopwatch();
-        Control settingsArea,filtersArea;
+        Control settingsArea,filtersArea,resultArea;TabPage computePage;
         System.Threading.CancellationTokenSource cancellation;
         RunResult lastResult;
         string[] lastSources=new string[0];
@@ -81,16 +81,19 @@ namespace FlopCommands {
         public MainForm():this(new HistoryStore()){}
         public MainForm(HistoryStore store) {
             historyStore=store;
-            Text="PLO Syntax Lab → PowerShell · CSV比較";
+            Text="PLO Syntax Lab → PowerShell · CSV比較 · 2026.10.13-multi-range";
             ClientSize=new Size(1480,930);MinimumSize=new Size(1240,840);
             StartPosition=FormStartPosition.CenterScreen;BackColor=Canvas;
             Font=new Font("Yu Gothic UI",10F);ForeColor=Ink;
             AutoScaleMode=AutoScaleMode.Dpi;
-            var root=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=5,Margin=Padding.Empty};
+            var root=new TableLayoutPanel{Dock=DockStyle.Top,ColumnCount=1,RowCount=6,Margin=Padding.Empty,Height=1375};
             root.RowStyles.Add(new RowStyle(SizeType.Absolute,88));root.RowStyles.Add(new RowStyle(SizeType.Absolute,245));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute,32));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
-            mainTabs.Dock=DockStyle.Fill;Controls.Add(mainTabs);var computePage=new TabPage("集計");computePage.Controls.Add(root);mainTabs.TabPages.Add(computePage);
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute,32));root.RowStyles.Add(new RowStyle(SizeType.Absolute,280));root.RowStyles.Add(new RowStyle(SizeType.Absolute,700));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
+            mainTabs.Dock=DockStyle.Fill;Controls.Add(mainTabs);computePage=new TabPage("集計"){AutoScroll=true};computePage.Controls.Add(root);mainTabs.TabPages.Add(computePage);
             historyPanel=new HistoryPanel(historyStore);var historyPage=new TabPage("履歴");historyPage.Controls.Add(historyPanel);mainTabs.TabPages.Add(historyPage);
+            equityPanel=new EquityPanel(new Equity.EquityHistoryStore(Path.Combine(historyStore.Root,"EQ")));root.Controls.Add(equityPanel,0,3);
+            Action resizeEquity=()=>{root.RowStyles[3].Height=equityPanel.InputHeight;root.Height=(int)Math.Ceiling(root.RowStyles.Cast<RowStyle>().Sum(row=>row.Height));};
+            equityPanel.InputHeightChanged+=resizeEquity;resizeEquity();
             mainTabs.SelectedIndexChanged+=(s,e)=>{if(mainTabs.SelectedIndex==1)historyPanel.RefreshEntries(historyPanel.CurrentId);};
             var header=new Panel{Dock=DockStyle.Fill,BackColor=Ink,Margin=Padding.Empty,Padding=new Padding(24,12,24,8)};
             var title=Label("PLO Syntax Lab → PowerShell",20,Color.White);title.Dock=DockStyle.Top;title.Height=43;
@@ -129,7 +132,7 @@ namespace FlopCommands {
             files.Controls.Add(Label("比率 = 各CSVのweight合計 ÷ 選択した全CSVのweight合計 × 100",9,Muted),0,5);inputs.Controls.Add(files,1,0);
             status.Dock=DockStyle.Fill;status.Margin=new Padding(24,0,24,0);status.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(status,0,2);
             var split=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Padding=new Padding(24,5,24,0),Margin=Padding.Empty};
-            split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,39));split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,61));root.Controls.Add(split,0,3);
+            split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,28));split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,72));root.Controls.Add(split,0,4);
             var left=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=4,ColumnCount=1,Margin=new Padding(0,0,12,0)};
             filtersArea=left;
             left.RowStyles.Add(new RowStyle(SizeType.Absolute,39));left.RowStyles.Add(new RowStyle(SizeType.Absolute,33));left.RowStyles.Add(new RowStyle(SizeType.Percent,100));left.RowStyles.Add(new RowStyle(SizeType.Absolute,35));
@@ -140,25 +143,26 @@ namespace FlopCommands {
             ConfigureGrid();left.Controls.Add(grid,0,2);
             selectionSummary.Dock=DockStyle.Fill;selectionSummary.TextAlign=ContentAlignment.MiddleLeft;selectionSummary.ForeColor=Muted;left.Controls.Add(selectionSummary,0,3);split.Controls.Add(left,0,0);
             var right=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=3,Margin=new Padding(8,0,0,0)};
-            right.RowStyles.Add(new RowStyle(SizeType.Absolute,39));right.RowStyles.Add(new RowStyle(SizeType.Percent,100));right.RowStyles.Add(new RowStyle(SizeType.Absolute,48));
-            var codeTitle=Label("3  コマンドを実行・結果を確認",11,Ink);codeTitle.Dock=DockStyle.Fill;right.Controls.Add(codeTitle,0,0);
+            resultArea=right;right.RowStyles.Add(new RowStyle(SizeType.Absolute,39));right.RowStyles.Add(new RowStyle(SizeType.Percent,100));right.RowStyles.Add(new RowStyle(SizeType.Absolute,48));
+            var codeTitle=Label("3  集計とEQを計算・結果を確認",11,Ink);codeTitle.Dock=DockStyle.Fill;right.Controls.Add(codeTitle,0,0);
             command.Dock=DockStyle.Fill;command.ReadOnly=true;command.WordWrap=false;command.Multiline=true;command.ScrollBars=ScrollBars.Both;command.MaxLength=int.MaxValue;command.Font=new Font("Consolas",10);command.BackColor=Color.FromArgb(19,30,43);command.ForeColor=Color.FromArgb(216,232,238);command.BorderStyle=BorderStyle.None;command.AccessibleName="生成したPowerShellコマンド";command.Margin=Padding.Empty;
             outputTabs.Dock=DockStyle.Fill;outputTabs.Margin=Padding.Empty;
             var codePage=new TabPage("コマンド");codePage.Controls.Add(command);outputTabs.TabPages.Add(codePage);ConfigureResults();outputTabs.TabPages.Add(resultsPage);right.Controls.Add(outputTabs,0,1);
-            var actions=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=5,Padding=new Padding(0,8,0,0),Margin=Padding.Empty};actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,74));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,107));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,87));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,72));
+            var actions=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=5,Padding=new Padding(0,8,0,0),Margin=Padding.Empty};actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,74));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,107));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,150));actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,72));
             codeSummary.Dock=DockStyle.Fill;codeSummary.TextAlign=ContentAlignment.MiddleLeft;codeSummary.Font=new Font("Yu Gothic UI",9);actions.Controls.Add(codeSummary,0,0);actions.Controls.Add(copy,1,0);actions.Controls.Add(save,2,0);actions.Controls.Add(run,3,0);actions.Controls.Add(cancel,4,0);cancel.Enabled=false;right.Controls.Add(actions,0,2);split.Controls.Add(right,1,0);
-            var footer=Label("PLO4 · 手札2枚＋ボード3枚 · フロップ / ターン / リバー · Monker実機の受理・抽出は未確認",9,Muted);footer.Dock=DockStyle.Fill;footer.Margin=new Padding(24,0,0,0);footer.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(footer,0,4);
+            var footer=Label("PLO4 · 手札2枚＋ボード3枚 · フロップ / ターン / リバー · Monker実機の受理・抽出は未確認",9,Muted);footer.Dock=DockStyle.Fill;footer.Margin=new Padding(24,0,0,0);footer.TextAlign=ContentAlignment.MiddleLeft;root.Controls.Add(footer,0,5);
             debounce.Interval=350;debounce.Tick+=(s,e)=>{debounce.Stop();ApplyBoard();};boardInput.TextChanged+=(s,e)=>{if(!starting){CancelDefaults();InvalidateCommand();debounce.Stop();debounce.Start();}};
             search.TextChanged+=(s,e)=>RefreshGrid();
             copy.Click+=(s,e)=>CopyCommand();save.Click+=(s,e)=>SaveCommand();
-            run.Click+=async(s,e)=>await ExecuteAsync();cancel.Click+=(s,e)=>{if(cancellation!=null){cancel.Enabled=false;resultStatus.Text="中止しています…";cancellation.Cancel();}};export.Click+=(s,e)=>SaveResults();
+            run.Click+=async(s,e)=>await ExecuteAsync();cancel.Click+=(s,e)=>CancelExecution();export.Click+=(s,e)=>SaveResults();
             executionTimer.Interval=500;executionTimer.Tick+=(s,e)=>{if(busy&&cancellation!=null&&!cancellation.IsCancellationRequested)resultStatus.Text=board+" · weight合計・比率"+"\r\n実行中（"+(int)elapsed.Elapsed.TotalSeconds+"秒）…";};
             FormClosing+=(s,e)=>{if(busy||EquityBusy){e.Cancel=true;closeWhenDone=true;if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();}};
             var tip=new ToolTip();tip.SetToolTip(search,"条件名またはsyntaxで絞り込みます。非表示になった選択も保持します。");tip.SetToolTip(boardInput,"ランクとスートを3〜5枚。スペース・10・スート記号にも対応します。");
             boardInput.Text="AsKd7s";
             Shown+=(s,e)=>QueueDefaults();FormClosed+=(s,e)=>{CancelDefaults();DefaultRunner.StopAll();if(bridge!=null)bridge.Dispose();};
-            equityPanel=new EquityPanel(()=>mainTabs.SelectedIndex=0,new Equity.EquityHistoryStore(Path.Combine(historyStore.Root,"EQ")));var equityPage=new TabPage("EQ");equityPage.Controls.Add(equityPanel);mainTabs.TabPages.Add(equityPage);
-            equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy;filtersArea.Enabled=!value&&!busy;run.Enabled=!value&&!busy&&command.Text.Length>0&&ActivePaths().Length>=2;if(!value&&closeWhenDone&&!IsDisposed)BeginInvoke(new Action(Close));};
+            run.Name="runComparisonEq";cancel.Name="cancelComparisonEq";
+            equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy;filtersArea.Enabled=!value&&!busy;run.Enabled=!value&&!busy&&command.Text.Length>0&&ActivePaths().Length>=2;cancel.Enabled=value||busy;if(!value)FinishClose();};
+            equityPanel.InputChanged+=()=>{if(busy&&cancellation!=null)cancellation.Cancel();};
             starting=false;SwitchSyntaxMode();ApplyBoard();
         }
         static Label Label(string text,float size,Color color){return new Label{Text=text,AutoSize=false,Dock=DockStyle.Top,Height=27,Font=new Font("Yu Gothic UI",size,FontStyle.Regular),ForeColor=color,Margin=Padding.Empty};}
@@ -186,64 +190,67 @@ namespace FlopCommands {
         }
         void ConfigureResults(){
             resultsPage.BackColor=Color.White;resultsPage.Padding=new Padding(10);
-            var layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Margin=Padding.Empty};
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,50));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,8));layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,45));
-            resultStatus.Dock=DockStyle.Fill;resultStatus.Text="「実行」を押すと、ここに集計結果を表示します。";resultStatus.ForeColor=Muted;layout.Controls.Add(resultStatus,0,0);
+            var layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=5,Margin=Padding.Empty};
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,50));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,8));layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,45));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,110));
+            resultStatus.Dock=DockStyle.Fill;resultStatus.Text="「集計＋EQ計算」を押すと、ここに結果を表示します。";resultStatus.ForeColor=Muted;layout.Controls.Add(resultStatus,0,0);
             progress.Dock=DockStyle.Fill;progress.Visible=false;progress.MarqueeAnimationSpeed=30;layout.Controls.Add(progress,0,1);
             var body=new Panel{Dock=DockStyle.Fill,Margin=Padding.Empty};
             resultsGrid.Dock=DockStyle.Fill;resultsGrid.ReadOnly=true;resultsGrid.AllowUserToAddRows=false;resultsGrid.AllowUserToDeleteRows=false;resultsGrid.AllowUserToResizeRows=false;resultsGrid.RowHeadersVisible=false;resultsGrid.BackgroundColor=Color.White;resultsGrid.BorderStyle=BorderStyle.None;
             resultsGrid.AutoGenerateColumns=false;resultsGrid.ColumnHeadersHeight=36;resultsGrid.EnableHeadersVisualStyles=false;resultsGrid.ColumnHeadersDefaultCellStyle.BackColor=Color.FromArgb(225,233,239);resultsGrid.ColumnHeadersDefaultCellStyle.Font=new Font("Yu Gothic UI",9);resultsGrid.RowTemplate.Height=36;resultsGrid.GridColor=Canvas;
             resultsGrid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(215,241,234);resultsGrid.DefaultCellStyle.SelectionForeColor=Ink;resultsGrid.DefaultCellStyle.NullValue="—";
             ConfigureResultColumns(2);
-            resultViews.Dock=DockStyle.Fill;var tablePage=new TabPage("表");tablePage.Controls.Add(resultsGrid);var graphPage=new TabPage("グラフ");graphPage.Controls.Add(chart);resultViews.TabPages.Add(tablePage);resultViews.TabPages.Add(graphPage);body.Controls.Add(resultViews);
+            resultViews.Dock=DockStyle.Fill;var tablePage=new TabPage("表");var tables=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=2};tables.RowStyles.Add(new RowStyle(SizeType.Percent,50));tables.RowStyles.Add(new RowStyle(SizeType.Percent,50));tables.Controls.Add(Group("CSV集計",resultsGrid),0,0);tables.Controls.Add(Group("アクション前EQ",equityPanel.TableView),0,1);tablePage.Controls.Add(tables);
+            var graphPage=new TabPage("グラフ");var graphs=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Name="comparisonAndEqGraphs"};graphs.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,31));graphs.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,69));graphs.Controls.Add(Group("CSV比率",chart),0,0);graphs.Controls.Add(Group("EQ × アクション頻度",equityPanel.PlotView),1,0);graphPage.Controls.Add(graphs);resultViews.TabPages.Add(tablePage);resultViews.TabPages.Add(graphPage);body.Controls.Add(resultViews);
             errorOutput.Dock=DockStyle.Fill;errorOutput.Padding=new Padding(12);errorOutput.BackColor=Color.FromArgb(255,245,240);errorOutput.ForeColor=Color.FromArgb(171,57,37);errorOutput.Visible=false;body.Controls.Add(errorOutput);layout.Controls.Add(body,0,2);
             var bottom=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Margin=Padding.Empty,Padding=new Padding(0,8,0,0)};bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,144));
-            comparison.Dock=DockStyle.Fill;comparison.Font=new Font("Yu Gothic UI",9);comparison.TextAlign=ContentAlignment.MiddleLeft;bottom.Controls.Add(comparison,0,0);export.Enabled=false;bottom.Controls.Add(export,1,0);layout.Controls.Add(bottom,0,3);resultsPage.Controls.Add(layout);
+            comparison.Dock=DockStyle.Fill;comparison.Font=new Font("Yu Gothic UI",9);comparison.TextAlign=ContentAlignment.MiddleLeft;bottom.Controls.Add(comparison,0,0);export.Enabled=false;bottom.Controls.Add(export,1,0);layout.Controls.Add(bottom,0,3);layout.Controls.Add(equityPanel.FooterView,0,4);resultsPage.Controls.Add(layout);
         }
+        static Control Group(string title,Control content){var box=new GroupBox{Text=title,Dock=DockStyle.Fill,Padding=new Padding(6)};box.Controls.Add(content);return box;}
         void ClearResults(){
             lastResult=null;lastSources=new string[0];resultsGrid.Rows.Clear();chart.SetData(null);errorOutput.Text="";errorOutput.Visible=false;resultsGrid.Visible=true;resultViews.Visible=true;export.Enabled=false;comparison.Text="";
-            resultStatus.Text="「実行」を押すと、ここに集計結果を表示します。";
+            resultStatus.Text="「集計＋EQ計算」を押すと、ここに結果を表示します。";
         }
-        public void CancelExecution(){if(cancellation!=null){cancel.Enabled=false;resultStatus.Text="中止しています…";cancellation.Cancel();}}
+        void FinishClose(){if(closeWhenDone&&!busy&&!EquityBusy&&!IsDisposed){closeWhenDone=false;BeginInvoke(new Action(Close));}}
+        public void CancelExecution(){cancel.Enabled=false;resultStatus.Text="中止しています…";if(cancellation!=null)cancellation.Cancel();if(EquityBusy)equityPanel.Cancel();}
         public async Task ExecuteAsync(){
             if(busy||EquityBusy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
-            mainTabs.SelectedIndex=0;
-            // Self-hosted invocations also need the form's UI context for awaited updates.
-            if(InvokeRequired)throw new InvalidOperationException("実行はアプリの画面から開始してください。");
+            mainTabs.SelectedIndex=0;if(InvokeRequired)throw new InvalidOperationException("実行はアプリの画面から開始してください。");
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
-            string code=command.Text, context=board+" · weight合計・比率"; string[] sources=ActivePaths();
-            ClearResults();busy=true;equityPanel.Enabled=false;settingsArea.Enabled=false;filtersArea.Enabled=false;run.Enabled=false;cancel.Enabled=true;
-            outputTabs.SelectedTab=resultsPage;resultStatus.Text=context+"\r\n実行中…";progress.Style=ProgressBarStyle.Marquee;progress.Visible=true;
-            cancellation=new System.Threading.CancellationTokenSource();elapsed.Restart();executionTimer.Start();
-            RunResult completed=null;string failure=null;bool canceled=false;
+            equityPanel.ResetForComparison();var eqRequest=equityPanel.CaptureForComparison();
+            string code=command.Text,context=board+" · weight合計・比率";string[] sources=ActivePaths();
+            ClearResults();busy=true;cancellation=new System.Threading.CancellationTokenSource();var token=cancellation.Token;equityPanel.SetExternalBusy(true);settingsArea.Enabled=false;filtersArea.Enabled=false;run.Enabled=false;cancel.Enabled=true;
+            outputTabs.SelectedTab=resultsPage;resultViews.SelectedIndex=1;computePage.ScrollControlIntoView(resultArea);resultStatus.Text=context+"\r\n集計中…";progress.Style=ProgressBarStyle.Marquee;progress.Visible=true;elapsed.Restart();executionTimer.Start();
             try{
-                completed=await CommandRunner.RunAsync(code,cancellation.Token);
-            }catch(OperationCanceledException){canceled=true;}
-            catch(Exception ex){failure=string.IsNullOrWhiteSpace(ex.Message)?ex.ToString():ex.Message;}
-            finally{
-                elapsed.Stop();executionTimer.Stop();progress.Visible=false;busy=false;equityPanel.Enabled=true;settingsArea.Enabled=true;filtersArea.Enabled=true;cancel.Enabled=false;run.Enabled=command.Text.Length>0&&ActivePaths().Length>=2;
-                cancellation.Dispose();cancellation=null;
-            }
-            ClearResults();
-            if(completed!=null){
-                lastResult=completed;lastSources=sources;ConfigureResultColumns(sources.Length,completed.Rows[0].Sources.Select(s=>s.Label).ToArray());
-                foreach(var row in completed.Rows){
-                    var values=new List<object>{row.Label};
-                    foreach(var csv in row.Sources){values.Add(csv.Sum);values.Add(csv.Percent);}
-                    values.Add(row.Total);values.Add(row.Status=="OK"?"完了":"合計0");
-                    int index=resultsGrid.Rows.Add(values.ToArray());
-                    string detail=row.Syntax+"\r\n"+string.Join("\r\n",row.Sources.Select((csv,i)=>csv.Label+" (CSV"+(i+1)+"): "+csv.Count.ToString("N0")+"ハンド · "+csv.Path))+"\r\n"+row.Note;
-                    foreach(DataGridViewCell cell in resultsGrid.Rows[index].Cells)cell.ToolTipText=detail;
+                var completed=await CommandRunner.RunAsync(code,token);token.ThrowIfCancellationRequested();elapsed.Stop();executionTimer.Stop();progress.Visible=false;
+                DisplayComparison(completed,code,context,sources);export.Enabled=false;
+                if(eqRequest!=null){
+                    resultStatus.Text+=" · EQ計算中…";
+                    await equityPanel.ExecutePreparedAsync(eqRequest,token);token.ThrowIfCancellationRequested();
+                    resultStatus.Text=context+" · 集計完了 · "+(equityPanel.LastResult!=null?"EQ計算完了":"EQは未完了（下の理由を確認）");
                 }
-                resultStatus.Text=context+" · 完了（"+elapsed.Elapsed.TotalSeconds.ToString("0.0")+"秒）\r\n"+completed.Rows.Count+"条件 × "+sources.Length+"ファイル";export.Enabled=true;
-                comparison.Text="各条件の比率合計は100%（丸め誤差あり）\r\n全CSVのweight合計が0の場合は —";
-                chart.SetData(completed);resultViews.SelectedIndex=1;
-                try{
-                    var entry=historyStore.Save(completed,code,"");historyPanel.RefreshEntries(entry.Id);resultStatus.Text+=" · 履歴保存済み";
-                }catch(Exception ex){resultStatus.Text=context+" · 完了（履歴保存失敗）\r\n結果はCSV保存できます。";SetStatus("履歴を保存できません："+ex.Message,true);}
-            }else if(canceled)resultStatus.Text=context+"\r\n実行を中止しました。";
-            else{resultStatus.Text=context+"\r\n実行に失敗しました。内容を確認して再実行してください。";resultViews.Visible=false;errorOutput.Visible=true;errorOutput.BringToFront();errorOutput.Text=failure;}
-            if(closeWhenDone)BeginInvoke(new Action(Close));
+            }catch(OperationCanceledException){resultStatus.Text=lastResult==null?"集計を中止しました。EQは実行していません。":"EQを中止しました。完了したCSV集計結果は表示しています。";equityPanel.NotifyComparisonStopped(resultStatus.Text);}
+            catch(Exception ex){resultStatus.Text="集計に失敗しました。EQは実行していません。";errorOutput.Visible=true;errorOutput.BringToFront();errorOutput.Text=ex.Message;resultViews.Visible=false;equityPanel.NotifyComparisonStopped(resultStatus.Text);}
+            finally{
+                elapsed.Stop();executionTimer.Stop();progress.Visible=false;busy=false;cancellation.Dispose();cancellation=null;equityPanel.SetExternalBusy(false);settingsArea.Enabled=true;filtersArea.Enabled=true;cancel.Enabled=false;run.Enabled=command.Text.Length>0&&ActivePaths().Length>=2;export.Enabled=lastResult!=null;
+            }
+            FinishClose();
+        }
+        void DisplayComparison(RunResult completed,string code,string context,string[] sources){
+            lastResult=completed;lastSources=sources;ConfigureResultColumns(sources.Length,completed.Rows[0].Sources.Select(s=>s.Label).ToArray());
+            foreach(var row in completed.Rows){
+                var values=new List<object>{row.Label};
+                foreach(var csv in row.Sources){values.Add(csv.Sum);values.Add(csv.Percent);}
+                values.Add(row.Total);values.Add(row.Status=="OK"?"完了":"合計0");
+                int index=resultsGrid.Rows.Add(values.ToArray());
+                string detail=row.Syntax+"\r\n"+string.Join("\r\n",row.Sources.Select((csv,i)=>csv.Label+" (CSV"+(i+1)+"): "+csv.Count.ToString("N0")+"ハンド · "+csv.Path))+"\r\n"+row.Note;
+                foreach(DataGridViewCell cell in resultsGrid.Rows[index].Cells)cell.ToolTipText=detail;
+            }
+            resultStatus.Text=context+" · 完了（"+elapsed.Elapsed.TotalSeconds.ToString("0.0")+"秒）\r\n"+completed.Rows.Count+"条件 × "+sources.Length+"ファイル";export.Enabled=true;
+            comparison.Text="各条件の比率合計は100%（丸め誤差あり）\r\n全CSVのweight合計が0の場合は —";
+            chart.SetData(completed);resultViews.SelectedIndex=1;
+            try{
+                var entry=historyStore.Save(completed,code,"");historyPanel.RefreshEntries(entry.Id);resultStatus.Text+=" · 履歴保存済み";
+            }catch(Exception ex){resultStatus.Text=context+" · 完了（履歴保存失敗）\r\n結果はCSV保存できます。";SetStatus("履歴を保存できません："+ex.Message,true);}
         }
         public void ExportResultsTo(string path){
             if(lastResult==null||busy)throw new Exception("保存できる実行結果がありません。");
@@ -333,7 +340,7 @@ namespace FlopCommands {
         }
         void UpdateSelectionSummary(){selectionSummary.Text=choices.Count(c=>c.Available&&selected.Contains(c.Filter.Cell))+"件選択"+(includeAll.Checked?" ＋ 全ハンド":"")+"  ·  "+grid.Rows.Count+" / "+choices.Count+"件表示";}
         void SetStatus(string text,bool error){status.Text=text;status.ForeColor=error?Color.FromArgb(171,57,37):Muted;}
-        void InvalidateCommand(){command.Clear();copy.Enabled=false;save.Enabled=false;run.Enabled=false;codeSummary.Text="";if(!busy)ClearResults();SyncEquityContext();}
+        void InvalidateCommand(){if(busy&&cancellation!=null)cancellation.Cancel();command.Clear();copy.Enabled=false;save.Enabled=false;run.Enabled=false;codeSummary.Text="";if(!busy)ClearResults();SyncEquityContext();}
         void SyncEquityContext(){
             if(equityPanel==null)return;
             try{

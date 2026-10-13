@@ -8,23 +8,27 @@ using FlopCommands.Equity;
 
 namespace FlopCommands {
     public sealed class EquityScatterChart : ScrollableControl {
-        readonly Color[] colors={Color.FromArgb(37,99,235),Color.FromArgb(0,132,112),Color.FromArgb(180,83,9)};
-        readonly ToolTip tip=new ToolTip{AutoPopDelay=30000};
+        static readonly Color[] colors={Color.FromArgb(37,99,235),Color.FromArgb(0,132,112),Color.FromArgb(180,83,9)};
+        readonly ToolTip tip=new ToolTip{AutoPopDelay=30000,ShowAlways=true};
         readonly List<Tuple<PointF,EquityPlotPoint>> hits=new List<Tuple<PointF,EquityPlotPoint>>();
         EquityPlotPoint[] points=new EquityPlotPoint[0];
         string message="EQ計算後に散布図を表示します。",lastTip="";
+        bool tipDisposed;
+        internal static Color ActionColor(int index){return colors[index];}
         public int PointCount {get{return points.Length;}}
-        public EquityScatterChart(){Dock=DockStyle.Fill;DoubleBuffered=true;AutoScroll=true;BackColor=Color.White;Name="eqScatter";AccessibleName="アクション前EQとベット頻度の散布図";}
+        public EquityScatterChart(){Dock=DockStyle.Fill;DoubleBuffered=true;AutoScroll=true;BackColor=Color.White;Name="eqScatter";AccessibleName="アクション前EQとアクション頻度の散布図";}
         public void SetData(EquityJobResult result){
             points=EquityPlot.Points(result);message=result==null?"入力を確認し、EQを計算してください。":result.PlotStatus;
             if(result!=null){int missing=result.Rows.Count(r=>r.Result==null||r.Frequency==null||r.Frequency.Percent==null);
                 if(missing>0)message+=" 表示できない条件："+missing+"件（結果表に理由）。";
                 if(points.Length==0)message="描画できる点がありません。 "+message;
             }
-            AccessibleDescription=message;AutoScrollPosition=Point.Empty;hits.Clear();lastTip="";tip.SetToolTip(this,"");Reflow();Invalidate();
+            AccessibleDescription=message;ClearHover();AutoScrollPosition=Point.Empty;hits.Clear();Reflow();Invalidate();
         }
         void Reflow(){AutoScrollMinSize=points.Length==0?Size.Empty:new Size(650,300);}
-        protected override void OnSizeChanged(EventArgs e){base.OnSizeChanged(e);Reflow();Invalidate();}
+        protected override void OnSizeChanged(EventArgs e){base.OnSizeChanged(e);ClearHover();if(hits!=null)hits.Clear();Reflow();Invalidate();}
+        protected override void OnScroll(ScrollEventArgs e){base.OnScroll(e);ClearHover();Invalidate();}
+        protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);if(!Visible)ClearHover();}
         static void DrawText(Graphics g,string text,Font font,Color color,RectangleF area,StringAlignment alignment){
             using(var brush=new SolidBrush(color))using(var format=new StringFormat{Alignment=alignment,LineAlignment=StringAlignment.Center,Trimming=StringTrimming.EllipsisCharacter})g.DrawString(text??"",font,brush,area,format);
         }
@@ -55,7 +59,7 @@ namespace FlopCommands {
                 g.DrawRectangle(border,plot.X,plot.Y,plot.Width,plot.Height);
             }
             DrawText(g,"自分のアクション前EQ (%)",Font,ink,new RectangleF(plot.Left,plot.Bottom+29,plot.Width,26),StringAlignment.Center);
-            DrawText(g,"ベット頻度 (%)",Font,ink,new RectangleF(18,72,200,24),StringAlignment.Near);
+            DrawText(g,"アクション頻度 (%)",Font,ink,new RectangleF(18,72,200,24),StringAlignment.Near);
             // Confidence intervals and points stay on their real coordinates: no jitter or connecting lines.
             foreach(var p in points){float x=plot.Left+plot.Width*(float)p.Equity/100f,y=plot.Bottom-plot.Height*(float)p.Frequency/100f;
                 if(!p.Exact){float low=plot.Left+plot.Width*(float)Math.Max(0,p.CiLow)/100f,high=plot.Left+plot.Width*(float)Math.Min(100,p.CiHigh)/100f;
@@ -66,11 +70,19 @@ namespace FlopCommands {
         }
         protected override void OnMouseMove(MouseEventArgs e){
             base.OnMouseMove(e);float x=e.X-AutoScrollPosition.X,y=e.Y-AutoScrollPosition.Y;
-            var nearby=hits.Where(h=>Math.Abs(h.Item1.X-x)<=8&&Math.Abs(h.Item1.Y-y)<=8).Select(h=>h.Item2);
-            string value=string.Join("\r\n\r\n",nearby.Select(p=>p.Label+" · "+p.Syntax+"\r\n"+p.Action+" (CSV"+(p.ActionIndex+1)+") · EQ "+p.Equity.ToString("F2")+"% · ベット頻度 "+p.Frequency.ToString("F2")+"%\r\n"+(p.Exact?"EQ：全列挙":"EQ 95%区間："+p.CiLow.ToString("F2")+"–"+p.CiHigh.ToString("F2")+"%")));
-            if(value!=lastTip){lastTip=value;tip.SetToolTip(this,value);}
+            var nearby=hits.Where(h=>Math.Abs(h.Item1.X-x)<=10&&Math.Abs(h.Item1.Y-y)<=10).Select(h=>h.Item2);
+            string value=string.Join("\r\n\r\n",nearby.Select(p=>"条件名："+p.Label+"\r\nsyntax："+p.Syntax+"\r\n"+p.Action+" (CSV"+(p.ActionIndex+1)+") · EQ "+p.Equity.ToString("F2")+"% · アクション頻度 "+p.Frequency.ToString("F2")+"%\r\n"+(p.Exact?"EQ：全列挙":"EQ 95%区間："+p.CiLow.ToString("F2")+"–"+p.CiHigh.ToString("F2")+"%")));
+            if(value.Length==0){ClearHover();return;}
+            Cursor=Cursors.Hand;
+            if(value!=lastTip&&!tipDisposed&&IsHandleCreated&&Visible){
+                lastTip=value;
+                // Explicit Show also works when the cursor entered the chart over
+                // empty space before moving onto a point. No second hover is needed.
+                tip.Show(value,this,new Point(Math.Min(e.X+16,Math.Max(0,ClientSize.Width-24)),Math.Min(e.Y+18,Math.Max(0,ClientSize.Height-24))),30000);
+            }
         }
-        protected override void OnMouseLeave(EventArgs e){base.OnMouseLeave(e);lastTip="";tip.SetToolTip(this,"");}
-        protected override void Dispose(bool disposing){if(disposing)tip.Dispose();base.Dispose(disposing);}
+        void ClearHover(){lastTip="";if(tip!=null&&!tipDisposed&&IsHandleCreated)tip.Hide(this);Cursor=Cursors.Default;}
+        protected override void OnMouseLeave(EventArgs e){base.OnMouseLeave(e);ClearHover();}
+        protected override void Dispose(bool disposing){if(disposing&&!tipDisposed){ClearHover();tip.Dispose();tipDisposed=true;}base.Dispose(disposing);}
     }
 }

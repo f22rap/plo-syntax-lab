@@ -9,6 +9,12 @@ using System.Threading;
 
 namespace FlopCommands.Equity {
     public sealed class EquityCsvImport { public string Text, EncodingName; public int Rows, ZeroRows; }
+    public sealed class EquityCsvBatchImport {
+        public string Text, EncodingName;
+        public string[] Paths;
+        public int Rows, ZeroRows, ComboCount;
+        public double WeightScale;
+    }
     public sealed class EquityActionData { public string Path, Label; public EquityRange Range; }
     public static class EquityInput {
         public const int MaxCsvBytes = 20 * 1024 * 1024;
@@ -46,7 +52,8 @@ namespace FlopCommands.Equity {
         }
         static string Header(string s){return Regex.Replace(s.Trim().ToLowerInvariant(),@"[\s_\-]","");}
         static readonly string[] HandNames={"hand","combo","range","ハンド","コンボ","レンジ"};
-        static readonly string[] WeightNames={"weight","frequency","freq","重み","頻度"};
+        static readonly string[] WeightNames={"weight","重み"};
+        static readonly string[] FrequencyNames={"frequency","freq","頻度"};
         static int Column(string[] cells,string[] names){int[] indexes=cells.Select((s,i)=>new{Key=Header(s),Index=i}).Where(x=>names.Contains(x.Key)).Select(x=>x.Index).ToArray();if(indexes.Length>1)throw new ArgumentException("CSVの列見出しが重複しています。");return indexes.Length==0?-1:indexes[0];}
         static void ValidateItem(string item,int line){
             if(item.IndexOfAny(new[]{'@',',',';','\r','\n'})>=0)throw Error(line,"ハンドセルに@・区切り文字・改行は使えません。");
@@ -55,10 +62,16 @@ namespace FlopCommands.Equity {
             if(!Regex.IsMatch(s,@"^(?:random|any|\*|[2-9TJQKA*x]{4})(?::(?:ds|ss|r|ts|mono))?$",RegexOptions.IgnoreCase))throw Error(line,"具体的な4枚または簡易レンジを1つ指定してください。除外行・@・複数条件は使えません。");
         }
         public static EquityCsvImport ImportRange(byte[] bytes,bool percentMode,CancellationToken token){
+            return ImportRangeCore(bytes,percentMode,token,false);
+        }
+        static EquityCsvImport ImportRangeCore(byte[] bytes,bool percentMode,CancellationToken token,bool allowEmpty){
             token.ThrowIfCancellationRequested();string encoding;var rows=Records(Decode(bytes,true,out encoding),token);
             if(rows.Count==0)throw new ArgumentException("CSVにデータがありません。");
             int hand=Column(rows[0].Cells,HandNames),weight=-1,first=0;bool header=hand>=0;
-            if(header){weight=Column(rows[0].Cells,WeightNames);first=1;if(rows[0].Cells.Length>1&&weight<0)throw Error(rows[0].Line,"重み列の見出しが必要です。");}
+            // Solver exports contain both weight and action frequency. Use weight
+            // for the pre-action range; frequency is only a legacy fallback when
+            // no weight column exists, never a fallback for an invalid weight cell.
+            if(header){weight=Column(rows[0].Cells,WeightNames);if(weight<0)weight=Column(rows[0].Cells,FrequencyNames);first=1;if(rows[0].Cells.Length>1&&weight<0)throw Error(rows[0].Line,"重み列の見出しが必要です。");}
             else{hand=0;weight=rows[0].Cells.Length>1?1:-1;}
             var output=new StringBuilder();var result=new EquityCsvImport{EncodingName=encoding};
             for(int i=first;i<rows.Count;i++){
@@ -74,8 +87,42 @@ namespace FlopCommands.Equity {
                 if(value==0){result.ZeroRows++;continue;}
                 if(output.Length>0)output.AppendLine();output.Append(item).Append(" @").Append(value.ToString("R",CultureInfo.InvariantCulture));result.Rows++;
             }
-            if(result.Rows==0)throw new ArgumentException("CSVに正の重みを持つレンジがありません。");
+            if(result.Rows==0&&!allowEmpty)throw new ArgumentException("CSVに正の重みを持つレンジがありません。");
             result.Text=output.ToString();return result;
+        }
+        public static EquityCsvBatchImport ImportRangeFiles(string[] paths,bool percentMode,CancellationToken token){
+            token.ThrowIfCancellationRequested();
+            if(paths==null||paths.Length==0)throw new ArgumentException("相手レンジのCSVを1個以上選択してください。");
+            var fullPaths=paths.Select(Path.GetFullPath).ToArray();
+            if(fullPaths.Distinct(StringComparer.OrdinalIgnoreCase).Count()!=fullPaths.Length)throw new ArgumentException("同じ相手CSVを複数指定することはできません。");
+            var sums=new Dictionary<long,double>();var hands=new Dictionary<long,EquityCombo>();var encodings=new HashSet<string>();
+            var result=new EquityCsvBatchImport{Paths=fullPaths};
+            foreach(string path in fullPaths){
+                token.ThrowIfCancellationRequested();
+                try{
+                    var file=ImportRangeCore(ReadCsv(path,token),percentMode,token,true);result.Rows+=file.Rows;result.ZeroRows+=file.ZeroRows;encodings.Add(file.EncodingName);
+                    // Preserve the existing within-file overlap/max rule. Across
+                    // files, add weights of the same physical four-card hand.
+                    if(file.Rows==0)continue;
+                    var range=EquityRange.Parse(file.Text,token);int index=0;
+                    foreach(var combo in range.Items){
+                        if((index++&1023)==0)token.ThrowIfCancellationRequested();double previous;sums.TryGetValue(combo.Mask,out previous);
+                        double weight=previous+combo.Weight;if(double.IsInfinity(weight))throw new ArgumentException("統合後のweightが大きすぎます。");
+                        sums[combo.Mask]=weight;hands[combo.Mask]=combo;
+                    }
+                }catch(ArgumentException ex){throw new ArgumentException(Path.GetFileName(path)+"："+ex.Message,ex);}
+            }
+            if(sums.Count==0)throw new ArgumentException("相手CSV全体に正の重みを持つレンジがありません。");
+            // Text input accepts weights <=1. If necessary scale the ENTIRE
+            // merged range once, preserving every ratio (never per file).
+            result.WeightScale=Math.Max(1,sums.Values.Max());result.ComboCount=sums.Count;
+            var output=new StringBuilder();int count=0;
+            foreach(var pair in sums.OrderBy(p=>p.Key)){
+                if((count++&1023)==0)token.ThrowIfCancellationRequested();double weight=pair.Value/result.WeightScale;
+                if(weight==0)throw new ArgumentException("統合したweightの比が数値精度の範囲を超えています。");
+                if(output.Length>0)output.AppendLine();output.Append(hands[pair.Key].Hand).Append(" @").Append(weight.ToString("R",CultureInfo.InvariantCulture));
+            }
+            token.ThrowIfCancellationRequested();result.Text=output.ToString();result.EncodingName=string.Join(" / ",encodings.OrderBy(e=>e,StringComparer.Ordinal));return result;
         }
         public static byte[] ReadCsv(string path,CancellationToken token){
             token.ThrowIfCancellationRequested();using(var file=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read)){
