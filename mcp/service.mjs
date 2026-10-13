@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
-import {root,hash,fileHash,within,inputFile,native,engine,checkAbort,sourceCommit} from './runtime.mjs';
+import {root,hash,fileHash,within,inputFile,native,engine,checkAbort,sourceCommit,buildInfo} from './runtime.mjs';
 import {chart,report,metricNote} from './artifacts.mjs';
 const require=createRequire(import.meta.url),P=require('../src/lab/engine.js');
 export const VERSION=require('../package.json').version;
@@ -12,8 +12,8 @@ const publicJob=j=>({job_id:j.id,state:j.state,progress:j.progress,result:j.resu
 export class Service {
  constructor(config){this.config=config;this.datasets=new Map();this.conditions=new Map();this.defaults=new Map();this.schemas=new Map();this.jobs=new Map();this.artifacts=new Map();this.queue=Promise.resolve();this.closed=false;}
  async init(){
-  const files=['src/lab/engine.js','src/defaults.js','src/default-labels.json','src/SyntaxMatcher.cs','src/compare-runtime.ps1','src/CompareCommands.cs','src/Core.cs','src/Execution.cs','src/History.cs','src/LabSelection.cs','mcp/NativeHost.cs','dist/PloMcp.Native.exe'];
-  this.versions={mcp:VERSION,source_commit:await sourceCommit(),files:Object.fromEntries(await Promise.all(files.map(async f=>[f,await fileHash(path.join(root,f))])))};
+  const files=['src/lab/engine.js','src/defaults.js','src/default-labels.json','src/SyntaxMatcher.cs','src/compare-runtime.ps1','src/CompareCommands.cs','src/Core.cs','src/Execution.cs','src/History.cs','src/LabSelection.cs','mcp/NativeHost.cs','dist/PloMcp.Native.exe','dist/PloResearch.Native.exe','mcp/ResearchHost.cs','src/ResearchData.cs','src/ResearchRun.cs','src/ResearchFiles.cs','src/EquityEngine.cs','src/EquityInput.cs','src/EquityJob.cs','src/EquityPlot.cs','src/EquityArchive.cs'];
+  this.versions={mcp:VERSION,source_commit:await sourceCommit(),build_info:await buildInfo(),files:Object.fromEntries(await Promise.all(files.map(async f=>[f,await fileHash(path.join(root,f))])))};
   return this;
  }
  status(){return {name:'PLO Syntax Lab',version:VERSION,input_roots:this.config.inputRoots,output_root:this.config.outputRoot,history_root:this.config.historyRoot,history_delete_enabled:this.config.allowHistoryDelete,metric:metricNote,monker_verified:false,versions:this.versions};}

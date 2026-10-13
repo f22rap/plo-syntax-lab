@@ -7,6 +7,7 @@ import {spawn,spawnSync} from 'node:child_process';
 import {Worker} from 'node:worker_threads';
 
 export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+export async function buildInfo(){try{return JSON.parse(await fs.readFile(path.join(root,'mcp/build-info.json'),'utf8'));}catch{return null;}}
 export async function sourceCommit(){
  try{const built=JSON.parse(await fs.readFile(path.join(root,'mcp/build-info.json'),'utf8'));if(/^[a-f0-9]{40}$/.test(built.sourceCommit))return built.sourceCommit;}catch{}
  const git=spawnSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',timeout:1000,windowsHide:true});

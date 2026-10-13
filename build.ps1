@@ -15,7 +15,12 @@ try {
     $coreSources = @('src\Core.cs','src\CompareCommands.cs','src\Execution.cs','src\History.cs','src\LabSelection.cs','src\SyntaxMatcher.cs','mcp\NativeHost.cs')
     & $compiler /nologo /target:exe /optimize+ /out:dist\PloMcp.Native.exe @references @resources @coreSources
     if ($LASTEXITCODE -ne 0) { throw 'MCP native host build failed.' }
+    $researchSources = @('src\EquityEngine.cs','src\EquityInput.cs','src\EquityJob.cs','src\EquityPlot.cs','src\EquityArchive.cs','src\SyntaxMatcher.cs','src\ResearchData.cs','src\ResearchRun.cs','src\ResearchFiles.cs','mcp\ResearchHost.cs')
+    & $compiler /nologo /target:exe /optimize+ /out:dist\PloResearch.Native.exe @references @researchSources
+    if ($LASTEXITCODE -ne 0) { throw 'Research MCP host build failed.' }
     if ($WithTests) {
+        & $compiler /nologo /target:exe /optimize+ /main:PloMcpResearchTests.Program /out:dist\PloResearch.Tests.exe @references @researchSources tests\research\BridgeTests.cs
+        if ($LASTEXITCODE -ne 0) { throw 'Research bridge test build failed.' }
         $testSources = @(Get-ChildItem -LiteralPath tests -Filter '*.cs' | ForEach-Object { $_.FullName })
         & $compiler /nologo /target:winexe /optimize+ /main:FlopCommands.TestProgram /out:dist\FlopCommandApp.Tests.exe /win32manifest:src\app.manifest @references @resources @sources @testSources
         if ($LASTEXITCODE -ne 0) { throw 'Test build failed.' }

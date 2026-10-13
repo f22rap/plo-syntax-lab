@@ -21,3 +21,8 @@ src/defaults.html
 /src/mcp/build-info.json
 
 /mcp/build-info.json
+
+/codex-mcp.toml
+/mcp-diagnostics.json
+/research-prompt.txt
+/research-output/

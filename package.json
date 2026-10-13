@@ -1,6 +1,6 @@
 {
   "name": "plo-syntax-lab-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Local MCP access to the PLO Syntax Lab engine and Windows comparison runtime",
   "engines": {
@@ -9,7 +9,9 @@
   "scripts": {
     "mcp": "node mcp/server.mjs",
     "test:mcp": "node --test tests/mcp.test.mjs",
-    "package:windows-mcp": "node mcp/package-runtime.cjs"
+    "package:windows-mcp": "node mcp/package-runtime.cjs",
+    "test:research": "node --test tests/research-mcp.test.mjs",
+    "test:codex-setup": "node --test tests/codex-setup.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",

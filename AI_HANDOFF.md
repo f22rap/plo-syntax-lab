@@ -317,3 +317,13 @@ ResearchRun.cs、ResearchFiles.cs、ResearchPanel.Run.cs、ResearchResultsView.c
 数値計算は既存EquityInput/EquityRange/EquityFrequencyPlan/EquityEngineを使う。単一ボードEQと同じシード派生・入力で一致する。特徴別は登録された有効ボードの等重み平均、図はEQと頻度が両方ある共通対象。欠損を0にせず、存在しないベットサイズを補わない。総betはraiseを含まない。進行中は入力を固定し、中止では確定したボードだけを保存する。入力ファイルの登録ハッシュと照合する。
 
 64件の新規チェックを含む20,968チェック成功。製品／Windows操作テストはクロスコンパイル。SVG出力はレンダリング確認済み。Windows実画面操作は未実施。MCP公開とAIホスト接続は未着手の第4ステップで、ユーザーの次の承認後に進める。
+
+## 研究MCP接続（2026-10-14、第4ステップ実装）
+
+Windows版mcp/server.mjsは従来15＋研究12の27ツール。server-core.mjsはスキーマ登録を分離。ResearchHost.csを別のPloResearch.Native.exeへビルドし、GUIと同じResearchStore/ResearchRun/ResearchFilesを利用する。research-runtime.mjsはJSON行通信と協調的キャンセル、research-service.mjsは計画・ジョブ・キーの冪等性を担当。既存11ツール／クラウドは変更しない。ユーザーsyntaxはliteral/per_boardのまま、generatedは未実装。
+
+検証はtests/research/BridgeTests.cs（GUI計算との一致・途中結果保持等17チェック）、tests/research-mcp.test.mjs（公式SDK実stdioの一連の調査）。Linuxで同じC#コードを.NET 8で動かすハーネスはtests/research-harness.mjsであり、製品のWindows制約を迂回する設定は提供しない。新EXEはWindows参照でコンパイル。Windows実機と選択AIホストの自然文操作は未確認で、ユーザー環境での接続確認が残る。詳細はdocs/research-mcp.md。
+
+### Codex接続先の選定とセットアップ
+
+ユーザーの「任せる」により、WindowsローカルCodexを接続先に選定。Setup-Codex.cmd/ps1、mcp/codex-setup.mjs、check-connection.mjsを追加。既存mcp.local.jsonと同名Codex MCP登録は保持し、公式SDKの読込確認後にCLI登録する。CLIなしはTOMLと設定画面での手順を提供。診断のMCP成功とAIホスト実行を区別する。docs/codex-setup.md参照。ユーザーPCへの登録・実Windows操作は引き続き未確認。

@@ -87,14 +87,22 @@ jobs:
           $ErrorActionPreference = 'Stop'
           npm ci --ignore-scripts
           if ($LASTEXITCODE -ne 0) { throw 'Windows MCP dependency installation failed' }
+          & .\dist\PloResearch.Tests.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Research bridge tests failed' }
+          npm run test:codex-setup
+          if ($LASTEXITCODE -ne 0) { throw 'Codex setup tests failed' }
+          npm run test:research
+          if ($LASTEXITCODE -ne 0) { throw 'Research MCP tests failed' }
           npm run test:mcp
           if ($LASTEXITCODE -ne 0) { throw 'Windows MCP integration tests failed' }
-      - name: Package and test Windows-native 15-tool MCP
+      - name: Package and test Windows-native MCP with research
         run: |
           $ErrorActionPreference = 'Stop'
           npm run package:windows-mcp
           if ($LASTEXITCODE -ne 0) { throw 'Windows-native MCP packaging failed' }
           $env:PLO_MCP_TEST_ROOT = Join-Path $env:RUNNER_TEMP 'plo-windows-mcp-package-tests'
+          node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/research-mcp.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged research MCP tests failed' }
           node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/mcp.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Packaged Windows-native MCP tests failed' }
           Remove-Item Env:PLO_MCP_TEST_ROOT
