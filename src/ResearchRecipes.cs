@@ -73,12 +73,27 @@ namespace FlopCommands.Research {
         public static ResearchDefaultPreset[] All(){return ResearchJson.Clone(catalog.Value);}
         public static string ExistingKey(ResearchCondition c){var g=c.Generator;return c.Kind=="generated"&&g!=null&&g.Source=="preset"&&g.RecipeVersion==1&&g.Ruleset=="plo4-flop-v1"&&g.AdditionalSyntax=="*"?g.PresetId+"@"+g.PresetRevision:null;}
         public static int Add(ResearchConditionSet set,IEnumerable<string> presetIds){
-            ResearchValidation.Set(set);var wanted=new HashSet<string>(presetIds??new string[0],StringComparer.Ordinal);var all=catalog.Value;
+            if(set==null||set.Conditions==null)throw new ArgumentException("条件セットがありません。");var wanted=new HashSet<string>(presetIds??new string[0],StringComparer.Ordinal);var all=catalog.Value;
             foreach(string id in wanted){var p=all.SingleOrDefault(x=>x.Id==id);if(p==null||!p.Supported)throw new ArgumentException(p==null?"デフォルト条件が見つかりません："+id:p.Reason);}
             var existing=new HashSet<string>(set.Conditions.Select(ExistingKey).Where(k=>k!=null),StringComparer.Ordinal);
             var additions=all.Where(p=>wanted.Contains(p.Id)&&!existing.Contains(p.Id+"@"+p.Revision)).Select(p=>new ResearchCondition{Label=p.Label,Kind="generated",Syntax="",Generator=new ResearchGenerator{PresetId=p.Id,PresetRevision=p.Revision}}).ToArray();
             if(set.Conditions.Count+additions.Length>1000)throw new ArgumentException("条件は1,000件までです。");set.Conditions.AddRange(additions);return additions.Length;
         }
+        public static int SplitPocketRanks(ResearchConditionSet set,string conditionId){
+            var source=set.Conditions.Single(c=>c.Id==conditionId);
+            if(source.Kind!="generated"||source.Generator==null)throw new ArgumentException("自動生成条件を選択してください。");
+            ResearchRecipes.Validate(source.Generator);
+            if(set.Conditions.Count+12>1000)throw new ArgumentException("条件は1,000件までです。");
+            var additions=new List<ResearchCondition>();
+            foreach(char rank in "23456789TJQKA"){
+                var c=ResearchJson.Clone(source);c.Id=Guid.NewGuid().ToString("N");c.Label=source.Label+" / pp "+rank+rank;
+                string extra=c.Generator.AdditionalSyntax;
+                c.Generator.AdditionalSyntax=(extra=="*"?"":"("+extra+"):")+rank+rank;
+                ResearchRecipes.Validate(c.Generator);additions.Add(c);
+            }
+            int index=set.Conditions.IndexOf(source);set.Conditions.RemoveAt(index);set.Conditions.InsertRange(index,additions);return additions.Count;
+        }
+
     }
     public static class ResearchRecipes {
         static void Need(bool value,string reason){if(!value)throw new ArgumentException(reason);}

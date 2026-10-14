@@ -127,6 +127,11 @@ namespace PloNativeMcp {
                 string previousKey = n.Board + "/" + (n.Side == "IP" ? "OOP" : "IP") + "/" + previous;
                 var candidates = historyIndex[previousKey].Where(o => hist.Length > 0 && o.Files.Any(f => f.Token == hist.Last())).ToArray();
                 var opponent = hist.Length > 0 && candidates.Length == 1 && candidates[0].Problems.Count == 0 ? candidates[0] : null;
+                // Explicit CO/BTN convention, shared with the Node directory importer.
+                if (n.Side == "OOP" && n.Folder == "donk" && n.History == "ROOT" && n.Position == "CO" && n.Files.Any(f => f.Token == "C")) {
+                    var roots = historyIndex[n.Board + "/IP/C"].ToArray();
+                    if (roots.Length == 1 && roots[0].Folder == "vs_check" && roots[0].Position == "BTN" && roots[0].Problems.Count == 0) opponent = roots[0];
+                }
                 var villain = n.Side == "IP" ? oop : ip;
                 scan.Spots.Add(new DirectorySpot { NodeId = n.Id, Board = n.Board, Side = n.Side, Folder = n.Folder, History = n.History, Position = n.Position, Villain = villain.Length == 1 ? villain[0] : null, Problems = n.Problems,
                     EqStatus = opponent != null ? "ready" : hist.Length > 0 ? "opponent_pre_action_node_missing_or_ambiguous" : "opponent_root_range_not_exported", OpponentNode = opponent == null ? null : opponent.Side + "/" + opponent.Folder + "/" + opponent.History,
@@ -136,7 +141,7 @@ namespace PloNativeMcp {
                 var s = g.First(); scan.Nodes.Add(Json.Obj("node_id", s.NodeId, "side", s.Side, "folder", s.Folder, "history", s.History, "position", s.Position, "villain_position", s.Villain, "boards", g.Count(), "ready", g.Count(x => x.Problems.Count == 0 && x.EqStatus == "ready"), "blocked", g.Count(x => x.Problems.Count > 0), "missing_opponent", g.Count(x => x.Problems.Count == 0 && x.EqStatus != "ready")));
             }
             scan.BoardCount = boards.Count; scan.FileCount = files.Count;
-            scan.Fingerprint = NativePaths.Hash(Json.Utf8.GetBytes(Json.Write(Json.Obj("root", root, "highest_rank", scan.HighestRank, "files", files.Select(f => Json.Obj("path", f.Path, "sha256", f.Sha)), "issues", scan.Issues, "boards", boardDirs))));
+            scan.Fingerprint = NativePaths.Hash(Json.Utf8.GetBytes(Json.Write(Json.Obj("root", root, "highest_rank", scan.HighestRank, "root_opponent_policy", "co-btn-vs-check-v1", "files", files.Select(f => Json.Obj("path", f.Path, "sha256", f.Sha)), "issues", scan.Issues, "boards", boardDirs))));
             return scan;
         }
         public static ResearchCatalog Catalog(DirectoryScan scan, Dictionary<string, object> a) {
@@ -150,6 +155,8 @@ namespace PloNativeMcp {
             var scenario = NativeResearch.Decode<ResearchScenario>(a["scenario"]);
             if (rows.Any(s => s.Position != scenario.HeroPosition || s.Villain != scenario.VillainPosition)) throw new ArgumentException("Scenario positions do not match the CSVs.");
             scenario.EquityReference = "Hero: sum of all actions at " + rows[0].Spot.Node + "; opponent: sum of all actions BEFORE their immediately preceding action. Prior hero actions remain conditioned. Root opponent range is not inferred.";
+            if (rows.All(s => s.Side == "OOP" && s.Folder == "donk" && s.History == "ROOT" && s.Position == "CO" && s.Villain == "BTN"))
+                scenario.EquityReference = "Hero CO: sum of all actions at OOP/donk/ROOT. User-defined BTN starting range: sum of ALL actions at IP/vs_check/C (after CO checks), adopted as the root opponent range; not an independently exported preflop range. Missing or ambiguous sources remain unavailable. Policy: co-btn-vs-check-v1.";
             return new ResearchCatalog { Id = (string)a["catalog_id"], Revision = 0, Name = (string)a["name"], HighestRank = scan.HighestRank, Scenario = scenario, Spots = rows.Select(s => ResearchJson.Clone(s.Spot)).ToList() };
         }
     }

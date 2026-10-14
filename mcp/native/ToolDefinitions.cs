@@ -27,7 +27,8 @@ namespace PloNativeMcp {
             }
         }
         static void CheckSchema(Dictionary<string, object> s) {
-            Json.Keys(s, "$schema", "type", "properties", "required", "additionalProperties", "items", "minItems", "maxItems", "minLength", "maxLength", "minimum", "maximum", "enum", "const", "pattern", "format", "default", "propertyNames");
+            Json.Keys(s, "$schema", "type", "properties", "required", "additionalProperties", "items", "minItems", "maxItems", "minLength", "maxLength", "minimum", "maximum", "enum", "const", "pattern", "format", "default", "propertyNames", "anyOf");
+            if(s.ContainsKey("anyOf")){foreach(var branch in (object[])s["anyOf"])CheckSchema(Json.Object(branch,"anyOf"));return;}
             if (!new[] { "object", "array", "string", "integer", "number", "boolean" }.Contains(Json.Get(s, "type") as string)) throw new ArgumentException("Unsupported schema type.");
             if (s.ContainsKey("properties")) foreach (var x in Json.Object(s["properties"], "properties").Values) CheckSchema(Json.Object(x, "property"));
             foreach (var key in new[] { "items", "additionalProperties", "propertyNames" }) if (Json.Get(s, key) is Dictionary<string, object>) CheckSchema(Json.Object(s[key], key));
@@ -38,6 +39,10 @@ namespace PloNativeMcp {
         static long Bound(Dictionary<string, object> s, string key, long otherwise) { return s.ContainsKey(key) ? Json.Integer(s[key], key, -9007199254740991, 9007199254740991) : otherwise; }
         static void Need(bool ok, string path) { if (!ok) throw new ArgumentException("Invalid tool argument: " + path); }
         static object Validate(Dictionary<string, object> s, object v, string path) {
+            if(s.ContainsKey("anyOf")){
+                foreach(var branch in (object[])s["anyOf"]){try{return Validate(Json.Object(branch,"anyOf"),v,path);}catch(ArgumentException){}}
+                throw new ArgumentException("Invalid tool argument: "+path+" does not match any allowed definition.");
+            }
             var type = Json.Get(s, "type") as string;
             if (type == "object") {
                 var input = Json.Object(v, path); var output = Json.Obj();

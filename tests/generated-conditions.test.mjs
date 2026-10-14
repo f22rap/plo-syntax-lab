@@ -54,7 +54,7 @@ test('3ボード×185条件が既存生成と一致し、名前変更でも同�
    assert.equal(a.status,b.count?'ready':'empty_condition',`${board} ${p.label}: ${a.reason}`);
    assert.equal(a.syntax,b.syntax,board+' '+p.label);assert.equal(a.legal_hand_count,b.count);assert.equal(a.verified,true);
   }
-  if(board==='JsTd7c'){assert.equal(actual[0].syntax,'JJ!(98)');assert.equal(actual[0].legal_hand_count,3103);const mid=actual.find(r=>r.resolved_preset?.preset_id==='set.middle.all');assert.equal(mid.syntax,'TT!((98,JJ))');assert.equal(mid.legal_hand_count,3094);}
+  if(board==='JsTd7c'){assert.equal(actual[0].syntax,'JJ!(98)');assert.equal(actual[0].legal_hand_count,3103);const mid=actual.find(r=>r.resolved_preset?.preset_id==='set.middle.all');assert.equal(mid.syntax,'TT!(98,JJ)');assert.equal(mid.legal_hand_count,3094);}
   if(board==='AsKd7s'){assert.equal(actual[0].legal_hand_count,3151);assert.equal(actual[0].syntax,'AA');}
   if(board==='AsAd7c')assert.equal(actual.find(r=>r.resolved_preset?.preset_id==='set.middle.all').reason_code,'relative_rank_unavailable');
  }

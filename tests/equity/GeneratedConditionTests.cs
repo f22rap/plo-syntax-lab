@@ -14,6 +14,13 @@ namespace EquityTests {
         static byte[] Text(string text){return Encoding.UTF8.GetBytes(text);}
         static ResearchConditionSet Examples(){using(var stream=typeof(GeneratedConditionTests).Assembly.GetManifestResourceStream("GeneratedExamples.json"))using(var bytes=new MemoryStream()){stream.CopyTo(bytes);return new ResearchConditionSet{Name="構造化条件の往復",Conditions=ResearchJson.Decode<List<ResearchCondition>>(bytes.ToArray())};}}
         static void Definitions(){
+            var draft=new ResearchConditionSet();draft.Conditions.Add(new ResearchCondition());
+            Check(ResearchPresets.Add(draft,new[]{"pair.top.pocket.under"})==1,"empty editor draft does not block preset addition");
+            var pp=draft.Conditions.Last();pp.Generator.AdditionalSyntax="ss";string ppId=pp.Id;
+            Check(ResearchPresets.SplitPocketRanks(draft,ppId)==13,"pp expands to 13 ranks");
+            Check(draft.Conditions.Skip(1).Select(c=>c.Id).Distinct().Count()==13,"pp identities unique");
+            Check(draft.Conditions[1].Generator.AdditionalSyntax=="(ss):22"&&draft.Conditions.Last().Generator.AdditionalSyntax=="(ss):AA","pp preserves additional syntax");
+            Check(draft.Conditions.Skip(1).All(c=>c.Generator.PresetId=="pair.top.pocket.under"),"pp preserves board-relative recipe");
             var all=ResearchPresets.All();Check(all.Length==185&&all.Count(p=>p.Supported)==159,"185 rows, 159 supported");Check(all[0].Id=="set.top.all"&&all[0].Label=="Tset all"&&all[0].Cell=="L49","canonical first row");
             all[0].Label="変更";Check(ResearchPresets.All()[0].Label=="Tset all","catalog is immutable to callers");
             var set=Selected();Check(set.Conditions.Select(c=>c.Generator.PresetId).SequenceEqual(new[]{"set.top.all","set.middle.all","aa.sd.bdsd"}),"selection follows catalog order");

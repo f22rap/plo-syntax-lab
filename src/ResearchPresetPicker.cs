@@ -13,6 +13,8 @@ namespace FlopCommands {
         readonly DataGridView grid=ResearchUi.Grid();
         readonly Label count=new Label{Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};
         readonly Button add;
+        readonly CheckBox splitPocket=new CheckBox{Text="pp条件をランク別に出力",AutoSize=true};
+        public bool SplitPocket {get{return splitPocket.Checked;}}
         bool loading;
         public string[] SelectedPresetIds {get{return presets.Where(p=>chosen.Contains(p.Id)).Select(p=>p.Id).ToArray();}}
         public ResearchPresetPicker(ResearchConditionSet set){
@@ -21,7 +23,7 @@ namespace FlopCommands {
             var root=ResearchUi.Rows(56,38,38,-1,36,42);Controls.Add(root);
             root.Controls.Add(new Label{Text="Syntax Labと同じ名称・順序です。選んだ条件をボードに応じて自動生成します。\n現在のボードで該当しない条件も選べます。選択済みの条件は重複追加しません。",Dock=DockStyle.Fill},0,0);
             var fields=ResearchUi.Fields(1);search.Name="researchPresetSearch";ResearchUi.Field(fields,0,"条件名で検索",search);root.Controls.Add(fields,0,1);
-            var tools=ResearchUi.Bar();tools.Controls.Add(ResearchUi.Button("表示中の選択可能条件を選択",()=>SelectVisible(true)));tools.Controls.Add(ResearchUi.Button("表示中の選択を解除",()=>SelectVisible(false)));root.Controls.Add(tools,0,2);
+            var tools=ResearchUi.Bar();splitPocket.Name="researchSplitPocket";tools.Controls.Add(splitPocket);tools.Controls.Add(ResearchUi.Button("表示中の選択可能条件を選択",()=>SelectVisible(true)));tools.Controls.Add(ResearchUi.Button("表示中の選択を解除",()=>SelectVisible(false)));root.Controls.Add(tools,0,2);
             grid.Name="researchPresetGrid";grid.EditMode=DataGridViewEditMode.EditOnEnter;grid.Columns.Add(new DataGridViewCheckBoxColumn{Name="selected",HeaderText="選択",FillWeight=9});
             grid.Columns.Add(new DataGridViewTextBoxColumn{Name="label",HeaderText="デフォルト条件名",FillWeight=32,ReadOnly=true});
             grid.Columns.Add(new DataGridViewTextBoxColumn{Name="state",HeaderText="状態",FillWeight=13,ReadOnly=true});

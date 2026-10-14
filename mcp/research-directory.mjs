@@ -78,13 +78,19 @@ export async function scanDirectory(config,{directory,highest_rank,ahi_only}, {s
  for(const g of groups.values()){
   const hist=tokens(g.history),previous=hist.length===1?'ROOT':hist.slice(0,-1).join('-');
   const candidates=(historyIndex.get([g.board,g.side==='IP'?'OOP':'IP',previous].join('/'))||[]).filter(x=>x.files.some(f=>f.token===hist[hist.length-1]));
-  const opponent=hist.length&&candidates.length===1&&candidates[0].problems.length===0?candidates[0]:null;
+  let opponent=hist.length&&candidates.length===1&&candidates[0].problems.length===0?candidates[0]:null;
+  // User-defined CO/BTN convention: BTN's starting range is the sum of
+  // all actions after CO checks. Do not apply this to other positions/nodes.
+  if(g.side==='OOP'&&g.folder==='donk'&&g.history==='ROOT'&&g.position==='CO'&&g.files.some(f=>f.token==='C')){
+   const roots=historyIndex.get([g.board,'IP','C'].join('/'))||[];
+   if(roots.length===1&&roots[0].folder==='vs_check'&&roots[0].position==='BTN'&&!roots[0].problems.length)opponent=roots[0];
+  }
   const missing=!opponent?(hist.length?'opponent_pre_action_node_missing_or_ambiguous':'opponent_root_range_not_exported'):null;
   const villain=[...positions[g.side==='IP'?'OOP':'IP']];
   spots.push({node_id:g.node_id,board:g.board,side:g.side,folder:g.folder,history:g.history,position:g.position,villain_position:villain.length===1?villain[0]:null,problems:g.problems,eq_status:missing||'ready',opponent_node:opponent?[opponent.side,opponent.folder,opponent.history].join('/'):null,spot:{spot_id:id(root+'/'+g.board+'/'+g.node_id),board:g.board,node:[g.side,g.folder,g.history].join('/'),hero_actions:g.hero_actions,opponent_sources:opponent?opponent.files.map(source):[],opponent_percent_unit:false,all_actions_common_scale:true,opponent_common_scale:!!opponent}});
  }
  const nodes=[...new Set(spots.map(s=>s.node_id))].map(key=>{const rows=spots.filter(s=>s.node_id===key),s=rows[0];return {node_id:key,side:s.side,folder:s.folder,history:s.history,position:s.position,villain_position:s.villain_position,boards:rows.length,ready:rows.filter(s=>!s.problems.length&&s.eq_status==='ready').length,blocked:rows.filter(s=>s.problems.length).length,missing_opponent:rows.filter(s=>!s.problems.length&&s.eq_status!=='ready').length};});
- const identity={root,highest_rank:selectedRank,files:files.map(f=>({path:f.path,sha256:f.sha256})),issues,boards:boardDirs};
+ const identity={root,highest_rank:selectedRank,root_opponent_policy:'co-btn-vs-check-v1',files:files.map(f=>({path:f.path,sha256:f.sha256})),issues,boards:boardDirs};
  return {profile:directoryProfile,directory:root,highest_rank:selectedRank,fingerprint:hash(JSON.stringify(identity)),board_count:boardDirs.length,excluded_board_count:ignoredBoards.length,file_count:files.length,nodes,spots,issues};
 }
 
@@ -96,5 +102,9 @@ export function directoryCatalog(scan,a){
  const blocked=rows.filter(s=>s.problems.length||!a.allow_frequency_only&&s.eq_status!=='ready');
  if(blocked.length)throw Error('Resolve or explicitly select around blocked boards: '+blocked.map(s=>s.board+': '+[...s.problems,...(s.eq_status==='ready'?[]:[s.eq_status])].join(',')).join('; '));
  if(rows.some(s=>s.position!==a.scenario.hero_position||s.villain_position!==a.scenario.villain_position))throw Error('Scenario positions do not match the CSVs.');
- return {catalog_id:a.catalog_id,revision:0,name:a.name,highest_rank:scan.highest_rank,scenario:{...a.scenario,equity_reference:'Hero: sum of all actions at '+rows[0].spot.node+'; opponent: sum of all actions BEFORE their immediately preceding action. Prior hero actions remain conditioned. Root opponent range is not inferred.'},spots:rows.map(s=>structuredClone(s.spot))};
+ const rootConvention=rows.every(s=>s.side==='OOP'&&s.folder==='donk'&&s.history==='ROOT'&&s.position==='CO'&&s.villain_position==='BTN');
+ const reference=rootConvention
+  ? 'Hero CO: sum of all actions at OOP/donk/ROOT. User-defined BTN starting range: sum of ALL actions at IP/vs_check/C (after CO checks), adopted as the root opponent range; not an independently exported preflop range. Missing or ambiguous sources remain unavailable. Policy: co-btn-vs-check-v1.'
+  : 'Hero: sum of all actions at '+rows[0].spot.node+'; opponent: sum of all actions BEFORE their immediately preceding action. Prior hero actions remain conditioned. Root opponent range is not inferred.';
+ return {catalog_id:a.catalog_id,revision:0,name:a.name,highest_rank:scan.highest_rank,scenario:{...a.scenario,equity_reference:reference},spots:rows.map(s=>structuredClone(s.spot))};
 }

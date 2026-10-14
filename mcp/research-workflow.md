@@ -35,6 +35,8 @@
 
 GUIで個別CSV登録を要求しない。[ディレクトリ取込手順](../docs/directory-import.md)に従い、scan_directory→全プレビューページ→import_directoryの順で実行する。プロファイルの意味・共通weightは既にユーザーが確認していれば再質問しない。位置・サイズ・履歴は確認済みplo-post-tree-v1の規則に限って読み取る。異なるnodeは別カタログとし、OOP ROOTの相手レンジは推測しない。syntaxはユーザー定義を保持する。
 
+CO対BTNのOOP/donk/ROOTには、明示された調査定義 `co-btn-vs-check-v1` がある。同じボードのIP/vs_check/Cの全アクションweightを合算し、BTN開始レンジとして採用する。独立した開始レンジのエクスポートと同一だとは説明しない。スキャンでその対応と全CSVを確認し、取込後のequity_referenceにも定義が保存されていることを確認する。欠落・曖昧な候補・不正は推測で補わない。この例外を別のポジションや別の局面に拡張しない。
+
 
 ## 保存した自動生成条件
 

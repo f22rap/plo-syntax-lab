@@ -31,6 +31,7 @@ F:\PLOrange\post\6max\lowstakes_5%4bb\100bb\SRP\COvsBTN
 
 | 自分の局面 | 相手レンジの復元元 |
 | --- | --- |
+| OOP/donk：ROOT（CO対BTN） | **ユーザー定義**：同じボードのIP/vs_check：Cの全CSVをBTN開始レンジとして採用 |
 | IP/vs_check：C | OOP/donk：ROOTの全CSV |
 | IP/vs_donk：R75 | OOP/donk：ROOTの全CSV |
 | OOP/vs_bet：C-R50 | IP/vs_check：Cの全CSV |
@@ -39,7 +40,11 @@ F:\PLOrange\post\6max\lowstakes_5%4bb\100bb\SRP\COvsBTN
 
 これより以前の自分の行動によるレンジの絞り込みは残る。全局面をフロップROOTまで巻き戻す計算ではない。元データの各判断局面がどのような条件で出力されたかは、ユーザー側で確認する。
 
-OOP/donk：ROOTには、直前のIP判断局面が存在しない。IP/vs_checkを無条件にROOTのIPレンジと見なさない。必要な相手レンジを別途明示してresearch_save_catalogで登録するか、頻度のみを明示的に許可する。欠損EQは0にしない。
+CO対BTNのOOP/donk：ROOTでは、ユーザー指定の定義 `co-btn-vs-check-v1` を採用する。CO自身はROOTの全アクション、相手BTNは同じ物理ボードのIP/vs_check：Cの全アクションを、それぞれハンドごとのweightで合算する。これは「COチェック後のBTNレンジを開始レンジとして扱う」という調査上の定義であり、独立したフロップ開始レンジのエクスポートと同一であることを主張しない。
+
+この規則はNode.js版とNode.js不要版のディレクトリ取込に組み込まれ、再起動後も適用される。Ahiだけでなく、指定した最高ランクすべてに適用する。CO対BTN以外・ROOT以外の局面には拡張しない。IP/Cの候補が一意で、フォルダーがvs_check、ポジションがBTN、検出されたファイル不正がない場合だけ採用する。欠落・複数候補・不正CSVは別局面から補わず、利用不可のままとする。CSV本文と共通weightは登録時に検証する。
+
+カタログのequity_referenceに上記定義とポリシーIDを保存し、各相手CSVのフルパスとハッシュも保存する。保存済みカタログは自動で書き換えない。更新版のMCPへ切り替えて再スキャンし、新規カタログとして登録する。その他のROOT局面は相手レンジを別途明示するか頻度のみを許可する。欠損EQは0にしない。
 
 ## AIの操作
 

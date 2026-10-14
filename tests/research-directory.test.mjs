@@ -17,6 +17,32 @@ async function fixture(t){
 }
 const args=(s,folder='vs_check')=>({node_id:s.nodes.find(n=>n.folder===folder).node_id,catalog_id:'imported',name:'Imported Ahi',scenario:directoryScenario,confirm_profile:'plo-post-tree-v1',all_actions_common_scale:true});
 
+test('CO root convention rejects missing, ambiguous, malformed or differently named BTN sources',async t=>{
+ for(const kind of ['missing','ambiguous','malformed','wrong-folder','no-co-check'])await t.test(kind,async t=>{
+  const {root,config}=await fixture(t),dir=path.join(root,'AsKd7c/IP/vs_check');
+  if(kind==='missing')await fs.rm(dir,{recursive:true});
+  if(kind==='ambiguous')await fs.cp(dir,path.join(root,'AsKd7c/IP/other'),{recursive:true});
+  if(kind==='malformed')await fs.writeFile(path.join(dir,'unknown.csv'),'bad');
+  if(kind==='wrong-folder')await fs.rename(dir,path.join(root,'AsKd7c/IP/other'));
+  if(kind==='no-co-check')await fs.rm(path.join(root,'AsKd7c/OOP/donk/AsKd7c_CO_ROOT_C.csv'));
+  const scan=await scanDirectory(config,{directory:root,highest_rank:'A'}),co=scan.spots.find(s=>s.board==='AsKd7c'&&s.folder==='donk');
+  assert.equal(co.eq_status,'opponent_root_range_not_exported');assert.deepEqual(co.spot.opponent_sources,[]);
+  assert.throws(()=>directoryCatalog(scan,{...args(scan,'donk'),scenario:{...directoryScenario,hero_position:'CO',villain_position:'BTN'}}),/opponent_root/);
+ });
+});
+
+test('CO root convention supports Khi but never silently applies to another position pair',async t=>{
+ const {root,config}=await fixture(t);await makeDirectoryFixture(root,['KsQd2c']);
+ const k=await scanDirectory(config,{directory:root,highest_rank:'K'}),co=k.spots.find(s=>s.folder==='donk');
+ assert.equal(co.eq_status,'ready');assert.equal(co.spot.opponent_sources.length,2);
+ for(const board of await fs.readdir(root))for(const dir of await fs.readdir(path.join(root,board,'OOP'))){
+  const base=path.join(root,board,'OOP',dir);
+  for(const file of await fs.readdir(base))await fs.rename(path.join(base,file),path.join(base,file.replace('_CO_','_SB_')));
+ }
+ const sb=await scanDirectory(config,{directory:root,highest_rank:'K'});
+ assert.equal(sb.spots.find(s=>s.folder==='donk').eq_status,'opponent_root_range_not_exported');
+});
+
 test('User tree: Ahi filter, all 10 nodes, exact previous opponent node, sizes and all-in',async t=>{
  const {root,config}=await fixture(t),s=await scanDirectory(config,{directory:root,highest_rank:'A'});
  assert.equal(s.board_count,2);assert.equal(s.excluded_board_count,2);assert.equal(s.nodes.length,10);assert.equal(s.spots.length,20);assert.deepEqual(s.issues,[]);assert.ok(s.spots.every(x=>!x.problems.length));
@@ -26,11 +52,14 @@ test('User tree: Ahi filter, all 10 nodes, exact previous opponent node, sizes a
  assert.equal(one('vs_bet').opponent_node,'IP/vs_check/C');assert.equal(one('vs_XR').opponent_node,'OOP/vs_bet/C-R50');
  assert.equal(one('vs_check').spot.hero_actions.find(x=>x.kind==='bet').pot_fraction,'0.5');assert.equal(one('vs_bet').spot.hero_actions.find(x=>x.kind==='raise').pot_fraction,'0.75');
  assert.equal(one('vs_XRraise').spot.hero_actions.find(x=>x.label==='All-in').pot_fraction,'allin');assert.equal(one('vs_L4').spot.hero_actions.length,1);
- assert.equal(one('donk').eq_status,'opponent_root_range_not_exported');assert.deepEqual(one('donk').spot.opponent_sources,[]);
+ assert.equal(one('donk').eq_status,'ready');assert.equal(one('donk').opponent_node,'IP/vs_check/C');
+ assert.deepEqual(one('donk').spot.opponent_sources,one('vs_check').spot.hero_actions.map(a=>a.source));
  const c=directoryCatalog(s,args(s));assert.equal(c.spots.length,2);assert.match(c.scenario.equity_reference,/BEFORE/);assert.ok(c.spots[0].hero_actions.every(x=>x.source.sha256.length===64));
  assert.throws(()=>directoryCatalog(s,{...args(s),scenario:{...directoryScenario,hero_position:'CO'}}),/positions/);
  assert.throws(()=>directoryCatalog(s,{...args(s),boards:['AsKd7c','AsKd7c']}),/duplicate/);
- assert.throws(()=>directoryCatalog(s,{...args(s,'donk'),scenario:{...directoryScenario,hero_position:'CO',villain_position:'BTN'}}),/opponent_root/);
+ const co=directoryCatalog(s,{...args(s,'donk'),scenario:{...directoryScenario,hero_position:'CO',villain_position:'BTN'}});
+ assert.match(co.scenario.equity_reference,/User-defined BTN starting range/);assert.match(co.scenario.equity_reference,/co-btn-vs-check-v1/);
+ assert.deepEqual(JSON.parse(JSON.stringify(co)).spots.find(s=>s.board==='AsKd7c').opponent_sources,one('vs_check').spot.hero_actions.map(a=>a.source));
  assert.equal(directoryCatalog(s,{...args(s,'donk'),scenario:{...directoryScenario,hero_position:'CO',villain_position:'BTN'},allow_frequency_only:true}).spots.length,2);
  assert.equal((await scanDirectory(config,{directory:root,ahi_only:false})).board_count,4);
 });

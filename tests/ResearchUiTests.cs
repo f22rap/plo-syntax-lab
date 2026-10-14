@@ -31,6 +31,14 @@ namespace FlopCommands {
                 search.Clear();Application.DoEvents();Require(grid.Rows.Cast<DataGridViewRow>().Count(r=>Convert.ToBoolean(r.Cells[0].Value))==2,"checked state restored after search");picker.Close();
             }
             Require(draft.Conditions.Count==0,"picker cancel leaves original unchanged");
+            var emptyDraft=new ResearchConditionSet();emptyDraft.Conditions.Add(new ResearchCondition());
+            using(var editor=new ResearchConditionEditor(emptyDraft)){
+                editor.Show(owner);Application.DoEvents();editor.AddDefaults(new[]{"pair.top.pocket.under"},true);
+                Require(editor.Value.Conditions.Count==13,"empty placeholder replaced with 13 pocket ranks");
+                Require(editor.Value.Conditions.All(c=>c.Kind=="generated"),"no empty literal remains");
+                Require(editor.Value.Conditions.First().Generator.AdditionalSyntax=="22"&&editor.Value.Conditions.Last().Generator.AdditionalSyntax=="AA","rank constraints reach editor");
+                ((Button)editor.Controls.Find("researchConditionSave",true).Single()).PerformClick();Application.DoEvents();Require(editor.DialogResult==DialogResult.OK,"split pp conditions save");
+            }
             ResearchConditionSet saved;
             using(var editor=new ResearchConditionEditor(draft)){
                 editor.Show(owner);Application.DoEvents();Require(editor.AddDefaults(new[]{"set.top.all","set.middle.all","aa.sd.bdsd"})==3,"bulk add defaults");string id=editor.Value.Conditions[0].Id;
