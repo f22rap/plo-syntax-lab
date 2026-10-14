@@ -11,7 +11,8 @@ import {makeDirectoryFixture,directoryScenario} from './directory-fixture.mjs';
 import {checkConnection} from '../mcp/check-connection.mjs';
 
 test('Research MCP: real SDK transport, shared settings, immutable plans, numerical results, cancellation and scope',{timeout:180000},async()=>{
- const base=await fs.mkdtemp(path.join(process.env.PLO_MCP_TEST_ROOT||path.join(root,'test-results'),'research-mcp-'));
+ const testRoot=process.env.PLO_MCP_TEST_ROOT||path.join(root,'test-results');await fs.mkdir(testRoot,{recursive:true});
+ const base=await fs.mkdtemp(path.join(testRoot,'research-mcp-'));
  const input=path.join(base,'input'),output=path.join(base,'output'),history=path.join(base,'history');await fs.mkdir(input);
  const configFile=path.join(base,'config.json');await fs.writeFile(configFile,JSON.stringify({inputRoots:[input],outputRoot:output,historyRoot:history,timeoutSeconds:120}));
  let client,transport;

@@ -339,3 +339,7 @@ Ahi固定を撤廃。scan/list highest_rankと計算settings.HighestRankはall/A
 ## Windowsのディレクトリ許可判定（0.4.2）
 
 61cfca3のWindows CIはEXEビルド・計算21,160件・bridge 17件を通過後、directoryテストでinputRoots範囲外エラー。fixtureがloadConfigの正規化を省略していたため本番と同じloadConfig経由へ修正。scanDirectoryも入力表記のlexical事前判定を廃し、plainでリンクを拒否した後にrealpathで解決し、canonical inputRootsとの範囲検査を実施する。短縮名と通常名の同一場所を受け入れ、範囲外・リンク拒否は維持。元表記とcanonical表記、非リンク別名の模擬回帰テストを追加。Windows再実行は次のpush後に確認。
+
+### 0.4.2 Windows CIの結果と配布テストの準備修正
+
+d1adfd9のCI（38494688812）でWindowsの短縮名RUNNER~1と通常名runneradmin、日本語・空白を含むパスの同一判定を確認。directory 8件、setup 3件、bridge 17件、研究と従来MCPの実stdio統合テスト、計算21,160件、EXEビルドは成功。次の配布テストでPLO_MCP_TEST_ROOTの未作成によるmkdtemp ENOENTが発生し、ZIP公開は未達。tests/research-mcp.test.mjsを既存mcp.test.mjsと同様にrecursive mkdir後mkdtempへ修正。未作成の入れ子フォルダーを指定した配布版SDK統合テストはLinux/.NET 8で成功。修正後の再push・Windows配布テストは承認待ち。
