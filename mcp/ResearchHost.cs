@@ -20,6 +20,7 @@ namespace PloMcp {
         [DataMember] public ResearchConditionSet conditionSet;
         [DataMember] public ResearchCatalog catalog;
         [DataMember] public ResearchRunSettings settings;
+        [DataMember] public ResearchGenerationSnapshot generation;
     }
     public static class ResearchBridge {
         public static string J<T>(T value){return Encoding.UTF8.GetString(ResearchJson.Encode(value));}
@@ -42,7 +43,7 @@ namespace PloMcp {
             if(full)foreach(var s in c.Spots){token.ThrowIfCancellationRequested();ResearchValidation.ValidateFiles(s,token);}
             Scope(q,c);errors=ResearchValidation.CheckFiles(c,token);Need(errors.Length==0,string.Join("\n",errors));
         }
-        static string Meta(ResearchRunResult r){return Obj("result_id",J(r.Id),"status",J(r.Status),"started_utc",J(r.StartedUtc),"finished_utc",J(r.FinishedUtc),"target_spots",J(r.TargetSpots),"completed_spots",J(r.CompletedSpots),"filtered_spots",J(r.FilteredSpots),"row_count",J(r.Rows.Count),"error",J(r.Error),"classification_version",J(r.ClassificationVersion),"engine_version",J(r.EngineVersion),"application_version",J(r.ApplicationVersion),"settings",J(r.Settings),"catalog",J(r.Catalog),"condition_set",J(r.ConditionSet),"status_counts",J(r.Rows.GroupBy(x=>x.Status).ToDictionary(g=>g.Key,g=>g.Count())));}
+        static string Meta(ResearchRunResult r){return Obj("result_id",J(r.Id),"status",J(r.Status),"started_utc",J(r.StartedUtc),"finished_utc",J(r.FinishedUtc),"target_spots",J(r.TargetSpots),"completed_spots",J(r.CompletedSpots),"filtered_spots",J(r.FilteredSpots),"row_count",J(r.Rows.Count),"error",J(r.Error),"classification_version",J(r.ClassificationVersion),"engine_version",J(r.EngineVersion),"application_version",J(r.ApplicationVersion),"settings",J(r.Settings),"catalog",J(r.Catalog),"condition_set",J(r.ConditionSet),"generation",J(r.Generation==null?null:ResearchGeneration.Read(r.Generation)),"generation_sha256",J(r.Generation==null?null:r.Generation.Sha256),"status_counts",J(r.Rows.GroupBy(x=>x.Status).ToDictionary(g=>g.Key,g=>g.Count())));}
         public static string Execute(ResearchRequest q,CancellationToken token,Action<ResearchProgress> progress){
             Need(q!=null&&!string.IsNullOrEmpty(q.historyRoot),"History root is required.");string dir=Path.Combine(Path.GetFullPath(q.historyRoot),"Research"),runs=Path.Combine(dir,"Runs");PlainPath(dir);PlainPath(runs);var store=new ResearchStore(dir);PlainPath(store.FilePath);PlainPath(store.FilePath+".lock");
             if(q.action=="workspace")return J(store.Load());
@@ -52,12 +53,14 @@ namespace PloMcp {
             if(q.action=="save_catalog"){
                 var w=store.Load();Need(w.Revision==q.expectedRevision,"Workspace changed; reload before saving.");Need(q.catalog!=null&&q.catalog.Spots!=null&&q.catalog.Spots.Count<=200,"Save at most 200 spots at once.");Scope(q,q.catalog);foreach(var source in q.catalog.Spots.SelectMany(s=>s.Actions.Select(a=>a.Source).Concat(s.Opponents)))if(!string.IsNullOrEmpty(source.Sha256))Need(source.Sha256==ResearchValidation.Hash(source.Path,token),"CSV changed after preview; scan again.");var old=w.Catalogs.SingleOrDefault(c=>c.Id==q.catalog.Id);Need(q.catalog.Revision==(old==null?0:old.Revision),"Catalog revision conflict.");q.catalog.Spots=q.catalog.Spots.Select(s=>ResearchValidation.ValidateFiles(s,token)).ToList();CheckSources(q,q.catalog,token,false);ResearchValidation.Catalog(q.catalog);token.ThrowIfCancellationRequested();if(old!=null)w.Catalogs.Remove(old);w.Catalogs.Add(q.catalog);var saved=store.Save(w,q.expectedRevision);return Obj("workspace_revision",J(saved.Revision),"catalog",J(Catalog(saved,q.catalog.Id)));
             }
-            if(q.action=="validate"||q.action=="run"){
-                var w=store.Load();var c=Select(q,w);var s=ResearchJson.Clone(Set(w,q.setId));Need(s.Revision==q.setRevision,"Condition set changed; validate a new plan.");if(q.catalog!=null)Need(J(c)==J(q.catalog),"Catalog snapshot changed; validate again.");if(q.conditionSet!=null)Need(J(s)==J(q.conditionSet),"Condition snapshot changed; validate again.");ResearchRun.ValidateRequest(c,s,q.settings);
+            if(q.action=="preflight"||q.action=="validate"||q.action=="run"){
+                var w=store.Load();var c=Select(q,w);var s=ResearchJson.Clone(Set(w,q.setId));Need(s.Revision==q.setRevision,"Condition set changed; validate a new plan.");if(q.catalog!=null)Need(J(c)==J(q.catalog),"Catalog snapshot changed; validate again.");if(q.conditionSet!=null)Need(J(s)==J(q.conditionSet),"Condition snapshot changed; validate again.");ResearchRun.ValidateRequest(c,s,q.settings,q.generation,q.action=="preflight");
                 var targets=ResearchJson.Clone(c);q.settings.HighestRank=ResearchRun.BoardRank(c,q.settings);targets.Spots=ResearchRun.Targets(c,q.settings).ToList();
-                CheckSources(q,targets,token,q.action=="validate");
-                if(q.action=="validate")return Obj("catalog",J(c),"condition_set",J(s),"settings",J(q.settings),"target_spots",J(targets.Spots.Count),"estimated_trials",J((long)targets.Spots.Count*s.Conditions.Count(x=>x.Enabled)*q.settings.Trials),"resolved",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchValidation.Resolve(s,x.Board))),"features",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchFeatures.From(x.Board))));
-                var r=ResearchRun.Execute(c,s,q.settings,token,progress);Scope(q,targets);PlainPath(runs);ResearchFiles.SaveHistory(r,runs);return Meta(r);
+                CheckSources(q,targets,token,q.action=="validate"||q.action=="preflight");
+                if(q.action=="preflight")return Obj("catalog",J(c),"condition_set",J(s),"settings",J(q.settings),"boards",J(targets.Spots.Select(x=>ResearchValidation.Board(x.Board)).Distinct().ToArray()));
+                var generated=ResearchGeneration.Validate(q.generation,c,s,q.settings);
+                if(q.action=="validate")return Obj("catalog",J(c),"condition_set",J(s),"settings",J(q.settings),"target_spots",J(targets.Spots.Count),"estimated_trials",J((long)targets.Spots.Count*s.Conditions.Count(x=>x.Enabled)*q.settings.Trials),"generation",J(generated),"generation_sha256",J(q.generation==null?null:q.generation.Sha256),"resolved",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchGeneration.Resolve(s,x.Board,generated))),"features",J(targets.Spots.ToDictionary(x=>x.Id,x=>ResearchFeatures.From(x.Board))));
+                var r=ResearchRun.Execute(c,s,q.settings,token,progress,q.generation);Scope(q,targets);PlainPath(runs);ResearchFiles.SaveHistory(r,runs);return Meta(r);
             }
             if(q.action=="history"){
                 var values=new List<string>();int unreadable=0;if(Directory.Exists(runs))foreach(var p in Directory.EnumerateFiles(runs,"*.json").OrderByDescending(p=>p).Take(10000)){try{PlainPath(p);var r=ResearchFiles.Read(p);if((r.Catalog.Name+" "+r.ConditionSet.Name+" "+r.Status).IndexOf(q.query??"",StringComparison.OrdinalIgnoreCase)>=0)values.Add(Obj("result_id",J(r.Id),"status",J(r.Status),"finished_utc",J(r.FinishedUtc),"catalog_name",J(r.Catalog.Name),"set_name",J(r.ConditionSet.Name),"completed_spots",J(r.CompletedSpots),"target_spots",J(r.TargetSpots)));}catch{unreadable++;}}

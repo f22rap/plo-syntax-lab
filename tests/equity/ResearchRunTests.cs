@@ -35,6 +35,7 @@ namespace EquityTests {
         }
         static void Calculations(string dir){
             var c=Catalog();c.Spots.Add(Spot(dir,"one","AsKd7c",.01,.03));c.Spots.Add(Spot(dir,"two","Ah8h3c",.75,.25,true));c.Spots.Add(Spot(dir,"nonace","KsQd7c",.5,.5));
+            var generated=new ResearchConditionSet();ResearchPresets.Add(generated,new[]{"set.top.all"});var allowMissing=Settings();allowMissing.AllowMissingDefinitions=true;Reject(()=>ResearchRun.ValidateRequest(c,generated,allowMissing),"unexpanded generated conditions cannot be skipped as missing definitions");
             RankFilters(c);
             var r=Run(c);ResearchFiles.Validate(r);Check(r.Status=="completed"&&r.CompletedSpots==2&&r.TargetSpots==2&&r.FilteredSpots==1,"Ahi selection excludes non-Ace board");Check(r.Rows.Count==4,"one row per condition per board");
             Near(Summary(r).FrequencyMean,50,"equal board average not pooled CSV weight");Near(Summary(r,"bet:0.33").FrequencyMean,50,"action key unaffected by reversed CSV order");Near(Summary(r,ResearchRun.TotalBet).FrequencyMean,50,"total bet");

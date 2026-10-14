@@ -4,7 +4,7 @@ Windows MCP 0.4.2は従来15ツールに調査用15ツールを追加する。�
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 
-ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ30ツールを呼び出す構成。利用者環境での実接続は未検証。
+ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ31ツールを呼び出す構成。利用者環境での実接続は未検証。
 
 ## 起動と設定
 
@@ -25,7 +25,7 @@ Windows MCP 0.4.2は従来15ツールに調査用15ツールを追加する。�
 }
 ```
 
-4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。30ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
+4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。31ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
 5. AIに「Ahiボードのベット戦略を、ボードの特徴ごとに調査して。登録した○○条件セットを使って」と依頼する。[AI向け手順](../mcp/research-workflow.md)も参照。
 
 AIホスト固有の設定画面・インストール操作は環境によって異なる。このパッケージ自体はWeb接続用URLを提供しないため、ブラウザ版ChatGPTには別途トンネル接続を設定する。PCを使わずクラウドでEQ計算を行う場合は別の実行基盤が必要。特定のAI製品への接続完了をSDK試験だけで判断しない。
@@ -80,8 +80,11 @@ npm run test:mcp
 npm run package:windows-mcp
 ```
 
-Linuxでは同じC#ソースを.NET 8へコンパイルし、公式SDKの実stdio通信で30ツールの発見、条件・CSV登録、計画、EQ／頻度・集計・出力、入力変更・許可範囲・競合・再起動・中止を試験した。17件のC#ブリッジ検証ではGUI単一ボード計算との数値・シード一致、確定済みボードの保持も確認。既存20,968件の計算検証も維持する。Windows EXEはクロスコンパイルで確認する。
+Linuxでは同じC#ソースを.NET 8へコンパイルし、公式SDKの実stdio通信で31ツールの発見、条件・CSV登録、計画、EQ／頻度・集計・出力、入力変更・許可範囲・競合・再起動・中止を試験した。17件のC#ブリッジ検証ではGUI単一ボード計算との数値・シード一致、確定済みボードの保持も確認。既存20,968件の計算検証も維持する。Windows EXEはクロスコンパイルで確認する。
 
 Windows実機での新しいEXE起動、およびユーザーが選ぶAIホストからの自然文調査は、この環境では未確認。配布物はその接続確認に使うプレビュー。ローカルプレビューには基準コミットとファイル別SHA-256を記録し、未プッシュの内容をそのコミットに含まれるものとして扱わない。
 
 最高ランクは[ディレクトリ取込](directory-import.md)の指定に従う。スキャンhighest_rank、省略時のカタログ継承、計算settings.HighestRankに対応。Khi/QhiにもAhi限定を適用しない。
+
+
+保存したデフォルト条件をボードごとに自動生成する手順は[生成条件のMCP調査](generated-conditions-research.md)を参照。Node.js版の`research_validate`が生成まで行い、`research_start`はその確定済みsyntaxを使用する。Node.js不要版の自動生成実行は未対応。

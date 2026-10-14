@@ -20,7 +20,8 @@ namespace FlopCommands.Research {
         [DataMember(Name="kind")] public string Kind="literal";
         [DataMember(Name="syntax")] public string Syntax="";
         [DataMember(Name="by_board")] public Dictionary<string,string> ByBoard=new Dictionary<string,string>();
-        public override string ToString(){return (Enabled?"☑ ":"☐ ")+Label;}
+        [DataMember(Name="generator",EmitDefaultValue=false)] public ResearchGenerator Generator;
+        public override string ToString(){return (Enabled?"☑ ":"☐ ")+Label+(Kind=="generated"?" [自動]":"");}
     }
     [DataContract] public sealed class ResearchConditionSet {
         [DataMember(Name="set_id")] public string Id=Guid.NewGuid().ToString("N");
@@ -99,7 +100,7 @@ namespace FlopCommands.Research {
         public const int MaxBytes=16*1024*1024;
         static DataContractJsonSerializer Serializer(Type type){return new DataContractJsonSerializer(type,new DataContractJsonSerializerSettings{UseSimpleDictionaryFormat=true,MaxItemsInObjectGraph=200000});}
         public static byte[] Encode<T>(T value){using(var stream=new MemoryStream()){Serializer(typeof(T)).WriteObject(stream,value);if(stream.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");return stream.ToArray();}}
-        public static T Decode<T>(byte[] bytes){if(bytes==null||bytes.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");using(var stream=new MemoryStream(bytes))return (T)Serializer(typeof(T)).ReadObject(stream);}
+        public static T Decode<T>(byte[] bytes){if(bytes==null||bytes.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");ResearchRecipeJson.CheckDocument(bytes);using(var stream=new MemoryStream(bytes))return (T)Serializer(typeof(T)).ReadObject(stream);}
         public static T Clone<T>(T value){return Decode<T>(Encode(value));}
         public static byte[] Read(string path){using(var file=File.OpenRead(path)){if(file.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");using(var stream=new MemoryStream()){file.CopyTo(stream);if(stream.Length>MaxBytes)throw new ArgumentException("調査設定が大きすぎます。");return stream.ToArray();}}}
     }
@@ -112,7 +113,9 @@ namespace FlopCommands.Research {
             Need(set!=null,"条件セットがありません。");Id(set.Id);Text(set.Name,"セット名",200);Need(set.Revision>=0,"条件セットの版が不正です。");
             Need(set.Conditions!=null&&set.Conditions.Count<=1000,"条件は1,000件までです。");var ids=new HashSet<string>();
             foreach(var c in set.Conditions){Need(c!=null,"空の条件があります。");Id(c.Id);Need(ids.Add(c.Id),"条件IDが重複しています。");Text(c.Label,"条件名",1000);Need(c.ByBoard!=null,"ボード別定義がありません。");
-                if(c.Kind=="literal"){new SyntaxMatcher(c.Syntax);Need(c.ByBoard.Count==0,"共通syntaxとボード別定義は同時に指定できません。");}
+                Need(c.Kind=="generated"||c.Generator==null,"手入力条件に自動生成定義を混在できません。");
+                if(c.Kind=="generated"){Need(c.Syntax==""&&c.ByBoard.Count==0,"自動生成条件には生成済みsyntaxを保存できません。");ResearchRecipes.Validate(c.Generator);}
+                else if(c.Kind=="literal"){new SyntaxMatcher(c.Syntax);Need(c.ByBoard.Count==0,"共通syntaxとボード別定義は同時に指定できません。");}
                 else if(c.Kind=="per_board"){
                     Need(string.IsNullOrEmpty(c.Syntax),"ボード別条件に共通syntaxは指定できません。");Need(c.ByBoard.Count>0&&c.ByBoard.Count<=10000,"ボード別syntaxを1件以上指定してください。");var boards=new HashSet<string>();
                     foreach(var pair in c.ByBoard){Need(boards.Add(Board(pair.Key)),"同じ物理ボードの定義が重複しています。");new SyntaxMatcher(pair.Value);}
@@ -121,6 +124,7 @@ namespace FlopCommands.Research {
         }
         public static ResolvedResearchCondition[] Resolve(ResearchConditionSet set,string board){
             Set(set);string key=Board(board);return set.Conditions.Where(c=>c.Enabled).Select(c=>{
+                if(c.Kind=="generated")throw new ArgumentException("自動生成条件はボード別の生成が必要です。保存済み条件セットを生成プレビューで確認してください。");
                 string syntax=c.Kind=="literal"?c.Syntax:c.ByBoard.Where(p=>Board(p.Key)==key).Select(p=>p.Value).FirstOrDefault();
                 return new ResolvedResearchCondition{Id=c.Id,Label=c.Label,Syntax=syntax,Status=syntax==null?"missing_definition":"ready"};
             }).ToArray();
@@ -144,7 +148,7 @@ namespace FlopCommands.Research {
             Text(s.HeroPosition,"自分のポジション",100);Text(s.VillainPosition,"相手のポジション",100);Need(!string.Equals(s.HeroPosition,s.VillainPosition,StringComparison.OrdinalIgnoreCase),"双方のポジションが同じです。");decimal stack;Need(decimal.TryParse(s.StackBb,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out stack)&&stack>0,"実効スタックを正のBB数で入力してください。");Text(s.PotType,"ポット種別",200);Text(s.ActionHistory,"それ以前のアクション",4000);Text(s.SolutionContext,"レーキ・ソルバー設定",4000);Text(s.EquityReference,"EQの基準点",500);
             Need(c.Spots!=null&&c.Spots.Count<=10000,"ボードは10,000件までです。");var ids=new HashSet<string>();var keys=new HashSet<string>();foreach(var spot in c.Spots){Spot(spot,true);Need(ids.Add(spot.Id),"ボードIDが重複しています。");Need(keys.Add(Board(spot.Board)+"\n"+spot.Node.Trim()),"同じボード・アクション位置の二重登録です。");}
         }
-        public static void Workspace(ResearchWorkspace w){Need(w!=null&&w.SchemaVersion==1&&w.Revision>=0,"未対応または不正な調査設定形式です。");Need(w.Sets!=null&&w.Catalogs!=null&&w.Sets.Count<=500&&w.Catalogs.Count<=500,"調査設定の件数が不正です。");var ids=new HashSet<string>();foreach(var s in w.Sets){Set(s);Need(ids.Add(s.Id),"条件セットIDが重複しています。");}ids.Clear();foreach(var c in w.Catalogs){Catalog(c);Need(ids.Add(c.Id),"カタログIDが重複しています。");}}
+        public static void Workspace(ResearchWorkspace w){Need(w!=null&&(w.SchemaVersion==1||w.SchemaVersion==2)&&w.Revision>=0,"未対応または不正な調査設定形式です。");Need(w.Sets!=null&&w.Catalogs!=null&&w.Sets.Count<=500&&w.Catalogs.Count<=500,"調査設定の件数が不正です。");var ids=new HashSet<string>();foreach(var s in w.Sets){Set(s);Need(w.SchemaVersion==2||!s.Conditions.Any(c=>c.Kind=="generated"),"自動生成条件には調査設定形式2が必要です。");Need(ids.Add(s.Id),"条件セットIDが重複しています。");}ids.Clear();foreach(var c in w.Catalogs){Catalog(c);Need(ids.Add(c.Id),"カタログIDが重複しています。");}}
         public static ResearchSpot ValidateFiles(ResearchSpot draft,CancellationToken token){
             var spot=ResearchJson.Clone(draft);Spot(spot,false);spot.Board=Board(spot.Board);var sources=spot.Actions.Select(a=>a.Source).Concat(spot.Opponents).ToArray();
             foreach(var s in sources){token.ThrowIfCancellationRequested();s.Path=Path.GetFullPath(s.Path);s.Sha256=Hash(s.Path,token);}
@@ -161,20 +165,25 @@ namespace FlopCommands.Research {
         public ResearchStore(string root){FilePath=Path.Combine(Path.GetFullPath(root),"workspace.json");}
         public ResearchWorkspace Load(){if(!File.Exists(FilePath))return new ResearchWorkspace();var w=ResearchJson.Decode<ResearchWorkspace>(ResearchJson.Read(FilePath));ResearchValidation.Workspace(w);return w;}
         public ResearchWorkspace Save(ResearchWorkspace draft,int expectedRevision){
-            var value=ResearchJson.Clone(draft);ResearchValidation.Workspace(value);Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
+            var value=ResearchJson.Clone(draft);if(value.SchemaVersion==1&&value.Sets!=null&&value.Sets.Any(s=>s!=null&&s.Conditions!=null&&s.Conditions.Any(c=>c!=null&&c.Kind=="generated")))value.SchemaVersion=2;ResearchValidation.Workspace(value);Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             using(var gate=new FileStream(FilePath+".lock",FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
-                var old=Load();if(old.Revision!=expectedRevision)throw new InvalidOperationException("別の画面・アプリで調査設定が更新されました。再読込してから保存してください。");value.Revision=checked(expectedRevision+1);
+                var old=Load();if(old.Revision!=expectedRevision)throw new InvalidOperationException("別の画面・アプリで調査設定が更新されました。再読込してから保存してください。");if(old.SchemaVersion==2)value.SchemaVersion=2;value.Revision=checked(expectedRevision+1);
                 foreach(var s in value.Sets){var previous=old.Sets.FirstOrDefault(x=>x.Id==s.Id);s.Revision=previous==null?1:Same(previous,s)?previous.Revision:checked(previous.Revision+1);}
                 foreach(var c in value.Catalogs){var previous=old.Catalogs.FirstOrDefault(x=>x.Id==c.Id);c.Revision=previous==null?1:Same(previous,c)?previous.Revision:checked(previous.Revision+1);}
-                WriteAtomic(FilePath,ResearchJson.Encode(value));return value;
+                byte[] encoded=ResearchJson.Encode(value);if(old.SchemaVersion==1&&value.SchemaVersion==2&&File.Exists(FilePath))BackupV1(old.Revision);WriteAtomic(FilePath,encoded);return value;
             }
         }
         static bool Same<T>(T a,T b){return ResearchJson.Encode(a).SequenceEqual(ResearchJson.Encode(b));}
+        void BackupV1(int revision){
+            string backup=FilePath+".schema-v1.r"+revision+".bak",temp=backup+"."+Guid.NewGuid().ToString("N")+".tmp";byte[] original=ResearchJson.Read(FilePath);
+            if(File.Exists(backup)){if(!ResearchJson.Read(backup).SequenceEqual(original))throw new IOException("移行前バックアップが既存の設定と一致しません："+backup);return;}
+            try{using(var file=new FileStream(temp,FileMode.CreateNew,FileAccess.Write,FileShare.None)){file.Write(original,0,original.Length);file.Flush(true);}File.Move(temp,backup);}finally{if(File.Exists(temp))File.Delete(temp);}
+        }
         static void WriteAtomic(string path,byte[] bytes){string temp=path+"."+Guid.NewGuid().ToString("N")+".tmp";try{using(var file=new FileStream(temp,FileMode.CreateNew,FileAccess.Write,FileShare.None)){file.Write(bytes,0,bytes.Length);file.Flush(true);}if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);}finally{if(File.Exists(temp))File.Delete(temp);}}
         public void Export(string path,ResearchWorkspace workspace){ResearchValidation.Workspace(workspace);string full=Path.GetFullPath(path);if(!string.Equals(Path.GetExtension(full),".json",StringComparison.OrdinalIgnoreCase)||string.Equals(full,FilePath,StringComparison.OrdinalIgnoreCase))throw new ArgumentException("調査設定の保存先とは別の.jsonファイルを選択してください。");if(workspace.Catalogs.SelectMany(c=>c.Spots).SelectMany(s=>s.Actions.Select(a=>a.Source).Concat(s.Opponents)).Any(s=>string.Equals(full,Path.GetFullPath(s.Path),StringComparison.OrdinalIgnoreCase)))throw new ArgumentException("入力CSVには上書きできません。");WriteAtomic(full,ResearchJson.Encode(workspace));}
         public static ResearchWorkspace ImportAsCopies(ResearchWorkspace current,string path){
             var input=ResearchJson.Decode<ResearchWorkspace>(ResearchJson.Read(path));ResearchValidation.Workspace(input);var next=ResearchJson.Clone(current);
-            foreach(var s in input.Sets){s.Id=Guid.NewGuid().ToString("N");s.Revision=0;next.Sets.Add(s);}foreach(var c in input.Catalogs){c.Id=Guid.NewGuid().ToString("N");c.Revision=0;next.Catalogs.Add(c);}ResearchValidation.Workspace(next);return next;
+            if(input.SchemaVersion==2)next.SchemaVersion=2;foreach(var s in input.Sets){s.Id=Guid.NewGuid().ToString("N");s.Revision=0;next.Sets.Add(s);}foreach(var c in input.Catalogs){c.Id=Guid.NewGuid().ToString("N");c.Revision=0;next.Catalogs.Add(c);}ResearchValidation.Workspace(next);return next;
         }
     }
 }

@@ -10,9 +10,11 @@
     "mcp": "node mcp/server.mjs",
     "test:mcp": "node --test tests/mcp.test.mjs",
     "package:windows-mcp": "node mcp/package-runtime.cjs",
-    "test:research": "node --test tests/research-mcp.test.mjs",
+    "test:research": "node --test --test-concurrency=1 tests/research-mcp.test.mjs tests/generated-research.test.mjs",
     "test:codex-setup": "node --test tests/codex-setup.test.mjs",
-    "test:directory": "node --test tests/research-directory.test.mjs"
+    "test:directory": "node --test tests/research-directory.test.mjs",
+    "test:generated": "node --test tests/generated-conditions.test.mjs tests/generated-plan-guards.test.mjs",
+    "preview:generated": "node mcp/preview-generated-conditions.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",

@@ -1,0 +1,618 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PLO generated research condition — design draft 1",
+  "description": "Design only. Not accepted by the current released app. Additional semantic and board-specific validation is required; see generated-conditions-design.md.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "literal"
+        },
+        "syntax": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000000
+        },
+        "by_board": {
+          "type": "object",
+          "maxProperties": 0,
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "condition_id",
+        "label",
+        "enabled",
+        "kind",
+        "syntax",
+        "by_board"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "per_board"
+        },
+        "syntax": {
+          "const": ""
+        },
+        "by_board": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 10000,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000000
+          }
+        }
+      },
+      "required": [
+        "condition_id",
+        "label",
+        "enabled",
+        "kind",
+        "syntax",
+        "by_board"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "generated"
+        },
+        "syntax": {
+          "const": ""
+        },
+        "by_board": {
+          "type": "object",
+          "maxProperties": 0,
+          "additionalProperties": false
+        },
+        "generator": {
+          "$ref": "#/$defs/generator"
+        }
+      },
+      "required": [
+        "condition_id",
+        "label",
+        "enabled",
+        "kind",
+        "syntax",
+        "by_board",
+        "generator"
+      ]
+    }
+  ],
+  "$defs": {
+    "rankRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "fixed"
+            },
+            "rank": {
+              "type": "string",
+              "enum": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "T",
+                "J",
+                "Q",
+                "K",
+                "A"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "rank"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "board"
+            },
+            "position": {
+              "type": "string",
+              "enum": [
+                "top",
+                "middle",
+                "bottom"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "position"
+          ]
+        }
+      ]
+    },
+    "role": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "all"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "category"
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "high_card",
+                "one_pair",
+                "two_pair",
+                "three_of_a_kind",
+                "straight",
+                "flush",
+                "full_house",
+                "quads",
+                "straight_flush"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "category"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "pair",
+                "set",
+                "trips",
+                "quads"
+              ]
+            },
+            "rank": {
+              "$ref": "#/$defs/rankRef"
+            }
+          },
+          "required": [
+            "type",
+            "rank"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "two_pair"
+            },
+            "ranks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/rankRef"
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "type",
+            "ranks"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "full_house"
+            },
+            "trips": {
+              "$ref": "#/$defs/rankRef"
+            },
+            "pair": {
+              "$ref": "#/$defs/rankRef"
+            }
+          },
+          "required": [
+            "type",
+            "trips",
+            "pair"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "straight",
+                "straight_flush"
+              ]
+            },
+            "high": {
+              "$ref": "#/$defs/rankRef"
+            }
+          },
+          "required": [
+            "type",
+            "high"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "flush"
+            },
+            "tier": {
+              "type": "string",
+              "enum": [
+                "nut",
+                "second",
+                "third",
+                "other"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "tier"
+          ]
+        }
+      ]
+    },
+    "filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/role"
+        },
+        "fd": {
+          "type": "string",
+          "enum": [
+            "all",
+            "none",
+            "fd",
+            "fdNut",
+            "fdSecond",
+            "fdThird",
+            "fdLow",
+            "fdTriple",
+            "dualFd"
+          ]
+        },
+        "sd": {
+          "type": "string",
+          "enum": [
+            "all",
+            "none",
+            "sd",
+            "wrap",
+            "nutGut",
+            "nutOpen",
+            "nonGut",
+            "nonOpen"
+          ]
+        },
+        "bdfd": {
+          "type": "string",
+          "enum": [
+            "all",
+            "none",
+            "bdfd",
+            "bdNut",
+            "bdSecond",
+            "bdLow",
+            "bdTriple"
+          ]
+        },
+        "bdsd": {
+          "type": "string",
+          "enum": [
+            "all",
+            "none",
+            "bdsd",
+            "bdsd4",
+            "bdsd8",
+            "bdsd9",
+            "bdsdOther"
+          ]
+        },
+        "pocket": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "all"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "rank"
+                },
+                "rank": {
+                  "$ref": "#/$defs/rankRef"
+                }
+              },
+              "required": [
+                "type",
+                "rank"
+              ]
+            }
+          ]
+        },
+        "clean": {
+          "type": "string",
+          "enum": [
+            "",
+            "regular",
+            "all"
+          ]
+        },
+        "blockers": {
+          "type": "array",
+          "maxItems": 13,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "rank": {
+                "$ref": "#/$defs/rankRef"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "one",
+                  "two"
+                ]
+              }
+            },
+            "required": [
+              "rank",
+              "mode"
+            ]
+          }
+        }
+      },
+      "required": [
+        "role",
+        "fd",
+        "sd",
+        "bdfd",
+        "bdsd",
+        "pocket",
+        "clean",
+        "blockers"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "clean": {
+                "const": "regular"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fd": {
+                "const": "all"
+              },
+              "sd": {
+                "const": "all"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "clean": {
+                "const": "all"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fd": {
+                "const": "all"
+              },
+              "sd": {
+                "const": "all"
+              },
+              "bdfd": {
+                "const": "all"
+              },
+              "bdsd": {
+                "const": "all"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "bdsd": {
+                "enum": [
+                  "bdsd",
+                  "bdsd4",
+                  "bdsd8",
+                  "bdsd9",
+                  "bdsdOther"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "sd": {
+                "enum": [
+                  "all",
+                  "none"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "generator": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "recipe_version": {
+              "const": 1
+            },
+            "ruleset": {
+              "const": "plo4-flop-v1"
+            },
+            "additional_syntax": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000000
+            },
+            "source": {
+              "const": "filter"
+            },
+            "filter": {
+              "$ref": "#/$defs/filter"
+            }
+          },
+          "required": [
+            "recipe_version",
+            "ruleset",
+            "additional_syntax",
+            "source",
+            "filter"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "recipe_version": {
+              "const": 1
+            },
+            "ruleset": {
+              "const": "plo4-flop-v1"
+            },
+            "additional_syntax": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000000
+            },
+            "source": {
+              "const": "preset"
+            },
+            "preset_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]{0,119}$"
+            },
+            "preset_revision": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "recipe_version",
+            "ruleset",
+            "additional_syntax",
+            "source",
+            "preset_id",
+            "preset_revision"
+          ]
+        }
+      ]
+    }
+  }
+}

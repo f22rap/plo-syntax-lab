@@ -41,8 +41,8 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
  }
  await connect();
  try{
-  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,nativeMcp?17:30);for(const name of researchToolNames)assert.ok(names.includes(name));for(const name of nativeMcp?['get_status','get_artifact']:['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
-  if(!nativeMcp){const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,30);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');}
+  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,nativeMcp?17:31);for(const name of researchToolNames.filter(n=>!nativeMcp||n!=='research_list_default_presets'))assert.ok(names.includes(name));for(const name of nativeMcp?['get_status','get_artifact']:['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
+  if(!nativeMcp){const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,31);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');}
   else assert.equal((await call('get_status')).requires_node,false);
   assert.equal((await call('research_list_workspace')).workspace_revision,0);
   set=(await call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0})).condition_set;assert.equal(set.revision,1);assert.equal(set.conditions[0].syntax,'*');

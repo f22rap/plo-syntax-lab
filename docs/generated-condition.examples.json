@@ -1,0 +1,281 @@
+[
+  {
+    "condition_id": "top_set_nfd",
+    "label": "トップセット＋ナッツFD",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "set",
+          "rank": {
+            "type": "board",
+            "position": "top"
+          }
+        },
+        "fd": "fdNut",
+        "sd": "all",
+        "bdfd": "all",
+        "bdsd": "all",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "third_fd",
+    "label": "サードナッツFD",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "fdThird",
+        "sd": "all",
+        "bdfd": "all",
+        "bdsd": "all",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "bdsd8",
+    "label": "BDSD 8",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "all",
+        "sd": "none",
+        "bdfd": "all",
+        "bdsd": "bdsd8",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "bdsd9",
+    "label": "BDSD 9+",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "all",
+        "sd": "none",
+        "bdfd": "all",
+        "bdsd": "bdsd9",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "fixed_aa",
+    "label": "AAを持つ（完成役不問）",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "all",
+        "sd": "all",
+        "bdfd": "all",
+        "bdsd": "all",
+        "pocket": {
+          "type": "rank",
+          "rank": {
+            "type": "fixed",
+            "rank": "A"
+          }
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "top_blocker",
+    "label": "ボードのトップランクをちょうど1枚",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "all",
+        "sd": "all",
+        "bdfd": "all",
+        "bdsd": "all",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": [
+          {
+            "rank": {
+              "type": "board",
+              "position": "top"
+            },
+            "mode": "one"
+          }
+        ]
+      },
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "nfd_fixed_aa",
+    "label": "ナッツFD＋固定syntax AA",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "filter",
+      "filter": {
+        "role": {
+          "type": "all"
+        },
+        "fd": "fdNut",
+        "sd": "all",
+        "bdfd": "all",
+        "bdsd": "all",
+        "pocket": {
+          "type": "all"
+        },
+        "clean": "",
+        "blockers": []
+      },
+      "additional_syntax": "AA"
+    }
+  },
+  {
+    "condition_id": "fixed_aa_legacy",
+    "label": "既存の固定syntax AA",
+    "enabled": true,
+    "kind": "literal",
+    "syntax": "AA",
+    "by_board": {}
+  },
+  {
+    "condition_id": "by_board_legacy",
+    "label": "既存のボード別syntax",
+    "enabled": true,
+    "kind": "per_board",
+    "syntax": "",
+    "by_board": {
+      "AsKd7c": "AK",
+      "Ah8h3c": "A8"
+    }
+  },
+  {
+    "condition_id": "preset_aa_bdsd",
+    "label": "AA SD BDSD",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "preset",
+      "preset_id": "aa.sd.bdsd",
+      "preset_revision": 1,
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "preset_top_set_all",
+    "label": "Tset all",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "preset",
+      "preset_id": "set.top.all",
+      "preset_revision": 1,
+      "additional_syntax": "*"
+    }
+  },
+  {
+    "condition_id": "preset_top_middle_nut_open",
+    "label": "TM2P SD nuts oe",
+    "enabled": true,
+    "kind": "generated",
+    "syntax": "",
+    "by_board": {},
+    "generator": {
+      "recipe_version": 1,
+      "ruleset": "plo4-flop-v1",
+      "source": "preset",
+      "preset_id": "two_pair.top_middle.sd.nut_open",
+      "preset_revision": 1,
+      "additional_syntax": "*"
+    }
+  }
+]

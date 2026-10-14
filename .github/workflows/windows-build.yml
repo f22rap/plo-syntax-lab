@@ -123,6 +123,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Directory import tests failed' }
           npm run test:codex-setup
           if ($LASTEXITCODE -ne 0) { throw 'Codex setup tests failed' }
+          npm run test:generated
+          if ($LASTEXITCODE -ne 0) { throw 'Generated-condition tests failed' }
           npm run test:research
           if ($LASTEXITCODE -ne 0) { throw 'Research MCP tests failed' }
           npm run test:mcp
@@ -155,7 +157,7 @@ jobs:
           npm run package:windows-mcp
           if ($LASTEXITCODE -ne 0) { throw 'Windows-native MCP packaging failed' }
           $env:PLO_MCP_TEST_ROOT = Join-Path $env:RUNNER_TEMP 'plo-windows-mcp-package-tests'
-          node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/research-mcp.test.mjs
+          node --test --test-concurrency=1 dist/PLO-Syntax-Lab-Windows-MCP/tests/research-mcp.test.mjs dist/PLO-Syntax-Lab-Windows-MCP/tests/generated-research.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Packaged research MCP tests failed' }
           node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/mcp.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Packaged Windows-native MCP tests failed' }
@@ -218,7 +220,7 @@ jobs:
             dist/NONODE-SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
-      - name: Upload downloadable Windows-native 30-tool MCP package
+      - name: Upload downloadable Windows-native 31-tool MCP package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: PLO-Syntax-Lab-Windows-MCP
@@ -246,7 +248,7 @@ jobs:
         with:
           name: PLO-Syntax-Lab-MCP
           path: package
-      - name: Download tested Windows-native 30-tool MCP package
+      - name: Download tested Windows-native 31-tool MCP package
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: PLO-Syntax-Lab-Windows-MCP

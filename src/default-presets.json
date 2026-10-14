@@ -1,0 +1,1667 @@
+[
+  {
+    "preset_id": "set.top.all",
+    "preset_revision": 1,
+    "cell": "L49",
+    "label": "Tset all",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L50",
+    "label": "Tset obdfd",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L51",
+    "label": "Tset 1bdfd",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L52",
+    "label": "Tset 2bdfd",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.hit.middle",
+    "preset_revision": 1,
+    "cell": "L53",
+    "label": "Tset hit M",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.hit.bottom",
+    "preset_revision": 1,
+    "cell": "L54",
+    "label": "Tset hit B",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.pocket.over",
+    "preset_revision": 1,
+    "cell": "L55",
+    "label": "Tset pp over",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.pocket.under",
+    "preset_revision": 1,
+    "cell": "L56",
+    "label": "Tset pp under",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.sd.open",
+    "preset_revision": 1,
+    "cell": "L57",
+    "label": "Tset SD oe",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.sd.gut",
+    "preset_revision": 1,
+    "cell": "L58",
+    "label": "Tset SD gut",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L59",
+    "label": "Tset SD SDblocker",
+    "group": "Tset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "set.top.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L60",
+    "label": "Tset SD !Sdblocker",
+    "group": "Tset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "set.middle.all",
+    "preset_revision": 1,
+    "cell": "L61",
+    "label": "Mset all",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L62",
+    "label": "Mset obdfd",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L63",
+    "label": "Mset 1bdfd",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L64",
+    "label": "Mset 2bdfd",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.hit.top",
+    "preset_revision": 1,
+    "cell": "L65",
+    "label": "Mset hit T",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.hit.bottom",
+    "preset_revision": 1,
+    "cell": "L66",
+    "label": "Mset hit B",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.pocket.over",
+    "preset_revision": 1,
+    "cell": "L67",
+    "label": "Mset pp over",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.pocket.under",
+    "preset_revision": 1,
+    "cell": "L68",
+    "label": "Mset pp under",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.sd.open",
+    "preset_revision": 1,
+    "cell": "L69",
+    "label": "Mset SD oe",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.sd.gut",
+    "preset_revision": 1,
+    "cell": "L70",
+    "label": "Mset SD gut",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L71",
+    "label": "Mset SD SDblocker",
+    "group": "Mset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "set.middle.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L72",
+    "label": "Mset SD !Sdblocker",
+    "group": "Mset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "set.bottom.all",
+    "preset_revision": 1,
+    "cell": "L73",
+    "label": "Bset all",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L74",
+    "label": "Bset obdfd",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L75",
+    "label": "Bset 1bdfd",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L76",
+    "label": "Bset 2bdfd",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.hit.top",
+    "preset_revision": 1,
+    "cell": "L77",
+    "label": "Bset hit T",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.hit.middle",
+    "preset_revision": 1,
+    "cell": "L78",
+    "label": "Bset hit M",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.pocket.over",
+    "preset_revision": 1,
+    "cell": "L79",
+    "label": "Bset pp over",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.pocket.under",
+    "preset_revision": 1,
+    "cell": "L80",
+    "label": "Bset pp under",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.sd.open",
+    "preset_revision": 1,
+    "cell": "L81",
+    "label": "Bset SD oe",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.sd.gut",
+    "preset_revision": 1,
+    "cell": "L82",
+    "label": "Bset SD gut",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L83",
+    "label": "Bset SD SDblocker",
+    "group": "Bset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "set.bottom.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L84",
+    "label": "Bset SD !Sdblocker",
+    "group": "Bset",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "three_pair.all",
+    "preset_revision": 1,
+    "cell": "L86",
+    "label": "3P all",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L87",
+    "label": "3P obdfd",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.overcard.any",
+    "preset_revision": 1,
+    "cell": "L88",
+    "label": "3P overcard all",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L89",
+    "label": "3P overcard A",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L90",
+    "label": "3P SD Sdblocker",
+    "group": "3P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "three_pair.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L91",
+    "label": "3P SD !Sdblocker",
+    "group": "3P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.top_middle.all",
+    "preset_revision": 1,
+    "cell": "L94",
+    "label": "TM2P all",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L95",
+    "label": "TM2P obdfd",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L96",
+    "label": "TM2P 1bdfd",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L97",
+    "label": "TM2P 2bdfd",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.pocket.over",
+    "preset_revision": 1,
+    "cell": "L98",
+    "label": "TM2P pp over",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.pocket.under",
+    "preset_revision": 1,
+    "cell": "L99",
+    "label": "TM2P pp under",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.overcard.any",
+    "preset_revision": 1,
+    "cell": "L100",
+    "label": "TM2P over card all",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L101",
+    "label": "TM2P over card A",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.overcard.none",
+    "preset_revision": 1,
+    "cell": "L102",
+    "label": "TM2P over card no",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.any",
+    "preset_revision": 1,
+    "cell": "L103",
+    "label": "TM2P SD all",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L104",
+    "label": "TM2P SD nuts oe",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.open",
+    "preset_revision": 1,
+    "cell": "L105",
+    "label": "TM2P SD oe",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L106",
+    "label": "TM2P SD nuts gut",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.gut",
+    "preset_revision": 1,
+    "cell": "L107",
+    "label": "TM2P SD gut",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L108",
+    "label": "TM2P SD BDSD",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L109",
+    "label": "TM2P SD SDblocker",
+    "group": "TM2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L110",
+    "label": "TM2P SD !Sdblocker",
+    "group": "TM2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.none",
+    "preset_revision": 1,
+    "cell": "L111",
+    "label": "TM2P SD no",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.all",
+    "preset_revision": 1,
+    "cell": "L112",
+    "label": "TB2P all",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L113",
+    "label": "TB2P obdfd",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L114",
+    "label": "TB2P 1bdfd",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L115",
+    "label": "TB2P 2bdfd",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.pocket.over",
+    "preset_revision": 1,
+    "cell": "L116",
+    "label": "TB2P pp over",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.pocket.under",
+    "preset_revision": 1,
+    "cell": "L117",
+    "label": "TB2P pp under",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.overcard.any",
+    "preset_revision": 1,
+    "cell": "L118",
+    "label": "TB2P over card all",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L119",
+    "label": "TB2P over card A",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.overcard.none",
+    "preset_revision": 1,
+    "cell": "L120",
+    "label": "TB2P over card no",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.any",
+    "preset_revision": 1,
+    "cell": "L121",
+    "label": "TB2P SD all",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L122",
+    "label": "TB2P SD nuts oe",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.open",
+    "preset_revision": 1,
+    "cell": "L123",
+    "label": "TB2P SD oe",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L124",
+    "label": "TB2P SD nuts gut",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.gut",
+    "preset_revision": 1,
+    "cell": "L125",
+    "label": "TB2P SD gut",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L126",
+    "label": "TB2P SD BDSD",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L127",
+    "label": "TB2P SD SDblocker",
+    "group": "TB2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L128",
+    "label": "TB2P SD !Sdblocker",
+    "group": "TB2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.none",
+    "preset_revision": 1,
+    "cell": "L129",
+    "label": "TB2P SD no",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.all",
+    "preset_revision": 1,
+    "cell": "L130",
+    "label": "MB2P all",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L131",
+    "label": "MB2P obdfd",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L132",
+    "label": "MB2P 1bdfd",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L133",
+    "label": "MB2P 2bdfd",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.pocket.over",
+    "preset_revision": 1,
+    "cell": "L134",
+    "label": "MB2P pp over",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.pocket.under",
+    "preset_revision": 1,
+    "cell": "L135",
+    "label": "MB2P pp under",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.overcard.any",
+    "preset_revision": 1,
+    "cell": "L136",
+    "label": "MB2P over card all",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L137",
+    "label": "MB2P over card A",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.overcard.none",
+    "preset_revision": 1,
+    "cell": "L138",
+    "label": "MB2P over card no",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.any",
+    "preset_revision": 1,
+    "cell": "L139",
+    "label": "MB2P SD all",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L140",
+    "label": "MB2P SD nuts oe",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.open",
+    "preset_revision": 1,
+    "cell": "L141",
+    "label": "MB2P SD oe",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L142",
+    "label": "MB2P SD nuts gut",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.gut",
+    "preset_revision": 1,
+    "cell": "L143",
+    "label": "MB2P SD gut",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L144",
+    "label": "MB2P SD BDSD",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L145",
+    "label": "MB2P SD SDblocker",
+    "group": "MB2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L146",
+    "label": "MB2P SD !Sdblocker",
+    "group": "MB2P",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.none",
+    "preset_revision": 1,
+    "cell": "L147",
+    "label": "MB2P SD no",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.all",
+    "preset_revision": 1,
+    "cell": "L150",
+    "label": "AA all",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L151",
+    "label": "AA obdfd",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L152",
+    "label": "AA 1bdfd",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L153",
+    "label": "AA 2bdfd",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.hit.top",
+    "preset_revision": 1,
+    "cell": "L154",
+    "label": "AA hit T",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.hit.middle",
+    "preset_revision": 1,
+    "cell": "L155",
+    "label": "AA hit M",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.hit.bottom",
+    "preset_revision": 1,
+    "cell": "L156",
+    "label": "AA hit B",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.pocket.all",
+    "preset_revision": 1,
+    "cell": "L157",
+    "label": "AA pp all",
+    "group": "AA",
+    "supported": false,
+    "reason": "このポケット条件は現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "aa.pocket.over",
+    "preset_revision": 1,
+    "cell": "L158",
+    "label": "AA pp over",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.pocket.under",
+    "preset_revision": 1,
+    "cell": "L159",
+    "label": "AA pp under",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.any",
+    "preset_revision": 1,
+    "cell": "L160",
+    "label": "AA SD all",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L161",
+    "label": "AA SD nuts oe",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.open",
+    "preset_revision": 1,
+    "cell": "L162",
+    "label": "AA SD oe",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L163",
+    "label": "AA SD nuts gut",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.gut",
+    "preset_revision": 1,
+    "cell": "L164",
+    "label": "AA SD gut",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L165",
+    "label": "AA SD BDSD",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L166",
+    "label": "AA SD SDblocker",
+    "group": "AA",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "aa.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L167",
+    "label": "AA SD !Sdblocker",
+    "group": "AA",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "aa.sd.none",
+    "preset_revision": 1,
+    "cell": "L168",
+    "label": "AA SD no",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.all",
+    "preset_revision": 1,
+    "cell": "L169",
+    "label": "KK all",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L170",
+    "label": "KK obdfd",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L171",
+    "label": "KK 1bdfd",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L172",
+    "label": "KK 2bdfd",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.hit.top",
+    "preset_revision": 1,
+    "cell": "L173",
+    "label": "KK hit T",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.hit.middle",
+    "preset_revision": 1,
+    "cell": "L174",
+    "label": "KK hit M",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.hit.bottom",
+    "preset_revision": 1,
+    "cell": "L175",
+    "label": "KK hit B",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.pocket.all",
+    "preset_revision": 1,
+    "cell": "L176",
+    "label": "KK pp all",
+    "group": "KK",
+    "supported": false,
+    "reason": "このポケット条件は現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "kk.pocket.over",
+    "preset_revision": 1,
+    "cell": "L177",
+    "label": "KK pp over",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.pocket.under",
+    "preset_revision": 1,
+    "cell": "L178",
+    "label": "KK pp under",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.any",
+    "preset_revision": 1,
+    "cell": "L179",
+    "label": "KK SD all",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L180",
+    "label": "KK SD nuts oe",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.open",
+    "preset_revision": 1,
+    "cell": "L181",
+    "label": "KK SD oe",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L182",
+    "label": "KK SD nuts gut",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.gut",
+    "preset_revision": 1,
+    "cell": "L183",
+    "label": "KK SD gut",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L184",
+    "label": "KK SD BDSD",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L185",
+    "label": "KK SD SDblocker",
+    "group": "KK",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "kk.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L186",
+    "label": "KK SD !Sdblocker",
+    "group": "KK",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "kk.sd.none",
+    "preset_revision": 1,
+    "cell": "L187",
+    "label": "KK SD no",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.all",
+    "preset_revision": 1,
+    "cell": "L190",
+    "label": "Thit all",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L191",
+    "label": "Thit obdfd",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L192",
+    "label": "Thit 1bdfd",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L193",
+    "label": "Thit 2bdfd",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.pocket.under",
+    "preset_revision": 1,
+    "cell": "L194",
+    "label": "Thit pp under",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.overcard.any",
+    "preset_revision": 1,
+    "cell": "L195",
+    "label": "Thit over card all",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L196",
+    "label": "Thit over card A",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.overcard.none",
+    "preset_revision": 1,
+    "cell": "L197",
+    "label": "Thit over card no",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.any",
+    "preset_revision": 1,
+    "cell": "L198",
+    "label": "Thit SD all",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L199",
+    "label": "Thit SD nuts oe",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.open",
+    "preset_revision": 1,
+    "cell": "L200",
+    "label": "Thit SD oe",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L201",
+    "label": "Thit SD nuts gut",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.gut",
+    "preset_revision": 1,
+    "cell": "L202",
+    "label": "Thit SD gut",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L203",
+    "label": "Thit SD BDSD",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L204",
+    "label": "Thit SD SDblocker",
+    "group": "Thit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.top.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L205",
+    "label": "Thit SD !Sdblocker",
+    "group": "Thit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.top.sd.none",
+    "preset_revision": 1,
+    "cell": "L206",
+    "label": "Thit SD no",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.all",
+    "preset_revision": 1,
+    "cell": "L207",
+    "label": "Mhit all",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L208",
+    "label": "Mhit obdfd",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L209",
+    "label": "Mhit 1bdfd",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L210",
+    "label": "Mhit 2bdfd",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.pocket.under",
+    "preset_revision": 1,
+    "cell": "L211",
+    "label": "Mhit pp under",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.overcard.any",
+    "preset_revision": 1,
+    "cell": "L212",
+    "label": "Mhit over card all",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L213",
+    "label": "Mhit over card A",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.overcard.none",
+    "preset_revision": 1,
+    "cell": "L214",
+    "label": "Mhit over card no",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.any",
+    "preset_revision": 1,
+    "cell": "L215",
+    "label": "Mhit SD all",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L216",
+    "label": "Mhit SD nuts oe",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.open",
+    "preset_revision": 1,
+    "cell": "L217",
+    "label": "Mhit SD oe",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L218",
+    "label": "Mhit SD nuts gut",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.gut",
+    "preset_revision": 1,
+    "cell": "L219",
+    "label": "Mhit SD gut",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L220",
+    "label": "Mhit SD BDSD",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L221",
+    "label": "Mhit SD SDblocker",
+    "group": "Mhit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.middle.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L222",
+    "label": "Mhit SD !Sdblocker",
+    "group": "Mhit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.middle.sd.none",
+    "preset_revision": 1,
+    "cell": "L223",
+    "label": "Mhit SD no",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.all",
+    "preset_revision": 1,
+    "cell": "L224",
+    "label": "Bhit all",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.bdfd.none",
+    "preset_revision": 1,
+    "cell": "L225",
+    "label": "Bhit obdfd",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.bdfd.one",
+    "preset_revision": 1,
+    "cell": "L226",
+    "label": "Bhit 1bdfd",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.bdfd.two",
+    "preset_revision": 1,
+    "cell": "L227",
+    "label": "Bhit 2bdfd",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.pocket.under",
+    "preset_revision": 1,
+    "cell": "L228",
+    "label": "Bhit pp under",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.overcard.any",
+    "preset_revision": 1,
+    "cell": "L229",
+    "label": "Bhit over card all",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.overcard.ace",
+    "preset_revision": 1,
+    "cell": "L230",
+    "label": "Bhit over card A",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.overcard.none",
+    "preset_revision": 1,
+    "cell": "L231",
+    "label": "Bhit over card no",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.any",
+    "preset_revision": 1,
+    "cell": "L232",
+    "label": "Bhit SD all",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "L233",
+    "label": "Bhit SD nuts oe",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.open",
+    "preset_revision": 1,
+    "cell": "L234",
+    "label": "Bhit SD oe",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "L235",
+    "label": "Bhit SD nuts gut",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.gut",
+    "preset_revision": 1,
+    "cell": "L236",
+    "label": "Bhit SD gut",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "L237",
+    "label": "Bhit SD BDSD",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.blocker",
+    "preset_revision": 1,
+    "cell": "L238",
+    "label": "Bhit SD SDblocker",
+    "group": "Bhit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.bottom.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "L239",
+    "label": "Bhit SD !Sdblocker",
+    "group": "Bhit",
+    "supported": false,
+    "reason": "SDブロッカーは現行エンジンで未定義です。"
+  },
+  {
+    "preset_id": "pair.bottom.sd.none",
+    "preset_revision": 1,
+    "cell": "L240",
+    "label": "Bhit SD no",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  }
+]

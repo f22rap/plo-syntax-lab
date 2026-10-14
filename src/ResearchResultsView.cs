@@ -18,7 +18,7 @@ namespace FlopCommands {
         public ResearchResultsView(){Name="researchResults";Dock=DockStyle.Fill;var root=ResearchUi.Rows(38,250,-1);root.Padding=Padding.Empty;Controls.Add(root);var bar=ResearchUi.Bar();mode.Items.AddRange(new object[]{"ボード別","特徴別（等重み）"});bar.Controls.Add(mode);bar.Controls.Add(note);root.Controls.Add(bar,0,0);table.ReadOnly=true;table.Name="researchResultTable";table.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.None;root.Controls.Add(table,0,1);root.Controls.Add(chart,0,2);mode.SelectedIndexChanged+=(s,e)=>RefreshResult();mode.SelectedIndex=0;}
         public void SetData(ResearchRunResult result){Result=result;RefreshResult();}
         static string P(double? value){return value.HasValue?value.Value.ToString("F2"):"—";}
-        static string State(string status){switch(status){case "completed":return "完了";case "frequency_only":return "頻度のみ";case "missing_definition":return "syntax未設定";case "no_matching_hands":return "該当なし";case "equity_unavailable":return "EQ計算不能";default:return "失敗";}}
+        static string State(string status){switch(status){case "completed":return "完了";case "frequency_only":return "頻度のみ";case "missing_definition":return "syntax未設定";case "empty_condition":return "条件が空集合";case "no_matching_hands":return "該当なし";case "equity_unavailable":return "EQ計算不能";default:return "失敗";}}
         void Columns(params string[] names){table.Columns.Clear();foreach(var name in names)table.Columns.Add(new DataGridViewTextBoxColumn{HeaderText=name,Width=name=="syntax"?230:name=="理由"?240:130,SortMode=DataGridViewColumnSortMode.Automatic});}
         void RefreshResult(){
             table.Rows.Clear();if(Result==null){note.Text="一括調査の結果をここに表示します。";chart.SetData(null,false);return;}

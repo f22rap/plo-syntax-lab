@@ -1,6 +1,6 @@
 # ブラウザ版ChatGPTからPLO Syntax Labを使う
 
-対象：Windows MCP 0.4.2の30ツール版。CSV読込とEQ計算はCSVを保存したWindows PCで実行し、ChatGPTがMCPを通じて操作する。既存の共通11ツール版・クラウド版とは別の接続である。
+対象：Windows MCP 0.4.2の31ツール版。CSV読込とEQ計算はCSVを保存したWindows PCで実行し、ChatGPTがMCPを通じて操作する。既存の共通11ツール版・クラウド版とは別の接続である。
 
 2026-10-14確認：コミット00a173aのWindows CIでソース版・配布版のMCPテストとZIP生成が成功した。以下は公式Secure MCP Tunnel仕様と本アプリのコードに基づく導入手順であり、利用者のChatGPT・Windows PC・トンネルを通した実接続は未検証。
 
@@ -21,7 +21,7 @@ node .\mcp\check-connection.mjs .\mcp.local.json
 
 `mcp.local.json`が既にある場合は、上の設定作成コマンドにCSVパスを渡さず、`node .\mcp\codex-setup.mjs`で再利用する。入力先を変更するときは同ファイルの`inputRoots`を編集する。既存設定は自動上書きしない。
 
-診断の`mcp_connection: passed`、`tool_count: 30`、`input_roots`の指定フォルダーを確認する。これはローカル接続の確認であり、`ai_host_connection: not_tested`はこの段階では正常。
+診断の`mcp_connection: passed`、`tool_count: 31`、`input_roots`の指定フォルダーを確認する。これはローカル接続の確認であり、`ai_host_connection: not_tested`はこの段階では正常。
 
 `dist\FlopCommandApp.exe`を開き、集計タブの「調査条件セット」で条件名とsyntaxを保存する。GUIとMCPは同じWindowsユーザーで起動する。GUI独自の履歴先を使う場合は`mcp.local.json`の`historyRoot`も一致させる。
 
@@ -96,7 +96,7 @@ CSVはPCから読み、ツール要求・結果はトンネル経由でChatGPT�
 
 ## 接続を確認したと判断する条件
 
-- ローカル診断で30ツールを確認。
+- ローカル診断で31ツールを確認。
 - トンネルのdoctorが成功し、runが稼働。
 - ブラウザの会話からget_status・research_list_workspaceが成功。
 - 承認した小規模調査でresult_id、EQ、全アクション頻度、出力が返る。

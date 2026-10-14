@@ -64,6 +64,6 @@ namespace EquityTests {
             using(var gate=new FileStream(store.FilePath+".lock",FileMode.Open,FileAccess.ReadWrite,FileShare.None)){bool blocked=false;try{store.Save(loaded,loaded.Revision);}catch(IOException){blocked=true;}Check(blocked,"concurrent store writer locked");}
             File.WriteAllText(store.FilePath,"invalid JSON");bool unreadable=false;try{store.Save(loaded,loaded.Revision);}catch(Exception){unreadable=true;}Check(unreadable&&File.ReadAllText(store.FilePath)=="invalid JSON","corrupt existing store never silently replaced");
         }
-        public static void Run(){Definitions();string dir=Path.Combine(Path.GetTempPath(),"plo-research-tests-"+Guid.NewGuid().ToString("N"));try{FilesAndPersistence(dir);}finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}Console.WriteLine("PASS: "+checks+" research setup checks");}
+        public static void Run(){Definitions();string dir=Path.Combine(Path.GetTempPath(),"plo-research-tests-"+Guid.NewGuid().ToString("N"));try{FilesAndPersistence(dir);}finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}Console.WriteLine("PASS: "+checks+" research setup checks");GeneratedConditionTests.Run();}
     }
 }

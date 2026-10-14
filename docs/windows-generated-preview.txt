@@ -1,0 +1,98 @@
+﻿PLO Syntax Lab — 保存条件からのボード別生成・MCP調査プレビュー
+2026-10-14 / 第4段階のWindows確認用
+
+最初に読むファイル：README-FIRST.txt（このファイル）
+
+1. ZIPを展開する
+エクスプローラーでZIPを右クリック →「すべて展開」を選びます。
+例：C:\PLOPreview
+ZIPの中からEXEを直接起動せず、フォルダーごと展開してください。
+以前の配布フォルダーとは別の場所に展開し、dist・mcp・src・node_modulesを一緒に残します。
+
+2. アプリと条件の保存を確認する（Node.js不要）
+Start-App.cmdをダブルクリックします。
+または dist\FlopCommandApp.exe を直接起動します。
+Windowsの.NET Framework 4.8が必要です。
+既存のsyntax生成画面はEdgeまたはChromeを使います。
+
+「集計」画面の「調査条件セット」から「新規」を開き、
+「デフォルト条件から追加」で Tset all と Mset all を選びます。
+条件セット名を「確認用セット」にして「検証して保存」を押します。
+一覧は185件、そのうち選択可能は159件です。
+アプリを閉じて開き直し、条件セット名と選択した条件が残ることを確認します。
+設定・履歴は同じWindowsユーザーの既存保存先を利用します。
+既存セットの編集を避けたい場合は「新規」で確認用セットを作ってください。
+生成条件の初回保存で形式1から形式2へ移行する場合、元の設定を自動バックアップします。
+形式2の設定は旧版アプリで読み込めません。旧版に戻す前に移行・バックアップの説明を確認してください。
+
+3. MCP用のCSVフォルダーを指定する（Node.js 20以上が必要）
+Node.js自体は同梱していません。npm installは不要です。
+Node.jsを使えない環境では、手順2のアプリ確認まで行えます。
+
+展開したフォルダーでPowerShellを開き、次を実行します。
+以下は展開先が C:\PLOPreview の場合です。実際の展開先に置き換えてください。
+
+  Set-Location 'C:\PLOPreview'
+  node --version
+  node .\mcp\codex-setup.mjs 'F:\PLOrange\post\6max\lowstakes_5%4bb\100bb\SRP\COvsBTN'
+
+CSVパスは、実際にCSVを保存しているフォルダーに置き換えます。
+上のコマンドは設定・補助ファイルを作ります。CSV登録やEQ計算はまだ行いません。
+mcp.local.jsonが既にある場合はCSVパスを付けず、次で再利用します。
+
+  node .\mcp\codex-setup.mjs
+
+既存設定は自動上書きしません。変更する場合はmcp.local.jsonを自分で編集します。
+GUIとMCPは同じWindowsユーザーで実行してください。
+GUIで保存先を変更している場合、mcp.local.jsonのhistoryRootも一致させます。
+
+4. ローカル接続を確認する
+Check-MCP.cmdをダブルクリックします。
+またはPowerShellで次を実行します。
+
+  node .\mcp\check-connection.mjs .\mcp.local.json
+
+mcp_connection: passed と tool_count: 31 が出ることを確認します。
+ai_host_connection: not_tested は、このローカル診断では正常です。
+この段階でブラウザ版ChatGPTやトンネルの接続成功までは確認できません。
+
+5. AIから今回の機能を確認する
+既存のAI接続設定で、Node.js版MCPの起動先を今回の展開先に合わせます。
+起動コマンドの例（パスは実際の展開先に変更）：
+
+  node C:/PLOPreview/mcp/server.mjs --config C:/PLOPreview/mcp.local.json
+
+ブラウザ版ChatGPTで既にトンネルを使っている場合は、
+トンネルが呼ぶMCP起動コマンドを上記の展開先へ合わせて再接続します。
+接続の詳しい既存手順は docs\chatgpt-browser-setup.md を参照してください。
+APIキーやCSVそのものは、この配布ファイルに含まれていません。
+
+AIへの依頼例：
+「PLO Syntax Labのresearch_list_workspaceを呼び、確認用セットを読み取ってください。
+まず登録済みボードと条件名を表示してください。まだ計算はしないでください。」
+
+続けて：
+「確認用セットを使い、指定したカタログのKhiボードを調査してください。
+research_validateで対象ボードと各条件の生成syntaxを表示し、私の確認を待ってください。」
+
+例えばTset allはAsKd7cでAA、Kh9h3cでKKになります。
+Khiが指示された場合はAを含むボードを対象にしません。
+内容を確認して計算を承認すると、CSV集計・双方のアクション前EQ・全アクション頻度を計算できます。
+research_exportのSVG出力では、色分けした点にカーソルを合わせて条件名を確認できます。
+CSV未登録の場合はディレクトリ取込を先に依頼します。局面情報などは確認してから登録します。
+
+6. 今回できること・まだできないこと
+できること：アプリで条件選択・保存、Node.js版MCPでボード別生成・集計・EQ・出力・再読込。
+未対応：保存した自動生成条件をアプリの直接実行ボタンから一括計算すること、
+        Node.js不要の接続EXEで自動生成条件を実行すること。
+Node.js不要の接続EXEはこのZIPには含めていません。
+アプリに元からある手入力syntax・CSV集計等の機能は従来どおり使用できます。
+
+今回のプレビューはWindows向けにコンパイルしています。
+ローカル試験ではLinux上で同じC#計算コードと公式MCP SDKを使って動作を確認しています。
+Windows実機での起動・画面操作と、ユーザー環境のトンネル接続は未確認です。
+Windows確認用のプレビューです。正式リリース版ではありません。
+
+詳しい機能説明：docs\generated-conditions-research.md
+選択・保存・設定移行：docs\generated-conditions-selection.md
+従来のCSV登録・集計：docs\research-setup.md、docs\research-run.md
