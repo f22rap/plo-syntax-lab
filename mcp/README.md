@@ -2,6 +2,8 @@
 
 **Codexを使う場合：** ZIP展開後に`Setup-Codex.cmd`を開いてください。[初回設定と接続確認](../docs/codex-setup.md)。
 
+**ブラウザ版ChatGPTを使う場合：** [Secure MCP Tunnelでの接続手順](../docs/chatgpt-browser-setup.md)を参照してください。Codexへの登録は不要です。トンネル設定と利用者環境での接続確認が必要です。
+
 PLO Syntax Labの条件生成・CSV比較・履歴・結果出力を、MCP対応AIから操作できます。既存画面やブラウザを起動する必要はありません。処理はWindows上で実行します。AIクライアントにはツールの結果が返るため、そのクライアントのデータ取扱設定も適用されます。
 
 現行0.4.2は`mcp/server.mjs`を入口とする30ツール版（従来15＋調査15）です。[複数ボード調査の導入](../docs/research-mcp.md)と[AI向け手順](research-workflow.md)を参照してください。以下の15ツールの説明は従来機能の仕様として維持します。先行して追加された[Windows/Linux共通の11ツール版](../docs/mcp-usage.md)（`src/mcp/stdio.cjs`）も維持しています。既存アプリの履歴・PowerShell・グラフ／レポート保存まで操作する場合は本版を使ってください。どちらも複数のstdio対応AIクライアントから利用できます。
