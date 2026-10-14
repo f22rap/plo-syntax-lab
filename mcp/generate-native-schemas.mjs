@@ -14,5 +14,8 @@ registerResearchTools(tool,{});
 const data=JSON.stringify({instructions:researchInstructions,tools},null,2)+'\n';
 const target=new URL('./native/ToolDefinitions.json',import.meta.url);
 if(process.argv.includes('--check')){
- if(await fs.readFile(target,'utf8')!==data)throw Error('Native tool schemas differ from research-tools.mjs. Regenerate them.');
+ // Git's Windows checkout can use CRLF. Compare the generated JSON content,
+ // preserving syntax strings and all schema values, rather than file newlines.
+ const checked=JSON.parse(await fs.readFile(target,'utf8'));
+ if(JSON.stringify(checked)!==JSON.stringify(JSON.parse(data)))throw Error('Native tool schemas differ from research-tools.mjs. Regenerate them.');
 }else await fs.writeFile(target,data);
