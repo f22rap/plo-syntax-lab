@@ -1,6 +1,6 @@
 # AIから複数ボードを調査する（第4ステップ）
 
-Windows MCP 0.4.1は従来15ツールに調査用15ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
+Windows MCP 0.4.2は従来15ツールに調査用15ツールを追加する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 

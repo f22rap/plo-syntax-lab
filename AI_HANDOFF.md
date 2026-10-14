@@ -335,3 +335,7 @@ Windows版mcp/server.mjsは従来15＋研究12の27ツール。server-core.mjs�
 ## 最高ランク条件（0.4.1）
 
 Ahi固定を撤廃。scan/list highest_rankと計算settings.HighestRankはall/A/K/Q/J/T/9…2。scan省略=all、登録catalog.highest_rankをlist/計算省略時に継承し、GUIは登録条件が初期選択。ResearchBoardFilterとmcp/board-filter.mjsで最高ランクを判定。旧AhiOnly/ahi_onlyはtrue=A、false=allとして互換維持し新旧矛盾は拒否。結果JSON/Markdownに実効条件を記録。スキャン件数はexcluded_board_countへ汎用化。
+
+## Windowsのディレクトリ許可判定（0.4.2）
+
+61cfca3のWindows CIはEXEビルド・計算21,160件・bridge 17件を通過後、directoryテストでinputRoots範囲外エラー。fixtureがloadConfigの正規化を省略していたため本番と同じloadConfig経由へ修正。scanDirectoryも入力表記のlexical事前判定を廃し、plainでリンクを拒否した後にrealpathで解決し、canonical inputRootsとの範囲検査を実施する。短縮名と通常名の同一場所を受け入れ、範囲外・リンク拒否は維持。元表記とcanonical表記、非リンク別名の模擬回帰テストを追加。Windows再実行は次のpush後に確認。

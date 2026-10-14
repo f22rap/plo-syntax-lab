@@ -16,7 +16,9 @@ async function plain(file){for(let p=path.resolve(file);;p=path.dirname(p)){if((
 export async function scanDirectory(config,{directory,highest_rank,ahi_only}, {signal,progress=()=>{}}={}){
  const selectedRank=resolveBoardRank(highest_rank,ahi_only);
  if(!path.isAbsolute(directory))throw Error('Use an absolute directory.');
- if(!config.inputRoots.some(r=>within(r,path.resolve(directory))))throw Error('Directory is outside configured inputRoots.');
+ // inputRoots are canonicalized by loadConfig. Windows 8.3 and long names
+ // may refer to the same directory but fail a lexical path.relative check.
+ // Resolve the candidate before the boundary check, without following links.
  await plain(directory);const root=await fs.realpath(directory);
  if(!config.inputRoots.some(r=>within(r,root)))throw Error('Directory is outside configured inputRoots. Register it using Setup-Codex or mcp.local.json first.');
  if(!(await fs.stat(root)).isDirectory())throw Error('Not a directory.');

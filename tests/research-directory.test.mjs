@@ -6,8 +6,15 @@ import path from 'node:path';
 import {scanDirectory,directoryCatalog} from '../mcp/research-directory.mjs';
 import {makeDirectoryFixture,directoryScenario} from './directory-fixture.mjs';
 import {matchesBoardRank,resolveBoardRank,boardRanks} from '../mcp/board-filter.mjs';
+import {loadConfig} from '../mcp/runtime.mjs';
 
-async function fixture(t){const root=await fs.mkdtemp(path.join(os.tmpdir(),'plo-directory-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));await makeDirectoryFixture(root);return {root,config:{inputRoots:[root],maxCsvBytes:2000000}};}
+async function fixture(t){
+ const base=await fs.mkdtemp(path.join(os.tmpdir(),'plo-directory-')),root=path.join(base,'CSV 日本語 with spaces');
+ t.after(()=>fs.rm(base,{recursive:true,force:true}));await makeDirectoryFixture(root);
+ const configFile=path.join(base,'config.json');await fs.writeFile(configFile,JSON.stringify({inputRoots:[root],outputRoot:path.join(base,'output'),historyRoot:path.join(base,'history'),maxCsvBytes:2000000}));
+ // Exercise production setup, including Windows short-name normalization.
+ return {root,config:await loadConfig(configFile)};
+}
 const args=(s,folder='vs_check')=>({node_id:s.nodes.find(n=>n.folder===folder).node_id,catalog_id:'imported',name:'Imported Ahi',scenario:directoryScenario,confirm_profile:'plo-post-tree-v1',all_actions_common_scale:true});
 
 test('User tree: Ahi filter, all 10 nodes, exact previous opponent node, sizes and all-in',async t=>{
@@ -58,4 +65,25 @@ test('Khi selection survives the directory preview and catalog import; default i
  assert.equal((await scanDirectory(config,{directory:root,highest_rank:'Q'})).board_count,2);
  assert.equal((await scanDirectory(config,{directory:root})).board_count,8);
  await assert.rejects(()=>scanDirectory(config,{directory:root,highest_rank:'K',ahi_only:true}),/Conflicting/);
+});
+test('Original and canonical directory spellings work with production-loaded config',async t=>{
+ const {root,config}=await fixture(t),canonical=await fs.realpath(root);
+ t.diagnostic(JSON.stringify({requested:root,canonical}));
+ assert.equal(config.inputRoots[0],canonical);
+ const original=await scanDirectory(config,{directory:root,highest_rank:'A'}),resolved=await scanDirectory(config,{directory:canonical,highest_rank:'A'});
+ assert.equal(original.directory,canonical);assert.equal(original.fingerprint,resolved.fingerprint);assert.equal(original.board_count,2);
+ await assert.rejects(()=>scanDirectory(config,{directory:path.dirname(root)}),/outside/);
+});
+test('Canonical scope accepts an equivalent path spelling but rejects an alias outside the root',async t=>{
+ const {root,config}=await fixture(t),canonical=await fs.realpath(root),base=path.dirname(canonical);
+ const insideAlias=path.join(base,'SHORT_ALIAS'),outsideAlias=path.join(base,'OUTSIDE_ALIAS');
+ const realpath=fs.realpath.bind(fs),lstat=fs.lstat.bind(fs);
+ // Model the realpath/lstat behavior of a non-link Windows 8.3 alias on every OS.
+ const target=p=>p===insideAlias?canonical:p===outsideAlias?base:p;
+ t.mock.method(fs,'realpath',async p=>realpath(target(p)));
+ t.mock.method(fs,'lstat',async p=>lstat(target(p)));
+ try{
+  assert.equal((await scanDirectory(config,{directory:insideAlias,highest_rank:'A'})).board_count,2);
+  await assert.rejects(()=>scanDirectory(config,{directory:outsideAlias}),/outside/);
+ }finally{t.mock.restoreAll();}
 });
