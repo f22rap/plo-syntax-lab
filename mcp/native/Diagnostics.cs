@@ -57,6 +57,9 @@ namespace PloNativeMcp {
                     return Json.Obj("mcp_connection", "passed", "chatgpt_connection", "not_tested", "research_ready", Json.Get(status, "research_ready"),
                         "tool_count", tools.Length, "protocol_version", McpServer.Protocol,
                         "checked_utc", DateTime.UtcNow.ToString("o"), "status", status);
+                } catch (Exception e) {
+                    if (child.HasExited && stderr.Wait(1000)) throw new IOException("接続EXEが終了しました (exit " + child.ExitCode + "): " + stderr.Result.Trim() + " / " + e.Message, e);
+                    throw;
                 } finally { if (!child.HasExited) { child.Kill(); child.WaitForExit(5000); } }
             }
         }
