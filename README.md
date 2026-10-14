@@ -6,6 +6,8 @@ PLO4のボードからMonker形式のsyntaxを生成し、2〜3つのCSVの該�
 
 AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)、既存Windowsアプリの履歴・PowerShell・グラフ／レポートまで操作する[Windowsアプリ連携版](mcp/README.md)、HTTPSの[クラウド版](docs/mcp-cloud-usage.md)があります。接続するAIクライアントと実行環境に合わせて選択してください。
 
+**Node.jsをインストールできないWindows環境**では、17個の調査ツールを持つ[Node.js不要の接続EXE](docs/native-mcp-preview.md)を利用できます。通常アプリ・HTML版・接続EXEをまとめた`PLO-Syntax-Lab-NoNode`を、[Windows build](https://github.com/f22rap/plo-syntax-lab/actions/workflows/windows-build.yml)の成功した実行のArtifactsから取得してください。[初めての導入手順](docs/native-mcp-install.txt)。ブラウザ版ChatGPTとの接続には別途MCPトンネルが必要です。
+
 ## 機能
 
 - **デフォルト**：従来の185件の条件名から選択。syntaxは現在のボードに合わせて生成します。
@@ -14,7 +16,7 @@ AIから利用するMCPには、[Windows/Linux共通版](docs/mcp-usage.md)、�
 - CSVごとのラベル、weight合計・比率の表とグラフ、結果CSVの保存。
 - 「全ハンド（syntaxなし）」の集計チェックボックス。
 - **EQ（Windows EXE）**：「集計＋EQ計算」でCSV比較とEQを連続実行。自分のアクション前レンジは全入力CSVのweight合計に固定。相手レンジも複数CSVのweight合算に対応。集計画面に相手レンジ入力、選択syntaxごとのEQ、比率グラフと全アクションを色分けしたEQ散布図をまとめて表示。[統合画面の操作](docs/equity-integrated-ui.md)・[高速化と速度検証](docs/equity-performance.md)。CSV／JSON／SVGの保存とEQ専用履歴。[EQ入力](docs/equity-ui.md)・[散布図](docs/equity-plot.md)・[保存と検証状況](docs/equity-save.md)。
-- **調査用のユーザーsyntax・複数ボードCSV登録（Windows EXE）**：集計タブ内で条件セットを編集・保存し、全ボード共通／ボード別syntaxを現在ボードへ適用できます。局面条件をそろえた複数ボードのCSV登録と一括EQ・頻度調査、ボード特徴別の等重み比較、全アクションの散布図、結果保存に対応。[登録方法](docs/research-setup.md)・[一括調査と検証範囲](docs/research-run.md)。MCP公開は次の段階。
+- **調査用のユーザーsyntax・複数ボードCSV登録（Windows EXE）**：集計タブ内で条件セットを編集・保存し、全ボード共通／ボード別syntaxを現在ボードへ適用できます。局面条件をそろえた複数ボードのCSV登録と一括EQ・頻度調査、ボード特徴別の等重み比較、全アクションの散布図、結果保存に対応。[登録方法](docs/research-setup.md)・[一括調査と検証範囲](docs/research-run.md)。MCP経由のディレクトリ取込・調査にも対応します。
 - PowerShellコマンドの表示・コピー・保存・実行・中止。
 - 結果の自動保存、履歴タブでの閲覧・検索・個別削除。
 

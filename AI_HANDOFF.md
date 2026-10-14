@@ -343,3 +343,15 @@ Ahi固定を撤廃。scan/list highest_rankと計算settings.HighestRankはall/A
 ### 0.4.2 Windows CIの結果と配布テストの準備修正
 
 d1adfd9のCI（38494688812）でWindowsの短縮名RUNNER~1と通常名runneradmin、日本語・空白を含むパスの同一判定を確認。directory 8件、setup 3件、bridge 17件、研究と従来MCPの実stdio統合テスト、計算21,160件、EXEビルドは成功。次の配布テストでPLO_MCP_TEST_ROOTの未作成によるmkdtemp ENOENTが発生し、ZIP公開は未達。tests/research-mcp.test.mjsを既存mcp.test.mjsと同様にrecursive mkdir後mkdtempへ修正。未作成の入れ子フォルダーを指定した配布版SDK統合テストはLinux/.NET 8で成功。修正後の再push・Windows配布テストは承認待ち。
+
+その後00a173aでWindows配布テスト・ZIP生成が成功。ブラウザ接続手順を含む117b860もCI 38504566136で成功し、Windows-MCP artifact 11867242351を公開済み。トンネル・利用者のChatGPTからの実接続は未検証。
+
+## Node.js不要の接続EXE（配布・Windows検証の段階）
+
+社内のNode.jsダウンロード制限を受け、ユーザーがC#版の開発を希望。各ステップで承認を得る方針を維持。接続EXE・設定画面の第1段階と、研究機能移植の第2段階が承認済み。mcp/nativeのC#5/.NET Framework 4.8でPloMcp.Connect.exeを実装し、独立したbuild-native-mcp.ps1でNode.jsなしにビルド可能。GUIで複数CSVフォルダー・結果/履歴先を保存し、自己子プロセスとのMCP診断を実行する。mcp.local.jsonと同じキーを使用し、既存設定読込は無変更、保存は競合検知とバックアップ付き。短縮名を実パスへ統一、リンク拒否、JSONサイズ/深度制限を持つ。
+
+0.2.0-preview.1は研究15ツール＋get_status/get_artifactの17件を実装。DirectoryImport.csが既存ディレクトリ規約を解釈し、NativeResearch.csがResearchBridgeをプロセス内で呼ぶ。計算本体・履歴形式・SVG等は既存GUIと共有。C#側でもJSON Schemaを検証し、定義は既存research-tools.mjsから生成した埋込JSONとCIの差分検査で維持する。既存syntax自動生成等の追加13ツールは移植対象外。Node.jsの隠れた同梱や起動で代替しない。
+
+Windows EXEをクロスコンパイル済み。同一ソースのLinux/.NET 8で72項目のC#検証と公式SDKの3つの実stdio統合シナリオが成功。研究フローはtests/research-mcp.test.mjsをPLO_NATIVE_MCP=1で共用し、EXE側のPATHからNode.jsを除外する。追加のnative-mcp-directory.test.mjsで10ノードの対応一致、不正な分母・重複ボード・範囲・スキーマを検証。単一ジョブ、版/ハッシュ固定、1時間の計画、冪等キー、協調的中止、EOFでの部分履歴保存、リソース読込に対応。
+
+ユーザーは2026-10-14に配布ZIP作成・push・Windows検証を承認。package-native-mcp.ps1はNode.js不要版PLO-Syntax-Lab-NoNode.zipを生成し、接続EXE・通常GUI・HTML・導入手順・SHA-256付きbuild-info.jsonをまとめる。CIはNode.jsなしのビルド、Windows設定画面の起動/パス表示/保存/終了、ZIPを展開した実EXEでの公式SDKと研究フローを検証してからartifactを公開する。既存30ツール版の配布を変更・廃止しない。Windows上の検証結果は対象コミットのCIを確認すること。利用者のChatGPTと公式トンネルを通した実接続は未確認。詳細はdocs/native-mcp-preview.mdとdocs/native-mcp-install.txt。

@@ -12,6 +12,26 @@ permissions:
   contents: read
 
 jobs:
+  native-connection:
+    name: Native MCP connection (no Node.js)
+    runs-on: windows-2022
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build and test native MCP without Node.js on PATH
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ploSavedPath = $env:PATH
+          try {
+            $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+            if (Get-Command node -ErrorAction SilentlyContinue) { throw 'Node.js is unexpectedly available' }
+            .\build-native-mcp.ps1 -WithTests
+          } finally { $env:PATH = $ploSavedPath }
+
   mcp:
     name: MCP tests (${{ matrix.os }})
     strategy:
@@ -63,7 +83,7 @@ jobs:
           npm test --prefix cloud
 
   build:
-    needs: [mcp, cloud]
+    needs: [mcp, cloud, native-connection]
     runs-on: windows-2022
     timeout-minutes: 20
     defaults:
@@ -87,6 +107,16 @@ jobs:
           $ErrorActionPreference = 'Stop'
           npm ci --ignore-scripts
           if ($LASTEXITCODE -ne 0) { throw 'Windows MCP dependency installation failed' }
+          .\build-native-mcp.ps1
+          node mcp/generate-native-schemas.mjs --check
+          if ($LASTEXITCODE -ne 0) { throw 'Native MCP schema drift detected' }
+          node --test tests/native-mcp-sdk.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Native MCP official SDK tests failed' }
+          $env:PLO_NATIVE_MCP = '1'
+          try {
+            node --test tests/research-mcp.test.mjs tests/native-mcp-directory.test.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'Native MCP research workflow tests failed' }
+          } finally { Remove-Item Env:PLO_NATIVE_MCP }
           & .\dist\PloResearch.Tests.exe
           if ($LASTEXITCODE -ne 0) { throw 'Research bridge tests failed' }
           npm run test:directory
@@ -97,6 +127,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Research MCP tests failed' }
           npm run test:mcp
           if ($LASTEXITCODE -ne 0) { throw 'Windows MCP integration tests failed' }
+      - name: Package and test Node-free EXE from extracted ZIP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\package-native-mcp.ps1 -SourceCommit $env:GITHUB_SHA
+          $ploExtracted = Join-Path $env:RUNNER_TEMP ('plo-native-package-' + [guid]::NewGuid().ToString('N'))
+          Expand-Archive -LiteralPath dist\PLO-Syntax-Lab-NoNode.zip -DestinationPath $ploExtracted
+          $ploInfo = Get-Content -LiteralPath (Join-Path $ploExtracted 'build-info.json') -Raw | ConvertFrom-Json
+          if ($ploInfo.source_commit -ne $env:GITHUB_SHA -or $ploInfo.tool_count -ne 17 -or $ploInfo.node_required) { throw 'Invalid package manifest' }
+          foreach ($ploEntry in $ploInfo.files.PSObject.Properties) {
+            $ploActual = (Get-FileHash -LiteralPath (Join-Path $ploExtracted $ploEntry.Name) -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($ploActual -ne $ploEntry.Value) { throw ('Package hash mismatch: ' + $ploEntry.Name) }
+          }
+          if (@(Get-ChildItem -LiteralPath $ploExtracted -Recurse -File).Count -ne @($ploInfo.files.PSObject.Properties).Count + 1) { throw 'Unexpected package contents' }
+          $env:PLO_NATIVE_TEST_EXE = Join-Path $ploExtracted 'PloMcp.Connect.exe'
+          $env:PLO_NATIVE_MCP = '1'
+          $env:PLO_MCP_TEST_ROOT = Join-Path $env:RUNNER_TEMP 'plo-native-package-research'
+          try {
+            node --test --test-concurrency=1 tests/native-mcp-sdk.test.mjs tests/research-mcp.test.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'Extracted Node-free package tests failed' }
+          } finally {
+            Remove-Item Env:PLO_NATIVE_TEST_EXE,Env:PLO_NATIVE_MCP,Env:PLO_MCP_TEST_ROOT
+          }
       - name: Package and test Windows-native MCP with research
         run: |
           $ErrorActionPreference = 'Stop'
@@ -157,6 +209,15 @@ jobs:
             dist/MCP-SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+      - name: Upload downloadable Node-free Windows package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: PLO-Syntax-Lab-NoNode
+          path: |
+            dist/PLO-Syntax-Lab-NoNode.zip
+            dist/NONODE-SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload downloadable Windows-native 30-tool MCP package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -190,6 +251,11 @@ jobs:
         with:
           name: PLO-Syntax-Lab-Windows-MCP
           path: package
+      - name: Download tested Node-free Windows package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: PLO-Syntax-Lab-NoNode
+          path: package
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -198,8 +264,8 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt --clobber
+            gh release upload "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-NoNode.zip package/NONODE-SHA256SUMS.txt --clobber
           else
-            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt \
+            gh release create "$RELEASE_TAG" package/PLO-Syntax-Lab-Windows.zip package/SHA256SUMS.txt package/PLO-Syntax-Lab-MCP.zip package/MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-Windows-MCP.zip package/WINDOWS-MCP-SHA256SUMS.txt package/PLO-Syntax-Lab-NoNode.zip package/NONODE-SHA256SUMS.txt \
               --verify-tag --title "PLO Syntax Lab $RELEASE_TAG" --generate-notes
           fi

@@ -1,0 +1,77 @@
+PLO Syntax Lab — Node.js不要版 0.2.0-preview.1
+
+1. ZIPをすべて展開してください
+
+GitHub Actionsから取得したZIPには、PLO-Syntax-Lab-NoNode.zipと
+NONODE-SHA256SUMS.txtが入っています。中のZIPも展開してください。
+Windows 10/11（64-bit）、.NET Framework 4.8を使用します。
+通常アプリの動作にはWindows PowerShell 5.1とEdge/Chromeも必要です。
+Node.js、npm、Visual Studioのインストールは不要です。
+
+2. CSVフォルダーを登録してください
+
+PloMcp.Connect.exeをダブルクリックします。
+「追加」でCSVをまとめた親フォルダーを選びます。複数登録できます。
+例：F:\PLOrange\post\6max\lowstakes_5%4bb\100bb\SRP\COvsBTN
+ボードフォルダーを一つずつ登録する必要はありません。
+「結果の保存先」「アプリの履歴先」を確認して「設定を保存」を押します。
+初期保存先：%LOCALAPPDATA%\FlopCommandApp\mcp-native.json
+
+3. PC内の接続を確認してください
+
+「接続を診断」を押します。
+「PC内の接続: 成功」「Node.js: 不要」「調査ツール: 17個」を確認します。
+「ChatGPTからの接続: 未確認」はPC内の診断だけでは正常です。
+この診断はChatGPTへの登録やトンネルの接続を行いません。
+
+4. 調査するsyntaxを設定してください
+
+同梱のFlopCommandApp.exeを開き、集計タブの「調査条件セット」で
+条件名とsyntaxを保存します。全ボード共通／ボード別に設定できます。
+同じWindowsユーザーで使用し、アプリと接続EXEの履歴先を一致させます。
+初期値：%LOCALAPPDATA%\FlopCommandApp\History
+詳しい操作：docs/research-setup.md
+
+5. AIクライアントへ接続してください
+
+ローカルstdio対応クライアントには「AI用の設定をコピー」で取得した
+設定を登録します。実行対象はPloMcp.Connect.exe、引数は
+--stdio --config "設定ファイルのフルパス" です。
+stdioはAIクライアントやトンネルが起動します。設定画面を開いておく
+だけではAIから操作できません。
+
+ブラウザ版ChatGPTはローカルEXEを直接実行できないため、対応する
+MCPトンネルなどの接続経路が別途必要です。本ZIPにトンネルやAPIキーは
+含まれません。公式Secure MCP Tunnelの準備・利用権限については
+https://developers.openai.com/api/docs/guides/secure-mcp-tunnels
+を参照してください。トンネルのMCP起動先を上記EXEと引数へ設定します。
+利用者のChatGPT・社内PC・トンネルを通した実接続は未確認です。
+
+6. AIから小規模な調査で確認してください
+
+まずget_statusとresearch_list_workspaceを呼び出して、設定したCSV先と
+条件セットが返ることを確認します。その後、例えば次のように依頼します。
+
+「登録したCOvsBTNディレクトリのKhiボード、IP/vs_checkを調査してください。
+条件セット『自分で保存した名前』のsyntaxを変更せず使用してください。
+Rはポット比、Aはオールインで、全アクションのweightは共通基準です。
+まず対象ボード・CSV対応・相手レンジの不足を示して承認を待ってください。
+承認後にCSV登録し、計算前にも承認を得てください。
+アクション前EQと全アクション頻度の色分けグラフを出してください。」
+
+Ahiを調査したい場合はKhiをAhiへ変更します。
+KhiにはAを含むボードを入れません。相手レンジが不足している場合は
+推測で補完しません。結果のSVGでは点にカーソルを合わせると条件名が出ます。
+AIからCSV・JSON・SVG・Markdownを取得できます。
+
+同梱ファイル
+
+PloMcp.Connect.exe    AI接続・設定・診断（17ツール）
+FlopCommandApp.exe   通常アプリ・ユーザーsyntax設定
+PLO-Syntax-Lab.html  単独で開けるsyntax生成画面
+build-info.json      元コミット・バージョン・ファイルのSHA-256
+docs/                操作と調査の仕様
+
+既存の「Windows-MCP」30ツール版とは別のNode.js不要版です。
+この接続EXEではユーザーsyntaxによる調査を扱い、AIによるsyntax自動生成の
+旧版ツールは含みません。更新時に既存の設定・CSV・履歴を削除しないでください。

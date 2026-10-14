@@ -9,14 +9,25 @@ import {root} from '../mcp/runtime.mjs';
 import {researchToolNames} from '../mcp/research-tools.mjs';
 import {makeDirectoryFixture,directoryScenario} from './directory-fixture.mjs';
 import {checkConnection} from '../mcp/check-connection.mjs';
+const nativeMcp=process.env.PLO_NATIVE_MCP==='1';
 
 test('Research MCP: real SDK transport, shared settings, immutable plans, numerical results, cancellation and scope',{timeout:180000},async()=>{
  const testRoot=process.env.PLO_MCP_TEST_ROOT||path.join(root,'test-results');await fs.mkdir(testRoot,{recursive:true});
- const base=await fs.mkdtemp(path.join(testRoot,'research-mcp-'));
- const input=path.join(base,'input'),output=path.join(base,'output'),history=path.join(base,'history');await fs.mkdir(input);
+ const base=await fs.realpath(await fs.mkdtemp(path.join(testRoot,'research-mcp-')));
+ const input=path.join(base,'input'),output=path.join(base,'output'),history=path.join(base,'history');for(const p of [input,output,history])await fs.mkdir(p);
  const configFile=path.join(base,'config.json');await fs.writeFile(configFile,JSON.stringify({inputRoots:[input],outputRoot:output,historyRoot:history,timeoutSeconds:120}));
  let client,transport;
- async function connect(){client=new Client({name:'plo-research-integration',version:'1'});const args=process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile];transport=new StdioClientTransport({command:process.execPath,args,env:process.env,stderr:'pipe',cwd:root});transport.stderr.on('data',d=>process.stderr.write(d));await client.connect(transport);}
+ async function connect(){
+  client=new Client({name:'plo-research-integration',version:'1'});
+  let command=process.execPath,env=process.env;
+  let args=process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile];
+  if(nativeMcp){
+   command=process.platform==='win32'?(process.env.PLO_NATIVE_TEST_EXE||path.join(root,'dist/PloMcp.Connect.exe')):process.env.PLO_NATIVE_TEST_DOTNET;
+   args=[...(process.platform==='win32'?[]:[process.env.PLO_NATIVE_TEST_HOST]),'--stdio','--config',configFile];
+   env={...process.env,PATH:''};for(const key of Object.keys(env))if(key.toUpperCase()==='PATH'&&key!=='PATH')delete env[key];
+  }
+  transport=new StdioClientTransport({command,args,env,stderr:'pipe',cwd:root});transport.stderr.on('data',d=>process.stderr.write(d));await client.connect(transport);
+ }
  async function call(name,args={}){const r=await client.callTool({name,arguments:args});if(r.isError)throw Error(r.content.map(c=>c.text||'').join('\n'));return r.structuredContent||JSON.parse(r.content[0].text);}
  async function terminal(job){for(let n=0;n<2000;n++){const j=await call('research_get_job',{job_id:job.job_id});if(!['queued','running'].includes(j.state))return j;await sleep(15);}throw Error('Timed out waiting for job.');}
  async function finish(job){const j=await terminal(job);if(j.state!=='completed')throw Error(j.error||j.state);return j.result;}
@@ -30,8 +41,9 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
  }
  await connect();
  try{
-  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,30);for(const name of researchToolNames)assert.ok(names.includes(name));for(const name of ['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
-  const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,30);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');
+  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,nativeMcp?17:30);for(const name of researchToolNames)assert.ok(names.includes(name));for(const name of nativeMcp?['get_status','get_artifact']:['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
+  if(!nativeMcp){const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,30);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');}
+  else assert.equal((await call('get_status')).requires_node,false);
   assert.equal((await call('research_list_workspace')).workspace_revision,0);
   set=(await call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0})).condition_set;assert.equal(set.revision,1);assert.equal(set.conditions[0].syntax,'*');
   await assert.rejects(()=>call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0}),/updated|更新|changed/);
@@ -58,7 +70,7 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   set=(await call('research_save_condition_set',{condition_set:{...set,conditions:[condition('all','*'),condition('none','KK')]},expected_workspace_revision:3})).condition_set;
   const changedPlan=await finish(await call('research_validate',request()));const source=catalog.spots[0].hero_actions[0].source.path,original=await fs.readFile(source,'utf8');await fs.appendFile(source,'\n');await assert.rejects(()=>finishCall('research_start',{plan_id:changedPlan.plan_id,request_key:'changed-source'}),/変更/);await fs.writeFile(source,original);
   const outside=path.join(base,'outside.csv');await fs.writeFile(outside,original);const badCatalog=structuredClone(catalog);badCatalog.spots[0].hero_actions[0].source.path=outside;await assert.rejects(()=>call('research_save_catalog',{catalog:badCatalog,expected_workspace_revision:4}),/outside/);
-  const alias=path.join(input,'alias.csv');try{await fs.symlink(outside,alias);badCatalog.spots[0].hero_actions[0].source.path=alias;await assert.rejects(()=>call('research_save_catalog',{catalog:badCatalog,expected_workspace_revision:4}),/outside|canonical/);}catch(e){if(e.code!=='EPERM')throw e;}
+  const alias=path.join(input,'alias.csv');try{await fs.symlink(outside,alias);badCatalog.spots[0].hero_actions[0].source.path=alias;await assert.rejects(()=>call('research_save_catalog',{catalog:badCatalog,expected_workspace_revision:4}),/outside|canonical|リンク/);}catch(e){if(e.code!=='EPERM')throw e;}
   await assert.rejects(()=>call('research_get_result',{result_id:'../outside'}));await assert.rejects(()=>call('research_validate',{...request(),settings:{Trials:2000001}}));
   // A missing opponent is explicit, optional frequency data is not EQ zero.
   const noOpponent=structuredClone(catalog);noOpponent.spots[1].opponent_sources=[];catalog=(await call('research_save_catalog',{catalog:noOpponent,expected_workspace_revision:4})).catalog;
@@ -69,6 +81,19 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
   await client.close();await connect();assert.equal((await call('research_get_result',{result_id:result.result_id,view:'metadata'})).condition_set.revision,1);assert.ok((await call('research_list_history')).items.some(x=>x.result_id===result.result_id));await assert.rejects(()=>call('research_start',{plan_id:plan.plan_id,request_key:'first'}),/Unknown plan/);
   // Cancel during numerical work (not just a queued job).
   const cp=await finish(await call('research_validate',{...request(),settings:{...settings,Trials:2000000,AllowFrequencyOnly:true}}));const cj=await call('research_start',{plan_id:cp.plan_id,request_key:'cancel'});for(let i=0;i<100;i++){const j=await call('research_get_job',{job_id:cj.job_id});if(j.progress?.Message?.includes('計算中'))break;await sleep(10);}await call('research_cancel_job',{job_id:cj.job_id});const cancelled=await terminal(cj);assert.equal(cancelled.state,'cancelled');assert.ok(cancelled.result?.result_id);assert.equal(cancelled.result.status,'cancelled');assert.ok(cancelled.result.completed_spots<2);assert.equal((await call('research_get_result',{result_id:cancelled.result.result_id,view:'metadata'})).status,'cancelled');
+  if(nativeMcp){
+   // Closing stdin must cancel in-process work and retain a readable partial run.
+   const prior=new Set((await call('research_list_history')).items.map(x=>x.result_id));
+   const eofJob=await call('research_start',{plan_id:cp.plan_id,request_key:'stdin-eof'});
+   let calculating=false;
+   for(let i=0;i<200;i++){const j=await call('research_get_job',{job_id:eofJob.job_id});if(j.progress?.Message?.includes('計算中')){calculating=true;break;}await sleep(5);}
+   assert.ok(calculating,'EOF test must reach numerical work');
+   await assert.rejects(()=>call('research_validate',request()),/already active/);
+   await client.close();await connect();
+   const partial=(await call('research_list_history')).items.filter(x=>!prior.has(x.result_id));
+   assert.equal(partial.length,1);assert.equal(partial[0].status,'cancelled');
+   assert.equal((await call('research_get_result',{result_id:partial[0].result_id,view:'metadata'})).status,'cancelled');
+  }
   // The user's directory profile is imported through real MCP into the shared C# store.
   const tree=path.join(input,'COvsBTN');await makeDirectoryFixture(tree);
   const scanJob=await finish(await call('research_scan_directory',{directory:tree,highest_rank:'A'}));assert.equal(scanJob.board_count,2);assert.equal(scanJob.excluded_board_count,2);
@@ -105,8 +130,8 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
    const rows=(await call('research_get_result',{result_id:rr.result_id,condition_id:'all'})).items;assert.equal(rows.length,scan.board_count);assert.ok(rows.every(x=>x.Status==='completed'));if(rank==='K')assert.ok(rows.every(x=>!x.Board.includes('A')));
    await client.close();await connect();assert.equal((await call('research_get_result',{result_id:rr.result_id,view:'metadata'})).settings.HighestRank,rank);assert.equal((await call('research_list_spots',{catalog_id:im.catalog_id})).highest_rank,rank);
   }
-  await assert.rejects(()=>finishCall('research_scan_directory',{directory:rankTree,highest_rank:'K',ahi_only:true}),/Conflicting/);
-  await assert.rejects(()=>finishCall('research_validate',{catalog_id:'rank-K',catalog_revision:1,set_id:set.set_id,set_revision:set.revision,settings:{HighestRank:'K',AhiOnly:true}}),/Conflicting/);
+  await assert.rejects(()=>finishCall('research_scan_directory',{directory:rankTree,highest_rank:'K',ahi_only:true}),/Conflicting|矛盾/);
+  await assert.rejects(()=>finishCall('research_validate',{catalog_id:'rank-K',catalog_revision:1,set_id:set.set_id,set_revision:set.revision,settings:{HighestRank:'K',AhiOnly:true}}),/Conflicting|矛盾/);
   console.log('Research MCP integration passed: '+base);
   async function callJob(args){return call('research_validate',args);}
   async function finishCall(name,args){return finish(await call(name,args));}
