@@ -29,7 +29,12 @@ namespace PloNativeMcp {
                     Console.Error.WriteLine("The setup screen is available in the Windows build."); return 2;
 #endif
                 }
-                Console.OutputEncoding = new UTF8Encoding(false);
+                // A WinExe has no console window. On .NET Framework, setting
+                // Console.OutputEncoding calls SetConsoleOutputCP and fails
+                // with "The handle is invalid" even with redirected MCP pipes.
+                // Encode the pipe writers directly, without a console API call.
+                Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
+                Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true });
                 if (mode == "--stdio") {
                     var config = Configuration.Load(configFile);
                     using (var server = new McpServer(config)) return server.Run(Console.OpenStandardInput(), Console.Out, Console.Error);
