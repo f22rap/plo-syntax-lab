@@ -43,7 +43,7 @@ namespace PloNativeMcp {
                     if (!string.IsNullOrWhiteSpace(stdout.Result)) throw new IOException("MCP以外の出力が混在しています。");
                     var replies = lines.Select(l => Json.Object(Json.Parse(l), "reply")).ToArray();
                     for (int i = 0; i < replies.Length; i++) {
-                        if ((Json.Get(replies[i], "jsonrpc") as string) != "2.0" || replies[i].ContainsKey("error") || Json.Integer(Json.Get(replies[i], "id"), "id", 1, 4) != i + 1) throw new IOException("MCP応答が不正です。");
+                        if ((Json.Get(replies[i], "jsonrpc") as string) != "2.0" || replies[i].ContainsKey("error") || Json.Integer(Json.Get(replies[i], "id"), "id", 1, 4) != i + 1) throw new IOException("MCP応答が不正です: " + lines[i]);
                     }
                     var init = Json.Object(replies[0]["result"], "initialize result");
                     if ((Json.Get(init, "protocolVersion") as string) != McpServer.Protocol) throw new IOException("MCPバージョンが一致しません。");

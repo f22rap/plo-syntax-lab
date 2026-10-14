@@ -98,11 +98,17 @@ namespace PloNativeMcp {
         }
         public int Run(Stream input, TextWriter output, TextWriter errors) {
             using (var buffered = new BufferedStream(input, 8192)) {
+                bool firstFrame = true;
                 while (true) {
                     string line;
                     try { line = ReadLine(buffered); }
                     catch (Exception e) { output.WriteLine(Json.Write(Error(null, -32700, "Invalid or oversized UTF-8 frame."))); output.Flush(); errors.WriteLine(e.Message); return 1; }
                     if (line == null) return 0;
+                    // Framework Process.StandardInput may emit an initial UTF-8
+                    // preamble. Accept it only at byte zero of the transport;
+                    // JSON bodies and later frames remain strict JSON.
+                    if (firstFrame && line.Length > 0 && line[0] == '\uFEFF') line = line.Substring(1);
+                    firstFrame = false;
                     if (line.Length == 0) continue;
                     var response = Handle(line);
                     if (response != null) { output.WriteLine(Json.Write(response)); output.Flush(); }

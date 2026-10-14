@@ -195,6 +195,12 @@ namespace PloNativeMcpTests {
                 var output = new StringWriter(); Check(server.Run(input, output, new StringWriter()) == 0, "Clean EOF exits.");
                 Check(Num(Get(Json.Parse(output.ToString()), "id")) == 8, "Only JSON goes to stdout.");
             }
+            using (var input = new MemoryStream(Json.Utf8.GetBytes("\uFEFF{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}\n\uFEFF{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"ping\"}\n"))) {
+                var output = new StringWriter(); server.Run(input, output, new StringWriter());
+                var lines = output.ToString().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                Check(Num(Get(Json.Parse(lines[0]), "id")) == 9, "Accept a Framework UTF-8 preamble only at transport start.");
+                Error(Json.Parse(lines[1]), -32700);
+            }
             foreach (var bytes in new[] { new byte[] { 255, 10 }, Json.Utf8.GetBytes("{\"jsonrpc\":\"2.0\"}"), new byte[Json.MaxBytes + 1] }) {
                 var output = new StringWriter(); Check(server.Run(new MemoryStream(bytes), output, new StringWriter()) == 1, "Bad frame fails cleanly.");
                 Error(Json.Parse(output.ToString()), -32700);
