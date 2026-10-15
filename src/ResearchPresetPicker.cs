@@ -14,6 +14,7 @@ namespace FlopCommands {
         readonly Label count=new Label{Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};
         readonly Button add;
         readonly CheckBox splitPocket=new CheckBox{Text="pp条件をランク別に出力",AutoSize=true};
+        public string ComposePresetId {get;private set;}
         public bool SplitPocket {get{return splitPocket.Checked;}}
         bool loading;
         public string[] SelectedPresetIds {get{return presets.Where(p=>chosen.Contains(p.Id)).Select(p=>p.Id).ToArray();}}
@@ -32,7 +33,7 @@ namespace FlopCommands {
             grid.CurrentCellDirtyStateChanged+=(s,e)=>{if(grid.IsCurrentCellDirty)grid.CommitEdit(DataGridViewDataErrorContexts.Commit);};
             grid.CellValueChanged+=(s,e)=>{if(loading||e.RowIndex<0||e.ColumnIndex!=0)return;var row=grid.Rows[e.RowIndex];var p=(ResearchDefaultPreset)row.Tag;if(!CanChoose(p))return;if(Convert.ToBoolean(row.Cells[0].Value))chosen.Add(p.Id);else chosen.Remove(p.Id);RefreshCount();};
             root.Controls.Add(grid,0,3);root.Controls.Add(count,0,4);
-            var bottom=ResearchUi.Bar();add=ResearchUi.Button("選択した条件を追加",()=>{if(chosen.Count==0)return;DialogResult=DialogResult.OK;Close();});add.Name="researchPresetAdd";bottom.Controls.Add(add);
+            var bottom=ResearchUi.Bar();add=ResearchUi.Button("選択した条件を追加",()=>{if(chosen.Count==0)return;DialogResult=DialogResult.OK;Close();});add.Name="researchPresetAdd";bottom.Controls.Add(add);bottom.Controls.Add(ResearchUi.Button("この条件に掛け合わせる",()=>{if(grid.CurrentRow==null)return;var p=(ResearchDefaultPreset)grid.CurrentRow.Tag;if(!p.Supported)throw new ArgumentException(p.Reason);ComposePresetId=p.Id;DialogResult=DialogResult.OK;Close();}));
             var cancel=ResearchUi.Button("キャンセル",()=>{DialogResult=DialogResult.Cancel;Close();});bottom.Controls.Add(cancel);CancelButton=cancel;root.Controls.Add(bottom,0,5);
             search.TextChanged+=(s,e)=>Reload();Reload();
         }

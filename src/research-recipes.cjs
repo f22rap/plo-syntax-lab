@@ -33,9 +33,9 @@ function role(r){
  }
 }
 const options={
- fd:['all','none','fd','fdNut','fdSecond','fdThird','fdLow','fdTriple','dualFd'],
- sd:['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen'],
- bdfd:['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple'],
+ fd:['all','none','fd','fdNut','fdSecond','fdThird','fdLow','fdTriple','dualFd','blocker','blockerNut','blockerSecond','blockerThird','blockerLow','blockerNone'],
+ sd:['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen','blocker','blockerNut','blockerNone'],
+ bdfd:['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple','bdPair'],
  bdsd:['all','none','bdsd','bdsd4','bdsd8','bdsd9','bdsdOther'],
  clean:['','regular','all']
 };
@@ -48,12 +48,13 @@ function filter(f){
  const seen=new Set();for(const b of f.blockers){object(b,['rank','mode'],'ブロッカー');rankRef(b.rank);choice(b.mode,['yes','no','one','two'],'ブロッカー枚数');const key=stable(b.rank);if(seen.has(key))fail('同じランク指定のブロッカーが重複しています。');seen.add(key);}
  if(f.clean&&[f.fd,f.sd].some(v=>v!=='all'))fail('cleanと通常ドローの個別指定を併用できません。');
  if(f.clean==='all'&&[f.bdfd,f.bdsd].some(v=>v!=='all'))fail('clean=allとバックドアの個別指定を併用できません。');
- if(!['all','none'].includes(f.bdsd)&&!['all','none'].includes(f.sd))fail('BDSDと通常SDを同時に要求できません。');
+ if(!['all','none'].includes(f.bdsd)&&!['all','none','blocker','blockerNut','blockerNone'].includes(f.sd))fail('BDSDと通常SDを同時に要求できません。');
 }
 function generator(g){
  const keys=['recipe_version','ruleset','source','additional_syntax'];
  if(g?.source==='filter'){object(g,[...keys,'filter'],'生成条件');filter(g.filter);}
  else if(g?.source==='preset'){object(g,[...keys,'preset_id','preset_revision'],'デフォルト条件');text(g.preset_id,'プリセットID',120);if(!/^[a-z][a-z0-9_.-]*$/.test(g.preset_id))fail('プリセットIDが不正です。');integer(g.preset_revision,1,2147483647,'プリセット版');}
+ else if(g?.source==='combination'){object(g,[...keys,'groups'],'掛け合わせ条件');if(!Array.isArray(g.groups)||!g.groups.length||g.groups.length>12)fail('掛け合わせ条件は1〜12軸です。');for(const group of g.groups){if(!Array.isArray(group)||!group.length||group.length>100||group.some(x=>typeof x!=='string'||!/^[a-z][a-z0-9_.-]{0,119}@[1-9][0-9]{0,8}$/.test(x)))fail('条件参照が不正です。');}}
  else fail('未対応の生成方法です。');
  integer(g.recipe_version,1,2147483647,'生成形式の版');text(g.ruleset,'判定規則',100);syntax(g.additional_syntax);
 }
@@ -104,14 +105,14 @@ function conditionHash(c){
  return hash(meaning);
 }
 // Immutable identity mapping; display labels from saved user conditions are never parsed.
-if(sourcePresets.length!==192||new Set(sourcePresets.map(p=>p.preset_id)).size!==192||sourcePresets.some((p,i)=>p.cell!==catalog[i]?.cell||p.label!==catalog[i]?.label))throw Error('デフォルト条件レジストリと既存一覧が一致しません。');
+if(sourcePresets.length!==catalog.length||new Set(sourcePresets.map(p=>p.preset_id)).size!==catalog.length||sourcePresets.some((p,i)=>p.cell!==catalog[i]?.cell||p.label!==catalog[i]?.label))throw Error('デフォルト条件レジストリと既存一覧が一致しません。');
 const presets=sourcePresets.map(p=>Object.freeze({...p})),byId=new Map(presets.map(p=>[p.preset_id,p]));
 function listPresets({query='',supported_only=false}={}){
  const q=String(query).replace(/\s/g,'').toLowerCase();return presets.filter(p=>(!supported_only||p.supported)&&(p.label+p.preset_id).replace(/\s/g,'').toLowerCase().includes(q)).map(clone);
 }
 function getPreset(id){const p=byId.get(id);return p?clone(p):null;}
 function createPresetSet({preset_ids,name='デフォルト調査条件',set_id=randomUUID()}={}){
- if(!Array.isArray(preset_ids)||!preset_ids.length||preset_ids.length>192)fail('デフォルト条件を1個以上選んでください。');
+ if(!Array.isArray(preset_ids)||!preset_ids.length||preset_ids.length>1000)fail('デフォルト条件を1個以上選んでください。');
  const wanted=new Set(preset_ids);for(const pid of wanted){const p=byId.get(pid);if(!p||!p.supported)fail(p?.reason||'デフォルト条件が見つかりません：'+pid,'unsupported_recipe');}
  return normalizeSet({set_id,revision:0,name,conditions:presets.filter(p=>wanted.has(p.preset_id)).map(p=>({condition_id:randomUUID(),label:p.label,enabled:true,kind:'generated',syntax:'',by_board:{},generator:{recipe_version:1,ruleset:'plo4-flop-v1',source:'preset',preset_id:p.preset_id,preset_revision:p.preset_revision,additional_syntax:'*'}}))});
 }

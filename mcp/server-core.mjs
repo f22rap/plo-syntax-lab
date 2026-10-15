@@ -8,12 +8,12 @@ const text=(description,max=1000)=>z.string().min(1).max(max).describe(descripti
 const board=text('3–5 board cards, e.g. JsTd7c',30);
 const id=text('ID returned by another tool',120);
 const historyId=z.string().regex(/^\d{8}T\d{13}Z_[a-f0-9]{32}$/);
-const page={offset:z.number().int().min(0).default(0),limit:z.number().int().min(1).max(192).default(50)};
+const page={offset:z.number().int().min(0).default(0),limit:z.number().int().min(1).max(1000).default(50)};
 const filter=z.object({
  role:z.string().min(1).max(64).default('all'),
- fd:z.enum(['all','none','fd','fdNut','fdSecond','fdLow','fdTriple','dualFd']).default('all'),
- sd:z.enum(['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen']).default('all'),
- bdfd:z.enum(['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple']).default('all'),
+ fd:z.enum(['all','none','fd','fdNut','fdSecond','fdLow','fdTriple','dualFd','blocker','blockerNut','blockerSecond','blockerThird','blockerLow','blockerNone']).default('all'),
+ sd:z.enum(['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen','blocker','blockerNut','blockerNone']).default('all'),
+ bdfd:z.enum(['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple','bdPair']).default('all'),
  pocket:z.enum(['all','2','3','4','5','6','7','8','9','10','11','12','13','14']).default('all'),
  clean:z.enum(['','regular','all']).default(''),
  blockers:z.array(z.object({rank:z.number().int().min(2).max(14),mode:z.enum(['yes','no','one','two'])}).strict()).max(5).default([])
@@ -33,7 +33,7 @@ export function buildServer(service,research=new ResearchService(service.config,
  tool('get_filter_schema','Get roles and board ranks for individual generation. May return a job whose result is the schema.',{board},a=>service.filterSchema(a.board),false);
  tool('generate_syntax','Generate a verified individual condition. Returns a job; its result is a condition_id for comparison.',{board,label:text('Condition label',200),filter},a=>service.generate(a),false);
  tool('start_comparison','Start 2–3 CSV weight comparison. Uses registered dataset_ids and generated condition_ids for this board. Successful results automatically enter GUI-compatible history.',{
-  board,dataset_ids:z.array(id).min(2).max(3),condition_ids:z.array(id).max(192).default([]),include_all:z.boolean().default(true)
+  board,dataset_ids:z.array(id).min(2).max(3),condition_ids:z.array(id).max(1000).default([]),include_all:z.boolean().default(true)
  },a=>service.compare(a),false);
  tool('get_job','Read a job status/result. Terminal states: completed, failed, cancelled.',{job_id:id},a=>service.getJob(a.job_id));
  tool('cancel_job','Cancel queued or running work. No history is created for cancelled comparisons. Final history commit cannot be cancelled.',{job_id:id},a=>service.cancelJob(a.job_id),false);

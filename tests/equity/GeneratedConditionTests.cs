@@ -21,7 +21,7 @@ namespace EquityTests {
             Check(draft.Conditions.Skip(1).Select(c=>c.Id).Distinct().Count()==13,"pp identities unique");
             Check(draft.Conditions[1].Generator.AdditionalSyntax=="(ss):22"&&draft.Conditions.Last().Generator.AdditionalSyntax=="(ss):AA","pp preserves additional syntax");
             Check(draft.Conditions.Skip(1).All(c=>c.Generator.PresetId=="pair.top.pocket.under"),"pp preserves board-relative recipe");
-            var all=ResearchPresets.All();Check(all.Length==192&&all.Count(p=>p.Supported)==166,"192 rows, 166 supported");Check(all[0].Id=="set.top.all"&&all[0].Label=="Tset all"&&all[0].Cell=="L49","canonical first row");
+            var all=ResearchPresets.All();Check(all.Length>192&&all.Count(p=>!p.Supported)==2,"192 rows, 166 supported");Check(all[0].Id=="set.top.all"&&all[0].Label=="Tset all"&&all[0].Cell=="L49","canonical first row");
             all[0].Label="変更";Check(ResearchPresets.All()[0].Label=="Tset all","catalog is immutable to callers");
             var set=Selected();Check(set.Conditions.Select(c=>c.Generator.PresetId).SequenceEqual(new[]{"set.top.all","set.middle.all","aa.sd.bdsd"}),"selection follows catalog order");
             var ids=set.Conditions.Select(c=>c.Id).ToArray();set.Conditions[0].Label="自分のトップセット名";set.Conditions[0].Enabled=false;

@@ -49,6 +49,7 @@ namespace FlopCommands.Research {
         [DataMember(Name="source")] public string Source="preset";
         [DataMember(Name="preset_id",EmitDefaultValue=false)] public string PresetId;
         [DataMember(Name="preset_revision",EmitDefaultValue=false)] public int? PresetRevision;
+        [DataMember(Name="groups",EmitDefaultValue=false)] public string[][] Groups;
         [DataMember(Name="filter",EmitDefaultValue=false)] public ResearchFilterRecipe Filter;
         [DataMember(Name="additional_syntax")] public string AdditionalSyntax="*";
     }
@@ -67,7 +68,7 @@ namespace FlopCommands.Research {
             using(var stream=typeof(ResearchPresets).Assembly.GetManifestResourceStream("PloResearch.DefaultPresets.json")){
                 if(stream==null)throw new InvalidOperationException("デフォルト条件一覧がアプリに含まれていません。");
                 using(var bytes=new MemoryStream()){stream.CopyTo(bytes);var all=ResearchJson.Decode<ResearchDefaultPreset[]>(bytes.ToArray());
-                    if(all.Length!=192||all.Select(p=>p.Id).Distinct().Count()!=192||all.Select(p=>p.Cell).Distinct().Count()!=192||all.Any(p=>p.Revision<1||string.IsNullOrWhiteSpace(p.Label)||(!p.Supported&&string.IsNullOrWhiteSpace(p.Reason))))throw new ArgumentException("デフォルト条件一覧が不正です。");return all;}
+                    if(all.Length==0||all.Select(p=>p.Id).Distinct().Count()!=all.Length||all.Select(p=>p.Cell).Distinct().Count()!=all.Length||all.Any(p=>p.Revision<1||string.IsNullOrWhiteSpace(p.Label)||(!p.Supported&&string.IsNullOrWhiteSpace(p.Reason))))throw new ArgumentException("デフォルト条件一覧が不正です。");return all;}
             }
         }
         public static ResearchDefaultPreset[] All(){return ResearchJson.Clone(catalog.Value);}
@@ -103,6 +104,7 @@ namespace FlopCommands.Research {
             Need(g!=null,"自動生成条件がありません。");ResearchRecipeJson.CheckGenerator(ResearchJson.Encode(g));
             Need(g.RecipeVersion>=1,"生成形式の版が不正です。");Need(!string.IsNullOrWhiteSpace(g.Ruleset)&&g.Ruleset.Length<=100,"判定規則が不正です。");
             Need(!string.IsNullOrWhiteSpace(g.AdditionalSyntax)&&g.AdditionalSyntax.Length<=1000000,"追加syntaxを指定してください（指定なしは*）。");new SyntaxMatcher(g.AdditionalSyntax);
+            if(g.Source=="combination"){Need(g.Groups!=null&&g.Groups.Length>0&&g.Groups.Length<=12,"掛け合わせ条件は1〜12軸です。");foreach(var group in g.Groups){Need(group!=null&&group.Length>0&&group.Length<=100,"各軸は1〜100条件です。");foreach(var key in group)Need(Regex.IsMatch(key??"",@"^[a-z][a-z0-9_.-]{0,119}@[1-9][0-9]{0,8}$"),"条件参照が不正です。");}return;}
             if(g.Source=="preset"){Need(g.PresetId!=null&&Regex.IsMatch(g.PresetId,@"^[a-z][a-z0-9_.-]{0,119}$"),"デフォルト条件IDが不正です。");Need(g.PresetRevision.HasValue&&g.PresetRevision>=1,"デフォルト条件の版が不正です。");return;}
             Choice(g.Source,"filter","生成方法");var f=g.Filter;Need(f!=null&&f.Role!=null&&f.Pocket!=null,"生成フィルターが不足しています。");var r=f.Role;
             switch(r.Type){
@@ -115,12 +117,12 @@ namespace FlopCommands.Research {
                 case "flush":Choice(r.Tier,"nut|second|third|other","フラッシュ順位");break;
                 default:throw new ArgumentException("未対応の役です。");
             }
-            Choice(f.Fd,"all|none|fd|fdNut|fdSecond|fdThird|fdLow|fdTriple|dualFd","FD");Choice(f.Sd,"all|none|sd|wrap|nutGut|nutOpen|nonGut|nonOpen","SD");
-            Choice(f.Bdfd,"all|none|bdfd|bdNut|bdSecond|bdLow|bdTriple","BDFD");Choice(f.Bdsd,"all|none|bdsd|bdsd4|bdsd8|bdsd9|bdsdOther","BDSD");Choice(f.Clean,"|regular|all","ドローなし指定");
+            Choice(f.Fd,"all|none|fd|fdNut|fdSecond|fdThird|fdLow|fdTriple|dualFd|blocker|blockerNut|blockerSecond|blockerThird|blockerLow|blockerNone","FD");Choice(f.Sd,"all|none|sd|wrap|nutGut|nutOpen|nonGut|nonOpen|blocker|blockerNut|blockerNone","SD");
+            Choice(f.Bdfd,"all|none|bdfd|bdNut|bdSecond|bdLow|bdTriple|bdPair","BDFD");Choice(f.Bdsd,"all|none|bdsd|bdsd4|bdsd8|bdsd9|bdsdOther","BDSD");Choice(f.Clean,"|regular|all","ドローなし指定");
             Choice(f.Pocket.Type,"all|rank","ポケット指定");if(f.Pocket.Type=="rank")RankKey(f.Pocket.Rank);
             Need(f.Blockers!=null&&f.Blockers.Length<=13,"ブロッカーは13個までです。");var seen=new HashSet<string>();foreach(var b in f.Blockers){Need(b!=null,"ブロッカー指定がありません。");Need(seen.Add(RankKey(b.Rank)),"同じランク指定のブロッカーが重複しています。");Choice(b.Mode,"yes|no|one|two","ブロッカー枚数");}
             Need(f.Clean==""||(f.Fd=="all"&&f.Sd=="all"),"ドローなしと通常ドローの個別指定を併用できません。");Need(f.Clean!="all"||(f.Bdfd=="all"&&f.Bdsd=="all"),"全ドローなしとバックドアの個別指定を併用できません。");
-            Need(f.Bdsd=="all"||f.Bdsd=="none"||f.Sd=="all"||f.Sd=="none","BDSDと通常SDを同時に要求できません。");
+            Need(f.Bdsd=="all"||f.Bdsd=="none"||f.Sd=="all"||f.Sd=="none"||f.Sd=="blocker"||f.Sd=="blockerNut"||f.Sd=="blockerNone","BDSDと通常SDを同時に要求できません。");
         }
     }
     // DataContractJsonSerializer drops unknown members. Check generated recipes
@@ -135,6 +137,7 @@ namespace FlopCommands.Research {
         }
         static void Rank(XmlElement r){if(Value(r,"type")=="fixed")Shape(r,"type","rank");else if(Value(r,"type")=="board")Shape(r,"type","position");else throw new ArgumentException("ランク指定が不正です。");}
         static void Generator(XmlElement g){
+            if(Value(g,"source")=="combination"){Shape(g,"recipe_version","ruleset","source","additional_syntax","groups");return;}
             if(Value(g,"source")=="preset"){Shape(g,"recipe_version","ruleset","source","additional_syntax","preset_id","preset_revision");return;}
             if(Value(g,"source")!="filter")throw new ArgumentException("未対応の生成方法です。");Shape(g,"recipe_version","ruleset","source","additional_syntax","filter");
             var f=Child(g,"filter");Shape(f,"role","fd","sd","bdfd","bdsd","pocket","clean","blockers");var r=Child(f,"role");

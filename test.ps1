@@ -2,7 +2,7 @@ param([switch]$Native)
 $ErrorActionPreference = 'Stop'
 Push-Location -LiteralPath $PSScriptRoot
 try {
-    foreach ($test in @('tests.cjs','symbolic-tests.cjs','straight-draw-tests.cjs','bdsd-tests.cjs','third-flush-tests.cjs','draw-regression-tests.cjs','pocket-tests.cjs','defaults-test.cjs')) {
+    foreach ($test in @('tests.cjs','symbolic-tests.cjs','straight-draw-tests.cjs','combination.test.cjs','draw-blockers.test.cjs','bdsd-tests.cjs','third-flush-tests.cjs','draw-regression-tests.cjs','pocket-tests.cjs','defaults-test.cjs')) {
         node (Join-Path 'tests' $test)
         if ($LASTEXITCODE -ne 0) { throw ('Failed: ' + $test) }
     }

@@ -27,7 +27,7 @@ const input={board:'JsTd7c',all:true,ranges:[{cell:'L49',label:'トップセッ�
   const selection={app:'PLO Syntax Lab',game:'PLO4',board:['Js','Td','7c'],ranges:[{label:'トップセット',count:3103,syntax:'JJ!(98)'}]};
   assert.equal((await post('lab/selection',selection)).status,200);assert.equal((await(await fetch(new URL('selection',url))).json()).selection.ranges[0].count,3103);
   assert.equal((await post('selection',{...selection,ranges:[{label:'empty',count:0,syntax:''}]})).status,400);
-  const generated=await(await post('defaults',{board:'JsTd7c'})).json();assert.equal(generated.ranges.length,192);assert.equal(generated.ranges.find(r=>r.cell==='L49').syntax,'JJ!(98)');
+  const generated=await(await post('defaults',{board:'JsTd7c'})).json();assert.equal(generated.ranges.length,require('../src/default-labels.json').length);assert.equal(generated.ranges.find(r=>r.cell==='L49').syntax,'JJ!(98)');
   const removed=await fetch(new URL('history/'+saved.record.id,url),{method:'DELETE',headers:{'Content-Type':'application/json',Origin:origin},body:'{}'});assert.equal(removed.status,200);assert.equal((await(await fetch(new URL('history',url))).json()).history.length,0);
   assert.equal((await fetch(new URL('history/not-an-id',url))).status,404);
   console.log('Linux comparison, decimal arithmetic, CSV validation, HTTP origin/token restrictions, generator transfer, 192 defaults, history export/delete: passed');

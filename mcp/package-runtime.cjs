@@ -12,7 +12,7 @@ async function main(){
  const files=['Start-App.cmd','Check-MCP.cmd','docs/windows-generated-preview.txt','mcp/board-filter.mjs','mcp/research-directory.mjs','tests/research-directory.test.mjs','tests/directory-fixture.mjs','docs/directory-import.md','Setup-Codex.cmd','Setup-Codex.ps1','mcp/codex-setup.mjs','mcp/check-connection.mjs','docs/codex-setup.md','docs/chatgpt-browser-setup.md','tests/codex-setup.test.mjs','package.json','package-lock.json','mcp/server.mjs','mcp/service.mjs','mcp/runtime.mjs',
   'mcp/server-core.mjs','mcp/research-tools.mjs','mcp/recipe-schema.mjs','mcp/research-service.mjs','mcp/research-runtime.mjs','mcp/ResearchHost.cs','mcp/research-workflow.md','docs/research-mcp.md','docs/research-setup.md','docs/research-run.md','docs/research-settings-example.json','tests/research-mcp.test.mjs','tests/research-harness.mjs','tests/research/BridgeTests.cs',
   'src/ResearchData.cs','src/ResearchRecipes.cs','src/ResearchGeneration.cs','src/ResearchRun.cs','src/ResearchFiles.cs','src/EquityEngine.cs','src/EquityInput.cs','src/EquityJob.cs','src/EquityPlot.cs','src/EquityArchive.cs','dist/PloResearch.Native.exe','dist/FlopCommandApp.exe','dist/PLO-Syntax-Lab.html',
-  'mcp/engine-worker.cjs','mcp/artifacts.mjs','mcp/NativeHost.cs','mcp/README.md',
+  'mcp/preview-combination.cjs','mcp/engine-worker.cjs','mcp/artifacts.mjs','mcp/NativeHost.cs','mcp/README.md',
   'mcp/config.example.json','mcp/client.example.json','tests/mcp.test.mjs',
   'src/lab/engine.js','src/defaults.js','src/default-labels.json','src/SyntaxMatcher.cs',
   'src/default-presets.json','src/research-recipes.cjs','src/research-generation.cjs',

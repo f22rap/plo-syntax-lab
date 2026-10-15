@@ -17,15 +17,16 @@ const role=z.union([
  z.object({type:z.literal('flush'),tier:z.enum(['nut','second','third','other'])}).strict()
 ]);
 const filter=z.object({role,
- fd:z.enum(['all','none','fd','fdNut','fdSecond','fdThird','fdLow','fdTriple','dualFd']),
- sd:z.enum(['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen']),
- bdfd:z.enum(['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple']),
+ fd:z.enum(['all','none','fd','fdNut','fdSecond','fdThird','fdLow','fdTriple','dualFd','blocker','blockerNut','blockerSecond','blockerThird','blockerLow','blockerNone']),
+ sd:z.enum(['all','none','sd','wrap','nutGut','nutOpen','nonGut','nonOpen','blocker','blockerNut','blockerNone']),
+ bdfd:z.enum(['all','none','bdfd','bdNut','bdSecond','bdLow','bdTriple','bdPair']),
  bdsd:z.enum(['all','none','bdsd','bdsd4','bdsd8','bdsd9','bdsdOther']),
  pocket:z.union([z.object({type:z.literal('all')}).strict(),z.object({type:z.literal('rank'),rank}).strict()]),
  clean:z.enum(['','regular','all']),blockers:z.array(z.object({rank,mode:z.enum(['yes','no','one','two'])}).strict()).max(13)
 }).strict();
 const common={recipe_version:z.number().int().min(1),ruleset:text(100),additional_syntax:text(1000000)};
 const generator=z.union([
+ z.object({...common,source:z.literal('combination'),groups:z.array(z.array(z.string().regex(/^[a-z][a-z0-9_.-]{0,119}@[1-9][0-9]{0,8}$/)).min(1).max(100)).min(1).max(12)}).strict(),
  z.object({...common,source:z.literal('preset'),preset_id:z.string().regex(/^[a-z][a-z0-9_.-]{0,119}$/),preset_revision:z.number().int().min(1)}).strict(),
  z.object({...common,source:z.literal('filter'),filter}).strict()
 ]);

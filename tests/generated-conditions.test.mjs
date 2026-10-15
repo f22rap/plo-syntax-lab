@@ -18,9 +18,9 @@ async function engine(board){if(!engines.has(board)){const e=new P.Engine();awai
 const byId=(rows,id)=>rows.find(r=>r.condition_id===id);
 
 test('192条件の名称・順序・安定IDを維持し、未定義26条件を明示する',()=>{
- const all=listPresets();assert.equal(all.length,192);assert.equal(new Set(all.map(p=>p.preset_id)).size,192);
+ const all=listPresets();assert.equal(all.length,catalog.length);assert.equal(new Set(all.map(p=>p.preset_id)).size,catalog.length);
  assert.deepEqual(all.map(({cell,label})=>({cell,label})),catalog);
- assert.equal(all.filter(p=>p.supported).length,166);
+ assert.equal(all.filter(p=>p.supported).length,catalog.length-2);
  for(const p of all.filter(p=>!p.supported)){assert.ok(p.reason);assert.match(p.label,/pp all|blocker/i);assert.throws(()=>createPresetSet({preset_ids:[p.preset_id]}));}
  const set=createPresetSet({preset_ids:['aa.sd.bdsd','set.top.all','set.top.all']});
  assert.deepEqual(set.conditions.map(c=>c.generator.preset_id),['set.top.all','aa.sd.bdsd']);
@@ -47,8 +47,8 @@ test('3ボード×192条件が既存生成と一致し、名前変更でも同�
  const selected=setOf(listPresets().map((p,i)=>({condition_id:'p'+i,label:'ユーザー条件 '+i,enabled:true,kind:'generated',syntax:'',by_board:{},generator:{recipe_version:1,ruleset:'plo4-flop-v1',source:'preset',preset_id:p.preset_id,preset_revision:1,additional_syntax:'*'}})));
  for(const board of ['JsTd7c','AsKd7s','AsAd7c']){
   const e=await engine(board),expected=await defaults(P,e,catalog),actual=(await G.generatePrepared(e,selected)).rows;
-  assert.equal(actual.length,192);
-  for(let i=0;i<192;i++){
+  assert.equal(actual.length,catalog.length);
+  for(let i=0;i<catalog.length;i++){
    const p=listPresets()[i],a=actual[i],b=expected[i];assert.equal(a.label,'ユーザー条件 '+i);
    if(!p.supported){assert.equal(a.status,'unsupported_recipe');assert.equal(a.legal_hand_count,null);assert.equal(a.syntax,'');continue;}
    assert.equal(a.status,b.count?'ready':'empty_condition',`${board} ${p.label}: ${a.reason}`);

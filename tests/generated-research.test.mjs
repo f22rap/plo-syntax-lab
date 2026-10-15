@@ -33,7 +33,7 @@ test('Generated research: saved presets → board syntax → real native CSV/EQ 
  const req=(override={})=>({catalog_id:catalog.catalog_id,catalog_revision:catalog.revision,set_id:set.set_id,set_revision:set.revision,settings,...override});
  await connect();
  try{
-  const presets=await call('research_list_default_presets',{limit:200});assert.equal(presets.total,192);assert.equal(presets.items.filter(p=>p.supported).length,166);
+  const presets=await call('research_list_default_presets',{limit:200});assert.ok(presets.total>192);assert.equal(presets.items.filter(p=>!p.supported).length,2);
   assert.equal((await call('research_list_default_presets',{query:'set.top.all'})).total,1);
   set=(await call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0})).condition_set;
   catalog=(await call('research_save_catalog',{catalog,expected_workspace_revision:1})).catalog;

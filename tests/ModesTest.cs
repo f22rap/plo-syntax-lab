@@ -7,8 +7,8 @@ using System.Windows.Forms;
 namespace FlopCommands {
     static partial class TestProgram {
         static void WaitDefaults(MainForm f){
-            var timer=System.Diagnostics.Stopwatch.StartNew();while((f.DefaultsBusy||f.ChoiceCount!=192)&&timer.Elapsed.TotalSeconds<150){Application.DoEvents();System.Threading.Thread.Sleep(25);if(!f.DefaultsBusy&&f.DefaultsMessage.Contains("生成できません"))throw new Exception(f.DefaultsMessage);}
-            Require(!f.DefaultsBusy&&f.ChoiceCount==192,"Default generation: "+f.DefaultsMessage);
+            var timer=System.Diagnostics.Stopwatch.StartNew();while((f.DefaultsBusy||f.ChoiceCount!=FlopCommands.Research.ResearchPresets.All().Length)&&timer.Elapsed.TotalSeconds<150){Application.DoEvents();System.Threading.Thread.Sleep(25);if(!f.DefaultsBusy&&f.DefaultsMessage.Contains("生成できません"))throw new Exception(f.DefaultsMessage);}
+            Require(!f.DefaultsBusy&&f.ChoiceCount==FlopCommands.Research.ResearchPresets.All().Length,"Default generation: "+f.DefaultsMessage);
         }
         static int ModesTest(string output){
             string a=Path.Combine(output,"modeA.csv"),b=Path.Combine(output,"modeB.csv");
@@ -29,11 +29,11 @@ namespace FlopCommands {
                 Require(f.LastResult.Rows[1].Sources[0].Percent==25m&&f.LastResult.Rows[2].Sources[0].Percent==75m,"Default ratios");
                 Require(f.GraphRowCount==3&&f.History.EntryCount==1,"Graph and history maintained");f.SaveSnapshot(Path.Combine(output,"default-preview.png"));f.ExportResultsTo(Path.Combine(output,"default-results.csv"));
                 f.UseDefaults=false;Require(f.LastResult==null,"Switch mode clears stale result");f.AcceptSelection(Payload("JsTd7c",Range("生成したトップセット","JJ!(98)",3103)));Run(f);Require(f.LastResult.Rows.Count==2&&f.LastResult.Rows[1].Sources[0].Sum==0.2m,"Generated mode execution remains valid");f.SaveSnapshot(Path.Combine(output,"generated-preview.png"));
-                f.UseDefaults=true;Require(f.ChoiceCount==192&&f.CurrentCode.Contains("Mset all"),"Return to default restores saved selections");
+                f.UseDefaults=true;Require(f.ChoiceCount==FlopCommands.Research.ResearchPresets.All().Length&&f.CurrentCode.Contains("Mset all"),"Return to default restores saved selections");
                 f.LoadCsvs();f.ApplyInput("AsKd7s5h");f.UseDefaults=false;f.UseDefaults=true;f.ApplyInput("AsKd7s5h9c");WaitDefaults(f);
                 Require(f.CurrentCode.Contains("AsKd7s5h9c")&&f.DefaultsMessage.Contains("AsKd7s5h9c"),"Cancel/switch and late results do not overwrite board");
                 f.ApplyInput("AsAs7s");Require(f.CurrentCode==""&&!f.DefaultsBusy,"Invalid board clears commands and stops generation");
-                f.ApplyInput("JsTd7c");WaitDefaults(f);Require(f.ChoiceCount==192,"Cached board restores defaults");
+                f.ApplyInput("JsTd7c");WaitDefaults(f);Require(f.ChoiceCount==FlopCommands.Research.ResearchPresets.All().Length,"Cached board restores defaults");
                 f.Close();Application.DoEvents();
             }
             File.WriteAllText(Path.Combine(output,"modes-test-passed.txt"),"PASS: initial default radio; actual hidden-browser generation without CSV/Excel; 192 historical labels; board-adapted syntax; independent mode selections; generated transfers; real PowerShell sums/ratios/graph/history in both modes; cancellation and stale-result guards; turn/river; invalid board; cache.");return 0;

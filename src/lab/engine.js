@@ -4,7 +4,7 @@ const R='23456789TJQKA', S='shdc', BASE=759375;
 const rank=c=>(c>>2)+2, suit=c=>c&3, card=c=>R[c>>2]+S[c&3];
 const deck=Array.from({length:52},(_,i)=>i);
 const CAT=['ハイカード','ワンペア','2ペア','スリーカード','ストレート','フラッシュ','フルハウス','クワッズ','ストレートフラッシュ'];
-const F={fd:1,fdNut:2,fdSecond:4,fdThird:65536,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdTriple:32768,dualFd:131072,bdsd:262144,bdsd9:524288,bdsd8:1048576,bdsd4:2097152,bdsdOther:4194304};
+const F={fd:1,fdNut:2,fdSecond:4,fdThird:65536,fdLow:8,fdTriple:16,sd:32,wrap:64,nutGut:128,nutOpen:256,nonGut:512,nonOpen:1024,bdfd:2048,bdNut:4096,bdSecond:8192,bdLow:16384,bdPair:8388608,bdTriple:32768,dualFd:131072,bdsd:262144,bdsd9:524288,bdsd8:1048576,bdsd4:2097152,bdsdOther:4194304};
 const straightMasks=[];
 for(let h=5;h<=14;h++) {let m=0;for(let k=0;k<5;k++)m|=1<<((h-k===1)?14:h-k);straightMasks.push([m,h]);}
 function combos(a,n) {const out=[];function walk(start,b){if(b.length===n){out.push(b);return;}for(let i=start;i<=a.length-(n-b.length);i++)walk(i+1,b.concat(a[i]));}walk(0,[]);return out;}
@@ -193,7 +193,7 @@ class Engine {
   else if(Array.isArray(board)&&board.every(c=>typeof c==='string'))board=parseBoard(board.join(''));
   else if(!Array.isArray(board)||board.length<3||board.length>5||board.some(c=>!Number.isInteger(c)||c<0||c>=52)||new Set(board).size!==board.length)throw Error('ボードを重複のない3〜5枚で入力してください。');
   board=board.slice();
-  this.board=board;this.expressionCache=new Map();this.rangeCache=new Map();this.atomSets=new Map();this.available=deck.filter(c=>!board.includes(c));this.bc=new Uint8Array(15);this.bs=new Uint8Array(4);for(const c of board){this.bc[rank(c)]++;this.bs[suit(c)]++;}
+  this.sdBlockerTargets=null;this.nutBlockerTargets=null;this.blockerCardSets={};this.board=board;this.expressionCache=new Map();this.rangeCache=new Map();this.atomSets=new Map();this.available=deck.filter(c=>!board.includes(c));this.bc=new Uint8Array(15);this.bs=new Uint8Array(4);for(const c of board){this.bc[rank(c)]++;this.bs[suit(c)]++;}
   this.ranks=[...new Set(board.map(rank))].sort((a,b)=>b-a);this.topSuit=Array.from({length:4},(_,s)=>this.available.filter(c=>suit(c)===s).sort((a,b)=>b-a));
   const triples=combos(board,3);this.pairs=new Array(2704);this.pairList=[];const roleMap=new Map();
   for(const p of combos(this.available,2)){
@@ -229,7 +229,7 @@ class Engine {
       const suited=h.filter(c=>suit(c)===s);if(suited.length<2)continue;
       const top=Math.max(...suited),tier=this.topSuit[s].indexOf(top);
       if(this.bs[s]===2){fdSuits++;flags|=F.fd|(tier===0?F.fdNut:tier===1?F.fdSecond:tier===2?F.fdThird:F.fdLow);if(suited.length>=3)flags|=F.fdTriple;}
-      if(board.length===3&&this.bs[s]===1){flags|=F.bdfd|(tier===0?F.bdNut:tier===1?F.bdSecond:F.bdLow);if(suited.length>=3)flags|=F.bdTriple;}
+      if(board.length===3&&this.bs[s]===1){flags|=F.bdfd|(tier===0?F.bdNut:tier===1?F.bdSecond:F.bdLow);if(suited.length===2)flags|=F.bdPair;if(suited.length>=3)flags|=F.bdTriple;}
      }
      if(fdSuits>=2)flags|=F.dualFd;
      const madeStraight=ps.some(p=>p.sh>0);let lo=0,hi=0;
@@ -277,11 +277,54 @@ class Engine {
  }
  bdsdDetails(hand){if(!this.backdoor)throw Error('BDSDはフロップ（3枚）のみ判定できます。');return this.backdoor.details(hand);}
  summary(){return {board:this.board.map(card),total:this.hands.length,roles:this.roles.map((r,i)=>({...r,count:this.roleCounts[i]})),ranks:this.ranks.map(r=>({value:r,label:rname(r)})),street:this.board.length};}
+ blockerTargets(nut=false){
+  const key=nut?'nutBlockerTargets':'sdBlockerTargets';if(this[key])return this[key];
+  return this[key]=this.pairList.filter(p=>!p.sh&&this.available.some(out=>!p.p.includes(out)&&p.high[out]&&(!nut||!this.straightOpponents[out].some(o=>o[0]>p.high[out]&&!p.p.includes(o[1])&&!p.p.includes(o[2])))));
+ }
+ blockerMatch(i,type,value){
+  if(this.board.length!==3)return false;
+  const h=unpack(this.hands[i]),f=this.flags[i];
+  if(type==='sd'){
+   if(f&F.sd||combos(h,2).some(p=>this.pairs[pairId(...p)].sh))return false;
+   const cards=this.blockerCardSets[value]||(this.blockerCardSets[value]=new Set(this.blockerTargets(value==='blockerNut').flatMap(p=>p.p)));
+   const hit=h.some(c=>cards.has(c));return value==='blockerNone'?!hit:hit;
+  }
+  if(f&F.fd||[0,1,2,3].some(s=>this.bs[s]>=3&&h.filter(c=>suit(c)===s).length>=2))return false;
+  const suits=[0,1,2,3].filter(s=>this.bs[s]===2);if(!suits.length)return false;
+  const c=h.find(c=>suits.includes(suit(c)));
+  if(value==='blockerNone')return c===undefined;
+  if(c===undefined)return false;
+  const tier=this.topSuit[suit(c)].indexOf(c);
+  return value==='blocker'||value==='blockerNut'&&tier===0||value==='blockerSecond'&&tier===1||value==='blockerThird'&&tier===2||value==='blockerLow'&&tier>=3;
+ }
+ blockerExpression(type,value){
+  if(this.board.length!==3)return NO;
+  const pairNode=test=>{const t=this.pairExpression(test);return t?parseExpression(t):NO;};
+  if(type==='sd'){
+   const cards=[...new Set(this.blockerTargets(value==='blockerNut').flatMap(p=>p.p).map(rank))];
+   const hit=or(...cards.map(r=>atom(rname(r))));
+   return and(not(this.rankExpression('sd')),not(pairNode(p=>p.sh>0)),value==='blockerNone'?not(hit):hit);
+  }
+  const branches=[];
+  for(let s=0;s<4;s++)if(this.bs[s]===2){
+   const top=this.topSuit[s],hit=value==='blocker'?atom(S[s]):value==='blockerNone'?not(atom(S[s])):value==='blockerLow'?and(atom(S[s]),not(or(...top.slice(0,3).map(c=>atom(card(c)))))):atom(card(top[{blockerNut:0,blockerSecond:1,blockerThird:2}[value]]));
+   branches.push(and(hit,not(atom(S[s].repeat(2)))));
+  }
+  return or(...branches);
+ }
+ blockerDetails(hand){
+  const h=parseHand(hand,this.board);if(h.length!==4)throw Error('ブロッカー判定には手札4枚が必要です。');
+  const i=this.hands.indexOf(pack(...h.slice().sort((a,b)=>a-b)));if(i<0)throw Error('合法な手札ではありません。');
+  const result={};for(const [key,nut] of [['sd',false],['nutSd',true]]){
+   const targets=this.blockerTargets(nut),blocked=targets.filter(p=>p.p.some(c=>h.includes(c))).length;
+   result[key]={eligible:this.board.length===3&&!(this.flags[i]&F.sd)&&!combos(h,2).some(p=>this.pairs[pairId(...p)].sh),total:targets.length,blocked,percent:targets.length?100*blocked/targets.length:0,ranks:[...new Set(h.filter(c=>targets.some(p=>p.p.includes(c))).map(rank))].map(rname)};
+  }return result;
+ }
  matches(i,filter={}){
   const role=this.roles[this.handRoles[i]];
   if(filter.role&&filter.role!=='all'&&(filter.role.startsWith('cat:')?role.cat!==Number(filter.role.slice(4)):role.key!==filter.role))return false;
   const f=this.flags[i];
-  for(const name of ['fd','sd','bdfd','bdsd']){const value=filter[name];if(!value||value==='all')continue;if(this.board.length===5||(this.board.length!==3&&(name==='bdfd'||name==='bdsd')))return false;if(value==='none'){if(f&F[name])return false;}else if(!(f&F[value]))return false;}
+  for(const name of ['fd','sd','bdfd','bdsd']){const value=filter[name];if(!value||value==='all')continue;if(value.startsWith('blocker')){if(!this.blockerMatch(i,name,value))return false;continue;}if(this.board.length===5||(this.board.length!==3&&(name==='bdfd'||name==='bdsd')))return false;if(value==='none'){if(f&F[name])return false;}else if(!(f&F[value]))return false;}
   if(filter.clean==='regular'&&(f&(F.fd|F.sd)))return false;
   if(filter.clean==='all'&&(f&(F.fd|F.sd|F.bdfd|F.bdsd)))return false;
   if(filter.pocket&&filter.pocket!=='all'&&unpack(this.hands[i]).filter(c=>rank(c)===Number(filter.pocket)).length<2)return false;
@@ -308,6 +351,7 @@ class Engine {
   }
   for(const key of ['fd','bdfd']){let val=filter[key];if(key==='fd'&&filter.clean==='regular')val='none';if(val&&val!=='all'){
    if(this.board.length===5||(key==='bdfd'&&this.board.length!==3))return null;
+   if(val.startsWith('blocker')){pos.push(render(this.blockerExpression(key,val)));continue;}
    const n=key==='fd'?2:1,suits=[0,1,2,3].filter(s=>this.bs[s]===n),branches=[];
    if(val==='dualFd'){
     if(suits.length<2)return null;pos.push(suits.map(s=>S[s].repeat(2)).join(':'));continue;
@@ -318,6 +362,7 @@ class Engine {
     else if(val==='fdSecond'||val==='bdSecond')expr=card(top[1])+symbol+':!'+card(top[0]).toLowerCase();
     else if(val==='fdThird')expr=card(top[2])+symbol+':!('+top.slice(0,2).map(c=>card(c).toLowerCase()).join(',')+')';
     else if(val==='fdLow'||val==='bdLow')expr=symbol.repeat(2)+':!('+top.slice(0,val==='fdLow'?3:2).map(c=>card(c).toLowerCase()).join(',')+')';
+    else if(val==='bdPair')expr=symbol.repeat(2)+':!'+symbol.repeat(3);
     else if(val==='fdTriple'||val==='bdTriple')expr=symbol.repeat(3);
     else return null;
     branches.push(expr);
@@ -327,7 +372,8 @@ class Engine {
   let sd=filter.clean==='regular'?'none':filter.sd;
   if(sd&&sd!=='all'){
    const has=this.pairExpression(p=>!!(p.lo||p.hi));const made=this.pairExpression(p=>p.sh>0);
-   if(sd==='sd'){if(!has)return null;pos.push(has);if(made)neg.push(made);}
+   if(sd.startsWith('blocker'))pos.push(render(this.blockerExpression('sd',sd)));
+   else if(sd==='sd'){if(!has)return null;pos.push(has);if(made)neg.push(made);}
    else if(has){if(made)neg.push(`(${has}!${made})`);else neg.push(has);}
   }
   if(filter.pocket&&filter.pocket!=='all')pos.push(rname(Number(filter.pocket)).repeat(2));
@@ -409,6 +455,7 @@ class Engine {
   }
  }
  drawExpression(sd){
+  if(sd.startsWith('blocker'))return this.blockerExpression('sd',sd);
   const cacheKey='draw:'+sd;if(this.expressionCache.has(cacheKey))return this.expressionCache.get(cacheKey);
   const patterns=[...new Set(this.pairList.filter(p=>p.drawFlags&F[sd]).map(p=>p.p.map(rank).sort((a,b)=>b-a).map(rname).join('')))]
    .sort((a,b)=>R.indexOf(b[0])-R.indexOf(a[0])||R.indexOf(b[1])-R.indexOf(a[1]));

@@ -33,6 +33,7 @@ function empty(row,code='no_legal_hands',reason='このボードでは該当す�
 function failure(row,status,code,reason){return Object.assign(row,{status,reason_code:code,reason,syntax:'',legal_hand_count:null,verified:false});}
 function unsupported(g){
  if(g.recipe_version!==1||g.ruleset!=='plo4-flop-v1')return 'この生成形式・判定規則の版には対応していません。';
+ if(g.source==='combination'){for(const key of g.groups.flat()){const [id,rev]=key.split('@'),p=R.getPreset(id);if(!p||!p.supported||p.preset_revision!==Number(rev))return '掛け合わせ条件の参照または版が未対応です：'+key;}}
  if(g.source==='preset'){const p=R.getPreset(g.preset_id);if(!p)return 'デフォルト条件が見つかりません。';if(p.preset_revision!==g.preset_revision)return 'このデフォルト条件の版には対応していません。';if(!p.supported)return p.reason;}
  return null;
 }
@@ -56,6 +57,7 @@ async function generatePrepared(e,conditionSet,{progress=()=>{}}={}){
  if(!e.ready||e.board.length!==3)throw Error('解析済みフロップが必要です。');
  const set=R.normalizeSet(conditionSet),board=R.canonicalBoard(e.board.map(P.card).join('')),selected=set.conditions.filter(c=>c.enabled);
  const wanted=new Map();for(const c of selected)if(c.kind==='generated'&&!unsupported(c.generator)&&c.generator.source==='preset'){const p=R.getPreset(c.generator.preset_id);wanted.set(p.preset_id,p);}
+ for(const c of selected)if(c.kind==='generated'&&c.generator.source==='combination'&&!unsupported(c.generator))for(const key of c.generator.groups.flat()){const p=R.getPreset(key.split('@')[0]);wanted.set(p.preset_id,p);}
  const presets=[...wanted.values()],defaultRows=presets.length?await generateDefaults(P,e,presets,(done,total)=>progress({stage:'defaults',done,total})):[];
  const byCell=new Map(defaultRows.map(r=>[r.cell,r])),rows=[];
  for(const c of selected){
@@ -64,7 +66,11 @@ async function generatePrepared(e,conditionSet,{progress=()=>{}}={}){
    if(c.kind==='generated'){
     const g=c.generator,problem=unsupported(g);
     if(problem)failure(row,'unsupported_recipe','unsupported_recipe',problem);
-    else if(g.source==='preset'){
+    else if(g.source==='combination'){
+     const parts=g.groups.map(group=>{const valid=[];for(const key of group){const p=R.getPreset(key.split('@')[0]),r=byCell.get(p.cell);if(r.count)valid.push(r.syntax);else if(r.problem!=='このボードでは該当なし'&&!/このボードには/.test(r.problem||''))throw Error(r.problem||'構成条件の生成に失敗しました。');}return valid.length?'('+valid.join(',')+')':'!*';});
+     applySyntax(row,parts.join(':'),g.additional_syntax,e);
+     if(row.status==='empty_condition'&&g.groups.some(group=>group.every(k=>/^axis\.fd\.(all|nut|second|third|other)@/.test(k)))&&g.groups.some(group=>group.every(k=>k.startsWith('axis.bdfd.triple@'))))row.reason='FDに2枚、別スートのBDFDに3枚以上が必要なため、手札4枚では成立しません。';
+    }else if(g.source==='preset'){
      const p=R.getPreset(g.preset_id),generated=byCell.get(p.cell);
      row.resolved_preset={preset_id:p.preset_id,preset_revision:p.preset_revision,cell:p.cell,label:p.label};
      if(!generated)throw Error('デフォルト生成結果が不足しています。');

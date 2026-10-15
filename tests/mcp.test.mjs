@@ -28,7 +28,7 @@ test('MCP: real stdio tools, engine, native comparison, artifacts and history',{
   const tools=await client.listTools();assert.equal(tools.tools.length,31);
   const status=await call('get_status');assert.equal(status.history_delete_enabled,false);assert.equal(status.monker_verified,false);assert.match(status.versions.source_commit,/^[a-f0-9]{40}$/);
   await finish(await call('list_conditions',{board:'JsTd7c'}));
-  const conditions=await call('list_conditions',{board:'JsTd7c',limit:192});assert.equal(conditions.total,192);
+  const conditions=await call('list_conditions',{board:'JsTd7c',limit:192});assert.equal(conditions.total,JSON.parse(await fs.readFile(path.join(root,'src/default-labels.json'),'utf8')).length);
   const top=conditions.conditions.find(c=>c.cell==='L49'),middle=conditions.conditions.find(c=>c.cell==='L61');assert.equal(top.syntax,'JJ!(98)');assert.equal(middle.count,3094);
   assert.equal((await call('list_conditions',{board:'JsTd7c',query:'Tsetall'})).conditions[0].condition_id,top.condition_id);
   assert.ok(conditions.conditions.some(c=>!c.available&&c.problem));

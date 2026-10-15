@@ -13,7 +13,8 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
   const has=(r,n=1)=>h=>h.filter(c=>P.rank(c)===r).length>=n;
   function requireRank(r,n=1){if(r==null)throw Error('このボードにはミドルランクがありません。');exact(rn(r).repeat(n),has(r,n));}
   function forbidRank(r){if(r!=null)exact('!'+rn(r),h=>!has(r)(h));}
-  if(/^[TMB]set$/.test(prefix)){const r=rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');filters=[{role:'set:'+r}];}
+  if(prefix==='Any')filters=[{}];
+  else if(/^[TMB]set$/.test(prefix)){const r=rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');filters=[{role:'set:'+r}];}
   else if(/^[TMB]hit$/.test(prefix)||prefix==='Ahit'){
    const r=prefix==='Ahit'?14:rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');
    if(prefix==='Ahit'&&t!==14)exact('!*',()=>false);
@@ -28,14 +29,16 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
   else if(/^(TM|TB|MB)2P$/.test(prefix)){const pair=prefix.slice(0,2).split('').map(rankAt);if(pair.includes(null))throw Error('このボードにはミドルランクがありません。');filters=[{role:'two:'+Math.max(...pair)+':'+Math.min(...pair)}];for(const r of pair)requireRank(r);for(const name of 'TMB')if(!prefix.slice(0,2).includes(name))forbidRank(rankAt(name));}
   else throw Error('この条件名の定義がありません。');
   if(suffix==='all'){}
+  else if(suffix==='BDFD pair'||suffix==='BDFD triple'||suffix==='BDFD nut'||suffix==='BDFD second'||suffix==='BDFD low'){filters=filters.map(f=>({...f,bdfd:{pair:'bdPair',triple:'bdTriple',nut:'bdNut',second:'bdSecond',low:'bdLow'}[suffix.split(' ')[1]]}));}
+  else if(suffix==='pp none'||suffix==='pp any'||/^pp [2-9TJQKA]$/.test(suffix)){const wanted=allRanks.map(r=>rn(r).repeat(2));const text=suffix==='pp none'?'!'+union(wanted):suffix==='pp any'?union(wanted):suffix.slice(-1).repeat(2);exact(text,P.compile(text));}
   else if(suffix.startsWith('kicker ')){
-   const available=allRanks.filter(r=>r!==14&&!ranks.includes(r)).sort((a,b)=>b-a),kind=suffix.slice(7);
+   const available=allRanks.filter(r=>r!==(prefix==='Ahit'?14:t)&&!ranks.includes(r)).sort((a,b)=>b-a),kind=suffix.slice(7);
    if(kind==='top')requireRank(available[0]);
    else if(kind==='second'){requireRank(available[1]);forbidRank(available[0]);}
    else if(kind==='other'){forbidRank(available[0]);forbidRank(available[1]);}
    else throw Error('未対応のキッカー条件です。');
   }else if(suffix.startsWith('FD ')){
-   const fd={nut:'fdNut',second:'fdSecond',third:'fdThird',other:'fdLow'}[suffix.slice(3)];
+   const fd={all:'fd',none:'none',blocker:'blocker',blockerNut:'blockerNut',blockerSecond:'blockerSecond',blockerThird:'blockerThird',blockerLow:'blockerLow',blockerNone:'blockerNone',nut:'fdNut',second:'fdSecond',third:'fdThird',other:'fdLow'}[suffix.slice(3)];
    if(!fd)throw Error('未対応のFD条件です。');filters=filters.map(f=>({...f,fd}));
   }
   else if(suffix==='obdfd'||suffix==='1bdfd'||suffix==='2bdfd'){
@@ -54,8 +57,8 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
    const value=suffix.split(' ').pop();if(value==='A'){exact(over.includes(14)?'A':'!*',h=>over.includes(14)&&has(14)(h));}
    else{const negate=value==='no';exact((negate?'!':'')+union(over.map(rn)),h=>negate?!over.some(r=>has(r)(h)):over.some(r=>has(r)(h)));}
   }else if(suffix.startsWith('SD ')){
-   const kind=suffix.slice(3);if(kind==='BDSD'){if(engine.board.length!==3)throw Error('BDSDはフロップのみです。');filters=filters.map(f=>({...f,sd:'none',bdsd:'bdsd'}));return {filters,extras,predicates};}
-   if(/blocker/i.test(kind))throw Error('SDブロッカーは新仕様で未定義です。');
+   const kind=suffix.slice(3);if(/^BDSD(4|8|9|Other)$/.test(kind)){filters=filters.map(f=>({...f,bdsd:'bdsd'+kind.slice(4)}));return {filters,extras,predicates};}if(kind==='wrap'){filters=filters.map(f=>({...f,sd:'wrap'}));return {filters,extras,predicates};}if(kind==='BDSD'){if(engine.board.length!==3)throw Error('BDSDはフロップのみです。');filters=filters.map(f=>({...f,sd:'none',bdsd:'bdsd'}));return {filters,extras,predicates};}
+   if(/blocker/i.test(kind)){filters=filters.map(f=>({...f,sd:kind.startsWith('!')?'blockerNone':kind==='nutblocker'?'blockerNut':'blocker'}));return {filters,extras,predicates};}
    if(engine.board.length===5)throw Error('リバーにドロー条件はありません。');
    let variants={all:['sd'],no:['none'],'nuts oe':['nutOpen'],'nuts gut':['nutGut'],oe:['nonOpen'],gut:['nonGut']}[kind];
    if(prefix.endsWith('set')&&kind==='oe')variants=['nutOpen','nonOpen'];if(prefix.endsWith('set')&&kind==='gut')variants=['nutGut','nonGut'];

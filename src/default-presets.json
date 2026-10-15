@@ -95,8 +95,8 @@
     "cell": "L59",
     "label": "Tset SD SDblocker",
     "group": "Tset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "set.top.sd.no_blocker",
@@ -104,8 +104,8 @@
     "cell": "L60",
     "label": "Tset SD !Sdblocker",
     "group": "Tset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "set.middle.all",
@@ -203,8 +203,8 @@
     "cell": "L71",
     "label": "Mset SD SDblocker",
     "group": "Mset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "set.middle.sd.no_blocker",
@@ -212,8 +212,8 @@
     "cell": "L72",
     "label": "Mset SD !Sdblocker",
     "group": "Mset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "set.bottom.all",
@@ -311,8 +311,8 @@
     "cell": "L83",
     "label": "Bset SD SDblocker",
     "group": "Bset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "set.bottom.sd.no_blocker",
@@ -320,8 +320,8 @@
     "cell": "L84",
     "label": "Bset SD !Sdblocker",
     "group": "Bset",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "three_pair.all",
@@ -365,8 +365,8 @@
     "cell": "L90",
     "label": "3P SD Sdblocker",
     "group": "3P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "three_pair.sd.no_blocker",
@@ -374,8 +374,8 @@
     "cell": "L91",
     "label": "3P SD !Sdblocker",
     "group": "3P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.top_middle.all",
@@ -518,8 +518,8 @@
     "cell": "L109",
     "label": "TM2P SD SDblocker",
     "group": "TM2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.top_middle.sd.no_blocker",
@@ -527,8 +527,8 @@
     "cell": "L110",
     "label": "TM2P SD !Sdblocker",
     "group": "TM2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.top_middle.sd.none",
@@ -680,8 +680,8 @@
     "cell": "L127",
     "label": "TB2P SD SDblocker",
     "group": "TB2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.top_bottom.sd.no_blocker",
@@ -689,8 +689,8 @@
     "cell": "L128",
     "label": "TB2P SD !Sdblocker",
     "group": "TB2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.top_bottom.sd.none",
@@ -842,8 +842,8 @@
     "cell": "L145",
     "label": "MB2P SD SDblocker",
     "group": "MB2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.middle_bottom.sd.no_blocker",
@@ -851,8 +851,8 @@
     "cell": "L146",
     "label": "MB2P SD !Sdblocker",
     "group": "MB2P",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "two_pair.middle_bottom.sd.none",
@@ -1013,8 +1013,8 @@
     "cell": "L166",
     "label": "AA SD SDblocker",
     "group": "AA",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "aa.sd.no_blocker",
@@ -1022,8 +1022,8 @@
     "cell": "L167",
     "label": "AA SD !Sdblocker",
     "group": "AA",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "aa.sd.none",
@@ -1184,8 +1184,8 @@
     "cell": "L185",
     "label": "KK SD SDblocker",
     "group": "KK",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "kk.sd.no_blocker",
@@ -1193,8 +1193,8 @@
     "cell": "L186",
     "label": "KK SD !Sdblocker",
     "group": "KK",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "kk.sd.none",
@@ -1337,8 +1337,8 @@
     "cell": "L204",
     "label": "Thit SD SDblocker",
     "group": "Thit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.top.sd.no_blocker",
@@ -1346,8 +1346,8 @@
     "cell": "L205",
     "label": "Thit SD !Sdblocker",
     "group": "Thit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.top.sd.none",
@@ -1490,8 +1490,8 @@
     "cell": "L221",
     "label": "Mhit SD SDblocker",
     "group": "Mhit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.middle.sd.no_blocker",
@@ -1499,8 +1499,8 @@
     "cell": "L222",
     "label": "Mhit SD !Sdblocker",
     "group": "Mhit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.middle.sd.none",
@@ -1643,8 +1643,8 @@
     "cell": "L238",
     "label": "Bhit SD SDblocker",
     "group": "Bhit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.bottom.sd.no_blocker",
@@ -1652,8 +1652,8 @@
     "cell": "L239",
     "label": "Bhit SD !Sdblocker",
     "group": "Bhit",
-    "supported": false,
-    "reason": "SDブロッカーは現行エンジンで未定義です。"
+    "supported": true,
+    "reason": ""
   },
   {
     "preset_id": "pair.bottom.sd.none",
@@ -1724,6 +1724,1239 @@
     "cell": "L247",
     "label": "Ahit FD other",
     "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B193",
+    "label": "Tset SD nutblocker",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B194",
+    "label": "Tset FD blocker",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B195",
+    "label": "Tset FD blockerNut",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B196",
+    "label": "Tset FD blockerSecond",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B197",
+    "label": "Tset FD blockerThird",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B198",
+    "label": "Tset FD blockerLow",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.top.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B199",
+    "label": "Tset FD blockerNone",
+    "group": "Tset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B200",
+    "label": "Mset SD nutblocker",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B201",
+    "label": "Mset FD blocker",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B202",
+    "label": "Mset FD blockerNut",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B203",
+    "label": "Mset FD blockerSecond",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B204",
+    "label": "Mset FD blockerThird",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B205",
+    "label": "Mset FD blockerLow",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.middle.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B206",
+    "label": "Mset FD blockerNone",
+    "group": "Mset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B207",
+    "label": "Bset SD nutblocker",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B208",
+    "label": "Bset FD blocker",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B209",
+    "label": "Bset FD blockerNut",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B210",
+    "label": "Bset FD blockerSecond",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B211",
+    "label": "Bset FD blockerThird",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B212",
+    "label": "Bset FD blockerLow",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "set.bottom.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B213",
+    "label": "Bset FD blockerNone",
+    "group": "Bset",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B214",
+    "label": "3P SD nutblocker",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B215",
+    "label": "3P FD blocker",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B216",
+    "label": "3P FD blockerNut",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B217",
+    "label": "3P FD blockerSecond",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B218",
+    "label": "3P FD blockerThird",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B219",
+    "label": "3P FD blockerLow",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "three_pair.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B220",
+    "label": "3P FD blockerNone",
+    "group": "3P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B221",
+    "label": "TM2P SD nutblocker",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B222",
+    "label": "TM2P FD blocker",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B223",
+    "label": "TM2P FD blockerNut",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B224",
+    "label": "TM2P FD blockerSecond",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B225",
+    "label": "TM2P FD blockerThird",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B226",
+    "label": "TM2P FD blockerLow",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_middle.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B227",
+    "label": "TM2P FD blockerNone",
+    "group": "TM2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B228",
+    "label": "TB2P SD nutblocker",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B229",
+    "label": "TB2P FD blocker",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B230",
+    "label": "TB2P FD blockerNut",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B231",
+    "label": "TB2P FD blockerSecond",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B232",
+    "label": "TB2P FD blockerThird",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B233",
+    "label": "TB2P FD blockerLow",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.top_bottom.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B234",
+    "label": "TB2P FD blockerNone",
+    "group": "TB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B235",
+    "label": "MB2P SD nutblocker",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B236",
+    "label": "MB2P FD blocker",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B237",
+    "label": "MB2P FD blockerNut",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B238",
+    "label": "MB2P FD blockerSecond",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B239",
+    "label": "MB2P FD blockerThird",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B240",
+    "label": "MB2P FD blockerLow",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "two_pair.middle_bottom.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B241",
+    "label": "MB2P FD blockerNone",
+    "group": "MB2P",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B242",
+    "label": "AA SD nutblocker",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B243",
+    "label": "AA FD blocker",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B244",
+    "label": "AA FD blockerNut",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B245",
+    "label": "AA FD blockerSecond",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B246",
+    "label": "AA FD blockerThird",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B247",
+    "label": "AA FD blockerLow",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "aa.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B248",
+    "label": "AA FD blockerNone",
+    "group": "AA",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B249",
+    "label": "KK SD nutblocker",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B250",
+    "label": "KK FD blocker",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B251",
+    "label": "KK FD blockerNut",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B252",
+    "label": "KK FD blockerSecond",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B253",
+    "label": "KK FD blockerThird",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B254",
+    "label": "KK FD blockerLow",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "kk.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B255",
+    "label": "KK FD blockerNone",
+    "group": "KK",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B256",
+    "label": "Thit SD nutblocker",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B257",
+    "label": "Thit FD blocker",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B258",
+    "label": "Thit FD blockerNut",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B259",
+    "label": "Thit FD blockerSecond",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B260",
+    "label": "Thit FD blockerThird",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B261",
+    "label": "Thit FD blockerLow",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.top.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B262",
+    "label": "Thit FD blockerNone",
+    "group": "Thit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B263",
+    "label": "Mhit SD nutblocker",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B264",
+    "label": "Mhit FD blocker",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B265",
+    "label": "Mhit FD blockerNut",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B266",
+    "label": "Mhit FD blockerSecond",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B267",
+    "label": "Mhit FD blockerThird",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B268",
+    "label": "Mhit FD blockerLow",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.middle.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B269",
+    "label": "Mhit FD blockerNone",
+    "group": "Mhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.sd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B270",
+    "label": "Bhit SD nutblocker",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.all",
+    "preset_revision": 1,
+    "cell": "B271",
+    "label": "Bhit FD blocker",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.nut",
+    "preset_revision": 1,
+    "cell": "B272",
+    "label": "Bhit FD blockerNut",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.second",
+    "preset_revision": 1,
+    "cell": "B273",
+    "label": "Bhit FD blockerSecond",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.third",
+    "preset_revision": 1,
+    "cell": "B274",
+    "label": "Bhit FD blockerThird",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.other",
+    "preset_revision": 1,
+    "cell": "B275",
+    "label": "Bhit FD blockerLow",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.bottom.fd.blocker.none",
+    "preset_revision": 1,
+    "cell": "B276",
+    "label": "Bhit FD blockerNone",
+    "group": "Bhit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.pair",
+    "preset_revision": 1,
+    "cell": "C277",
+    "label": "Any BDFD pair",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.triple",
+    "preset_revision": 1,
+    "cell": "C278",
+    "label": "Any BDFD triple",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.nut",
+    "preset_revision": 1,
+    "cell": "C279",
+    "label": "Any BDFD nut",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.second",
+    "preset_revision": 1,
+    "cell": "C280",
+    "label": "Any BDFD second",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.low",
+    "preset_revision": 1,
+    "cell": "C281",
+    "label": "Any BDFD low",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.none",
+    "preset_revision": 1,
+    "cell": "C282",
+    "label": "Any obdfd",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.one",
+    "preset_revision": 1,
+    "cell": "C283",
+    "label": "Any 1bdfd",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.bdfd.two",
+    "preset_revision": 1,
+    "cell": "C284",
+    "label": "Any 2bdfd",
+    "group": "BDFD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.all",
+    "preset_revision": 1,
+    "cell": "C285",
+    "label": "Any FD all",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.none",
+    "preset_revision": 1,
+    "cell": "C286",
+    "label": "Any FD none",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.nut",
+    "preset_revision": 1,
+    "cell": "C287",
+    "label": "Any FD nut",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.second",
+    "preset_revision": 1,
+    "cell": "C288",
+    "label": "Any FD second",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.third",
+    "preset_revision": 1,
+    "cell": "C289",
+    "label": "Any FD third",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.other",
+    "preset_revision": 1,
+    "cell": "C290",
+    "label": "Any FD other",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blocker",
+    "preset_revision": 1,
+    "cell": "C291",
+    "label": "Any FD blocker",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blockernut",
+    "preset_revision": 1,
+    "cell": "C292",
+    "label": "Any FD blockerNut",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blockersecond",
+    "preset_revision": 1,
+    "cell": "C293",
+    "label": "Any FD blockerSecond",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blockerthird",
+    "preset_revision": 1,
+    "cell": "C294",
+    "label": "Any FD blockerThird",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blockerlow",
+    "preset_revision": 1,
+    "cell": "C295",
+    "label": "Any FD blockerLow",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.fd.blockernone",
+    "preset_revision": 1,
+    "cell": "C296",
+    "label": "Any FD blockerNone",
+    "group": "FD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.none",
+    "preset_revision": 1,
+    "cell": "C297",
+    "label": "Any pp none",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.any",
+    "preset_revision": 1,
+    "cell": "C298",
+    "label": "Any pp any",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.2",
+    "preset_revision": 1,
+    "cell": "C299",
+    "label": "Any pp 2",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.3",
+    "preset_revision": 1,
+    "cell": "C300",
+    "label": "Any pp 3",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.4",
+    "preset_revision": 1,
+    "cell": "C301",
+    "label": "Any pp 4",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.5",
+    "preset_revision": 1,
+    "cell": "C302",
+    "label": "Any pp 5",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.6",
+    "preset_revision": 1,
+    "cell": "C303",
+    "label": "Any pp 6",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.7",
+    "preset_revision": 1,
+    "cell": "C304",
+    "label": "Any pp 7",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.8",
+    "preset_revision": 1,
+    "cell": "C305",
+    "label": "Any pp 8",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.9",
+    "preset_revision": 1,
+    "cell": "C306",
+    "label": "Any pp 9",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.t",
+    "preset_revision": 1,
+    "cell": "C307",
+    "label": "Any pp T",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.j",
+    "preset_revision": 1,
+    "cell": "C308",
+    "label": "Any pp J",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.q",
+    "preset_revision": 1,
+    "cell": "C309",
+    "label": "Any pp Q",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.k",
+    "preset_revision": 1,
+    "cell": "C310",
+    "label": "Any pp K",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.pp.a",
+    "preset_revision": 1,
+    "cell": "C311",
+    "label": "Any pp A",
+    "group": "pp",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.kicker.top",
+    "preset_revision": 1,
+    "cell": "C312",
+    "label": "Any kicker top",
+    "group": "キッカー",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.kicker.second",
+    "preset_revision": 1,
+    "cell": "C313",
+    "label": "Any kicker second",
+    "group": "キッカー",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.kicker.other",
+    "preset_revision": 1,
+    "cell": "C314",
+    "label": "Any kicker other",
+    "group": "キッカー",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.all",
+    "preset_revision": 1,
+    "cell": "C315",
+    "label": "Any SD all",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.none",
+    "preset_revision": 1,
+    "cell": "C316",
+    "label": "Any SD no",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.nut_open",
+    "preset_revision": 1,
+    "cell": "C317",
+    "label": "Any SD nuts oe",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.nut_gut",
+    "preset_revision": 1,
+    "cell": "C318",
+    "label": "Any SD nuts gut",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.open",
+    "preset_revision": 1,
+    "cell": "C319",
+    "label": "Any SD oe",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.gut",
+    "preset_revision": 1,
+    "cell": "C320",
+    "label": "Any SD gut",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.blocker",
+    "preset_revision": 1,
+    "cell": "C321",
+    "label": "Any SD SDblocker",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.nutblocker",
+    "preset_revision": 1,
+    "cell": "C322",
+    "label": "Any SD nutblocker",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.no_blocker",
+    "preset_revision": 1,
+    "cell": "C323",
+    "label": "Any SD !Sdblocker",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.bdsd",
+    "preset_revision": 1,
+    "cell": "C324",
+    "label": "Any SD BDSD",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.wrap",
+    "preset_revision": 1,
+    "cell": "C325",
+    "label": "Any SD wrap",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.bdsd4",
+    "preset_revision": 1,
+    "cell": "C326",
+    "label": "Any SD BDSD4",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.bdsd8",
+    "preset_revision": 1,
+    "cell": "C327",
+    "label": "Any SD BDSD8",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.bdsd9",
+    "preset_revision": 1,
+    "cell": "C328",
+    "label": "Any SD BDSD9",
+    "group": "SD",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "axis.sd.bdsdother",
+    "preset_revision": 1,
+    "cell": "C329",
+    "label": "Any SD BDSDOther",
+    "group": "SD",
     "supported": true,
     "reason": ""
   }

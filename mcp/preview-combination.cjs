@@ -1,0 +1,2 @@
+const fs=require('node:fs'),G=require('../src/research-generation.cjs');
+(async()=>{const set=JSON.parse(fs.readFileSync(process.argv[2],'utf8')),result=await G.generateBoard(process.argv[3],set);for(const row of result.rows){console.log(row.label+'\n'+(row.status==='ready'?row.legal_hand_count+'ハンド\n'+row.syntax:'該当なし／確認事項：'+(row.reason||row.status))+'\n');if(row.status==='generation_failed')process.exitCode=1;}})().catch(e=>{console.error(e.message);process.exitCode=1;});
