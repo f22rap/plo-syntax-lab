@@ -121,6 +121,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Research bridge tests failed' }
           npm run test:directory
           if ($LASTEXITCODE -ne 0) { throw 'Directory import tests failed' }
+          npm run test:ev-csv
+          if ($LASTEXITCODE -ne 0) { throw 'EV CSV inspection tests failed' }
           npm run test:codex-setup
           if ($LASTEXITCODE -ne 0) { throw 'Codex setup tests failed' }
           npm run test:generated

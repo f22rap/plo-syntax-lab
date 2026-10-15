@@ -1,3 +1,4 @@
+import {inspectCsv,compareCsv} from './csv-ev-inspection.mjs';
 import {resolveBoardRank,matchesBoardRank} from './board-filter.mjs';
 import fs from 'node:fs/promises';
 import sdRankStudy from '../src/sd-rank-study.cjs';
@@ -14,6 +15,8 @@ export const researchInstructions='For rank-specific SD-blocker research use res
 
 export class ResearchService {
  constructor(config,legacy,{native=researchNative}={}){this.config=config;this.legacy=legacy;this.native=native;this.plans=new Map();this.jobs=new Map();this.keys=new Map();this.scans=new Map();this.queue=Promise.resolve();this.closed=false;this.generator=new ConditionGenerator({timeoutSeconds:Math.min(3600,config.timeoutSeconds||300)});}
+ inspectCsv(a){return inspectCsv(this.config,a);}
+ compareCsv(a){return compareCsv(this.config,a);}
  scanDirectory(a){return this.job('directory_scan',async j=>{
   const scan=await scanDirectory(this.config,a,{signal:j.controller.signal,progress:p=>j.progress=p});
   for(const [key,value] of this.scans)if(value.expires<Date.now())this.scans.delete(key);
