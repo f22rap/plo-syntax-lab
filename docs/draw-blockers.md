@@ -14,3 +14,6 @@ blockerNoneも自身の同種ドロー・完成役を除外する。FDの対象�
 既存デフォルトのSD SDblocker / SD !Sdblockerを有効化。各役のFDブロッカーとナッツSDブロッカーを追加。AI用生成recipeでも同じフィルターを使用する。BDSD判定は変更しない。
 
 Engine.blockerDetails(4枚手札) はSD候補数、重複除去したブロック数・率・関与ランクとeligibleを返す。eligible=falseの値はブロッカー分類として使用しない。相手CSVの頻度で重み付けした指標ではない。
+
+ランク別の標準研究ではppを除外しない。再生成・レポートもこの方針を共通化した
+[SDランク調査](sd-rank-study.md)を使用する。独自のpp除外syntaxを標準結果へ混ぜない。

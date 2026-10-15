@@ -25,7 +25,7 @@ test('MCP: real stdio tools, engine, native comparison, artifacts and history',{
  const atext='hand,frequency,weight\r\nJhJdAsKc,1,0.2\r\nJhJd9h8h,1,0.9\r\nThTsAhKh,1,0.3\r\n';
  await connect();
  try{
-  const tools=await client.listTools();assert.equal(tools.tools.length,31);
+  const tools=await client.listTools();assert.equal(tools.tools.length,33);
   const status=await call('get_status');assert.equal(status.history_delete_enabled,false);assert.equal(status.monker_verified,false);assert.match(status.versions.source_commit,/^[a-f0-9]{40}$/);
   await finish(await call('list_conditions',{board:'JsTd7c'}));
   const conditions=await call('list_conditions',{board:'JsTd7c',limit:192});assert.equal(conditions.total,JSON.parse(await fs.readFile(path.join(root,'src/default-labels.json'),'utf8')).length);

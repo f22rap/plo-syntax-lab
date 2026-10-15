@@ -14,7 +14,9 @@
     "test:codex-setup": "node --test tests/codex-setup.test.mjs",
     "test:directory": "node --test tests/research-directory.test.mjs",
     "test:generated": "node --test tests/generated-conditions.test.mjs tests/generated-plan-guards.test.mjs",
-    "preview:generated": "node mcp/preview-generated-conditions.mjs"
+    "preview:generated": "node mcp/preview-generated-conditions.mjs",
+    "test:sd-rank": "node --test tests/sd-rank-study.test.cjs",
+    "research:sd-rank": "node mcp/sd-rank-study.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",

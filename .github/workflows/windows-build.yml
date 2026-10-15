@@ -125,6 +125,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Codex setup tests failed' }
           npm run test:generated
           if ($LASTEXITCODE -ne 0) { throw 'Generated-condition tests failed' }
+          npm run test:sd-rank
+          if ($LASTEXITCODE -ne 0) { throw 'PP-inclusive SD rank tests failed' }
           npm run test:research
           if ($LASTEXITCODE -ne 0) { throw 'Research MCP tests failed' }
           npm run test:mcp

@@ -41,3 +41,7 @@ CO対BTNのOOP/donk/ROOTには、明示された調査定義 `co-btn-vs-check-v1
 ## 保存した自動生成条件
 
 Node.js版では`research_list_default_presets`でアプリと同じ一覧を取得できる。ユーザが保存した生成条件はIDと定義を保持し、`research_validate`で各ボードへ展開する。返された`generation`／`resolved`を確認してから`research_start`へ進む。未対応・生成失敗を未設定扱いにして続けない。空集合はnullで記録する。詳細は[生成条件の調査手順](../docs/generated-conditions-research.md)を参照。
+
+ランク別SDブロッカー調査は `research_build_sd_rank_set` でpp込みの条件セットを作る。
+結果のランキングは `research_sd_rank_report` を使用する。`_nopp_` 条件を再生成・代用しない。
+詳細は `docs/sd-rank-study.md`。ユーザーが別途明示したpp限定分析は別セットとして扱う。
