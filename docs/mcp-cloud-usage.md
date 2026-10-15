@@ -40,7 +40,7 @@ Sitesの非公開プラグインとして提供します。ChatGPTのPlugins →
 | 条件・CSV・upload・job・成果物の数 | 512・32・8・16・32 |
 | MCPツール応答・resources/read | 256KiB・8MiB（JSONエスケープ後） |
 
-全185デフォルト条件はoffset/limitで取得します。重いボードや複合条件は時間・応答サイズ制限でエラーになる場合があります。syntaxを黙って省略・短縮せずOUTPUT_TOO_LARGEを返します。plo_capabilitiesで実際の制限と検証済み版を確認してください。
+全329デフォルト条件はoffset/limitで取得します。重いボードや複合条件は時間・応答サイズ制限でエラーになる場合があります。syntaxを黙って省略・短縮せずOUTPUT_TOO_LARGEを返します。plo_capabilitiesで実際の制限と検証済み版を確認してください。
 
 weight合計は小数28桁の整数計算、比率は小数8桁の切り捨てで文字列として返します。合計0ではnull。同じrequestKey・同じ入力の比較再送は同じjobIdを返し、異なる入力への再利用はREQUEST_KEY_CONFLICTです。ジョブは最初の終端更新が確定し、成功後のcancelで結果を消しません。
 

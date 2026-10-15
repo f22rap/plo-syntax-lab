@@ -28,7 +28,13 @@ const register=(service,name,text,board='Ts9h3d')=>good(service,'plo_register_da
   eq(flush.map(r=>r.syntax),['Kss','Qss:!ks']);
   const before=service.conditions.size;
   await bad(service,'plo_generate_ranges',{board:'AsAd7c',mode:'custom',requests:Array.from({length:100},()=>({label:'日'.repeat(256),filter:{blockers:Array.from({length:8},(_,i)=>({rank:i+2,mode:'no'}))}})),examplesLimit:8},'OUTPUT_TOO_LARGE');eq(service.conditions.size,before,'Oversized responses must not leave condition IDs allocated');
-  const defaults=await good(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,192);eq(defaults.rows.length,5);eq(defaults.nextOffset,185);
+  const defaults=await good(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,329);eq(defaults.rows.length,5);eq(defaults.nextOffset,185);
+  const labels=require('../src/default-labels.json');eq(defaults.totalRows,labels.length);
+  const last=await good(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:labels.length-7,limit:100});eq(last.rows.map(r=>r.cell),labels.slice(-7).map(r=>r.cell));eq(last.rows.length,7);eq(last.nextOffset,null);
+  const {catalog}=require('../src/mcp/contracts.cjs'),schema=catalog.tools.find(t=>t.name==='plo_generate_ranges');eq(schema.inputSchema.properties.offset.maximum,labels.length-1);
+  const output=schema.outputSchema.properties.data.anyOf[0].properties;eq(output.totalRows.maximum,labels.length);eq(output.offset.maximum,labels.length-1);eq(output.nextOffset.anyOf[0].maximum,labels.length-1);
+  validate('plo_generate_ranges','input',{board:'JsTd7c',mode:'defaults',offset:labels.length-1,limit:1});
+  await bad(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:labels.length,limit:1},'INVALID_ARGUMENT');
   await bad(service,'plo_generate_ranges',{board:'Ts9h3d',mode:'custom',requests:[{label:'x',filter:{role:'set:99'}}]},'INVALID_FILTER');
   await bad(service,'plo_generate_ranges',{board:'Ts9h3d',mode:'custom',requests:[{label:'x',filter:{clean:'regular',sd:'nutGut'}}]},'INVALID_FILTER');
   const empty=await good(service,'plo_generate_ranges',{board:'AsKd7s',mode:'custom',requests:[{label:'none',filter:{sd:'nonGut'}}]});eq([empty.rows[0].count,empty.rows[0].syntax,empty.rows[0].conditionId],[0,'',null]);

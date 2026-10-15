@@ -50,7 +50,9 @@ try{
  const bdfd=(await good(a,'plo_generate_ranges',{board:'As9h3d',mode:'custom',requests:[{label:'N',filter:{bdfd:'bdNut'}},{label:'2N',filter:{bdfd:'bdSecond'}}]})).rows;
  eq(bdfd.map(r=>r.syntax),['(Kss,Ahh,Add)','(Qss:!ks,Khh:!ah,Kdd:!ad)']);
  const flush=(await good(a,'plo_generate_ranges',{board:'As9s3d',mode:'custom',requests:[{label:'N',filter:{fd:'fdNut'}},{label:'2N',filter:{fd:'fdSecond'}}]})).rows;eq(flush.map(r=>r.syntax),['Kss','Qss:!ks']);
- const defaults=await good(a,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,185);eq(defaults.rows.length,5);
+ const defaults=await good(a,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,329);eq(defaults.rows.length,5);eq(defaults.nextOffset,185);
+ const lastDefaults=await good(a,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:322,limit:10});eq(lastDefaults.totalRows,329);eq(lastDefaults.rows.length,7);eq(lastDefaults.nextOffset,null);
+ const defaultLabels=JSON.parse(await fs.readFile(path.join(root,'src/default-labels.json'),'utf8'));eq(lastDefaults.rows.map(r=>r.cell),defaultLabels.slice(-7).map(r=>r.cell));
  await bad(a,'plo_generate_ranges',{board:'Ts9h3d',mode:'defaults',limit:11},'LIMIT_EXCEEDED');
  await bad(a,'plo_generate_ranges',{board:'Ts9h3d',mode:'custom',requests:Array.from({length:11},()=>({label:'x',filter:{}}))},'LIMIT_EXCEEDED');
  const match=await good(a,'plo_match_hands',{board:'9hTs3d',conditionId:ranges[0].conditionId,hands:['KsQhAsAd','QsJhAsAd']});eq(match.matches.map(h=>h.matched),[true,false]);

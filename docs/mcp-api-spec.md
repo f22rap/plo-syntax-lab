@@ -40,7 +40,7 @@
 | 既存ソース | 再利用する機能 | MCP実装で加えるもの |
 | --- | --- | --- |
 | src/lab/engine.js | prepare / summary / query / syntax / compile | worker実行、入力schema、版情報、ハンドごとの説明 |
-| src/defaults.js / default-labels.json | 185件のデフォルト条件 | ページング、安定したcell、条件ID |
+| src/defaults.js / default-labels.json | 329件のデフォルト条件 | ページング、安定したcell、条件ID |
 | src/linux/compare.cjs | CSV解析、重複・weight検証、BigInt集計、結果CSV | 検証処理の分離、IDからの入力解決、精度を保った構造化結果 |
 | src/linux/worker.cjs | Workerによる比較・デフォルト生成 | 解析・カスタム条件・ジョブ・中止への対応 |
 | src/linux/server.cjs | ローカルUI用HTTP | 既存のloopback・Origin制限を保持。MCPの通信処理は別アダプターで実装 |
@@ -106,7 +106,7 @@ filterは既存エンジンのrole、fd、sd、bdfd、clean、pocket、blockers�
 - ターンのBDFDやリバーのドロー等は正常なUNSUPPORTED行とし、理由を返す。
 - 空集合はEMPTY、count=0、syntax=""、conditionId=null。全ハンドへ変換しない。
 
-mode=customではrequestsを1〜100件指定する。各requestにlabelとfilterを付ける。mode=defaultsでは185件をoffset/limitで取得する。全185cellを安定した順で返し、対象外行も含める。カスタムmodeではoffset/limitを受け取らない。
+mode=customではrequestsを1〜100件指定する。各requestにlabelとfilterを付ける。mode=defaultsでは329件をoffset/limitで取得する。全329cellを安定した順で返し、対象外行も含める。カスタムmodeではoffset/limitを受け取らない。
 
 includeSyntax=falseの場合はsyntax=nullで件数と条件IDだけを返す。条件IDがない空集合はsyntax=""を維持する。examplesLimitは0〜8、初期値0。examplesは自分のCSVを使わず、ボードに対する合法ハンドから取得する。
 
@@ -317,7 +317,7 @@ plo_get_jobへjobIdを渡し、succeeded後にplo_export_resultでCSVを取得�
 
 受入テスト：
 1. 上記8つのドローsyntaxを仕様通り生成し、空集合・対象外・複合条件も検証する。
-2. 既存の生成・SD・FD/BDFD・ポケット・185条件・Linux集計テストを全て保持する。
+2. 既存の生成・SD・FD/BDFD・ポケット・329条件・Linux集計テストを全て保持する。
 3. 同じボード・filterのUIとMCPでsyntax・件数が一致する。
 4. 全合法ハンドによる内部照合を維持し、手札2枚組SDの重複を保持する。
 5. CSVの精度28桁、2/3CSV、合計0、並び違い重複、ボード衝突、同名ファイルを検証する。
