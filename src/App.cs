@@ -303,18 +303,18 @@ namespace FlopCommands {
             CancelDefaults();string target=board;defaultBoard=target;defaultChoices.Clear();defaultSelected.Clear();
             List<Choice> cached;if(!force&&defaultCache.TryGetValue(target,out cached)){ApplyDefaults(cached);return;}
             var cancellation=new System.Threading.CancellationTokenSource();defaultCancellation=cancellation;defaultCompletion=new TaskCompletionSource<LabSelection>(TaskCreationOptions.RunContinuationsAsynchronously);string job=Guid.NewGuid().ToString("N");defaultJob=job;defaultBusy=true;
-            defaultsInfo.Text="185条件をボードに合わせて生成中…";RefreshGrid();RefreshCommand();
+            defaultsInfo.Text="192条件をボードに合わせて生成中…";RefreshGrid();RefreshCommand();
             try{
                 EnsureBridge();var data=await DefaultRunner.RunAsync(bridge.Url+"defaults?board="+Uri.EscapeDataString(target)+"&job="+job,defaultCompletion.Task,cancellation.Token);
                 if(defaultJob!=job||board!=target)return;if(!string.IsNullOrEmpty(data.error))throw new Exception(data.error);
-                if(data.ranges.Length!=185||data.ranges.Select(r=>r.cell).Distinct().Count()!=185)throw new Exception("デフォルトの条件一覧が不完全です。");
+                if(data.ranges.Length!=192||data.ranges.Select(r=>r.cell).Distinct().Count()!=192)throw new Exception("デフォルトの条件一覧が不完全です。");
                 var result=data.ranges.Select(r=>new Choice{Filter=new Filter{Cell=r.cell,Label=r.label,Syntax=Commands.NormalizeSyntax(r.syntax)},Problem=r.count>0?null:(r.problem??"このボードでは該当なし")}).ToList();
                 if(defaultCache.Count>=6)defaultCache.Clear();defaultCache[target]=result;defaultBusy=false;ApplyDefaults(result);
             }catch(OperationCanceledException){}
             catch(Exception ex){if(defaultJob==job&&!IsDisposed){defaultBoard=null;defaultsInfo.Text="生成できません："+ex.Message;SetStatus(defaultsInfo.Text,true);}}
             finally{if(defaultJob==job){defaultBusy=false;defaultCancellation=null;defaultCompletion=null;if(!IsDisposed)RefreshCommand();}cancellation.Dispose();}
         }
-        void ApplyDefaults(List<Choice> items){defaultChoices.Clear();defaultChoices.AddRange(items);foreach(string id in new[]{"L49","L61"})if(defaultChoices.Any(c=>c.Filter.Cell==id&&c.Available))defaultSelected.Add(id);defaultsInfo.Text=board+" · デフォルト185条件（選択可 "+defaultChoices.Count(c=>c.Available)+"件）";if(UseDefaults){RefreshGrid();RefreshCommand();}}
+        void ApplyDefaults(List<Choice> items){defaultChoices.Clear();defaultChoices.AddRange(items);foreach(string id in new[]{"L49","L61"})if(defaultChoices.Any(c=>c.Filter.Cell==id&&c.Available))defaultSelected.Add(id);defaultsInfo.Text=board+" · デフォルト192条件（選択可 "+defaultChoices.Count(c=>c.Available)+"件）";if(UseDefaults){RefreshGrid();RefreshCommand();}}
         void OpenGenerator(){try{ApplyBoard();if(board.Length==0)return;Process.Start(new ProcessStartInfo(GeneratorUrl){UseShellExecute=true});}catch(Exception ex){SetStatus("生成画面を開けません："+ex.Message,true);}}
         void ImportSelection(){using(var dialog=new OpenFileDialog{Filter="PLO Syntax Labの条件|*.json"})if(dialog.ShowDialog(this)==DialogResult.OK)try{SetStatus(AcceptSelection(File.ReadAllText(dialog.FileName,Encoding.UTF8)),false);}catch(Exception ex){SetStatus(ex.Message,true);}}
         public string AcceptSelection(string json){

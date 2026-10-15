@@ -28,7 +28,7 @@ const register=(service,name,text,board='Ts9h3d')=>good(service,'plo_register_da
   eq(flush.map(r=>r.syntax),['Kss','Qss:!ks']);
   const before=service.conditions.size;
   await bad(service,'plo_generate_ranges',{board:'AsAd7c',mode:'custom',requests:Array.from({length:100},()=>({label:'日'.repeat(256),filter:{blockers:Array.from({length:8},(_,i)=>({rank:i+2,mode:'no'}))}})),examplesLimit:8},'OUTPUT_TOO_LARGE');eq(service.conditions.size,before,'Oversized responses must not leave condition IDs allocated');
-  const defaults=await good(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,185);eq(defaults.rows.length,5);eq(defaults.nextOffset,null);
+  const defaults=await good(service,'plo_generate_ranges',{board:'JsTd7c',mode:'defaults',offset:180,limit:5});eq(defaults.totalRows,192);eq(defaults.rows.length,5);eq(defaults.nextOffset,185);
   await bad(service,'plo_generate_ranges',{board:'Ts9h3d',mode:'custom',requests:[{label:'x',filter:{role:'set:99'}}]},'INVALID_FILTER');
   await bad(service,'plo_generate_ranges',{board:'Ts9h3d',mode:'custom',requests:[{label:'x',filter:{clean:'regular',sd:'nutGut'}}]},'INVALID_FILTER');
   const empty=await good(service,'plo_generate_ranges',{board:'AsKd7s',mode:'custom',requests:[{label:'none',filter:{sd:'nonGut'}}]});eq([empty.rows[0].count,empty.rows[0].syntax,empty.rows[0].conditionId],[0,'',null]);
@@ -86,3 +86,4 @@ const register=(service,name,text,board='Ts9h3d')=>good(service,'plo_register_da
  }finally{await client.close();await transport.close();}
  console.log(JSON.stringify({status:'passed',checks,tools:11,stdio:'official SDK client passed',resources:'passed'}));
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

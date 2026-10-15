@@ -14,12 +14,13 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
   function requireRank(r,n=1){if(r==null)throw Error('このボードにはミドルランクがありません。');exact(rn(r).repeat(n),has(r,n));}
   function forbidRank(r){if(r!=null)exact('!'+rn(r),h=>!has(r)(h));}
   if(/^[TMB]set$/.test(prefix)){const r=rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');filters=[{role:'set:'+r}];}
-  else if(/^[TMB]hit$/.test(prefix)){
-   const r=rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');
+  else if(/^[TMB]hit$/.test(prefix)||prefix==='Ahit'){
+   const r=prefix==='Ahit'?14:rankAt(prefix[0]);if(r==null)throw Error('このボードにはミドルランクがありません。');
+   if(prefix==='Ahit'&&t!==14)exact('!*',()=>false);
    // Thit describes hitting the unpaired top board rank. On A44 the
    // evaluator correctly scores A+44 as two pair, but it is still Ahit.
    // Keep the actual best-hand role so trips/full houses remain excluded.
-   const paired=engine.board.length===3&&prefix==='Thit'&&engine.bc[r]===1?ranks.find(x=>x!==r&&engine.bc[x]===2):null;
+   const paired=engine.board.length===3&&(prefix==='Thit'||prefix==='Ahit')&&engine.bc[r]===1?ranks.find(x=>x!==r&&engine.bc[x]===2):null;
    filters=[{role:paired!=null?'two:'+r+':'+paired:'pair:'+r}];if(engine.bc[r]!==1)requireRank(r);
   }
   else if(prefix==='AA'||prefix==='KK'){const r=prefix==='AA'?14:13;filters=[{role:'pair:'+r,pocket:r}];}
@@ -27,6 +28,16 @@ root.generateDefaults=async function(P,engine,catalog,progress=()=>{}){
   else if(/^(TM|TB|MB)2P$/.test(prefix)){const pair=prefix.slice(0,2).split('').map(rankAt);if(pair.includes(null))throw Error('このボードにはミドルランクがありません。');filters=[{role:'two:'+Math.max(...pair)+':'+Math.min(...pair)}];for(const r of pair)requireRank(r);for(const name of 'TMB')if(!prefix.slice(0,2).includes(name))forbidRank(rankAt(name));}
   else throw Error('この条件名の定義がありません。');
   if(suffix==='all'){}
+  else if(suffix.startsWith('kicker ')){
+   const available=allRanks.filter(r=>r!==14&&!ranks.includes(r)).sort((a,b)=>b-a),kind=suffix.slice(7);
+   if(kind==='top')requireRank(available[0]);
+   else if(kind==='second'){requireRank(available[1]);forbidRank(available[0]);}
+   else if(kind==='other'){forbidRank(available[0]);forbidRank(available[1]);}
+   else throw Error('未対応のキッカー条件です。');
+  }else if(suffix.startsWith('FD ')){
+   const fd={nut:'fdNut',second:'fdSecond',third:'fdThird',other:'fdLow'}[suffix.slice(3)];
+   if(!fd)throw Error('未対応のFD条件です。');filters=filters.map(f=>({...f,fd}));
+  }
   else if(suffix==='obdfd'||suffix==='1bdfd'||suffix==='2bdfd'){
    if(engine.board.length!==3)throw Error('BDFDはフロップのみです。');
    const suits=[0,1,2,3].filter(s=>engine.bs[s]===1),patterns=suits.map(s=>'shdc'[s].repeat(2)),n=suffix==='obdfd'?0:Number(suffix[0]);

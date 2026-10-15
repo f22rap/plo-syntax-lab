@@ -67,7 +67,7 @@ namespace FlopCommands.Research {
             using(var stream=typeof(ResearchPresets).Assembly.GetManifestResourceStream("PloResearch.DefaultPresets.json")){
                 if(stream==null)throw new InvalidOperationException("デフォルト条件一覧がアプリに含まれていません。");
                 using(var bytes=new MemoryStream()){stream.CopyTo(bytes);var all=ResearchJson.Decode<ResearchDefaultPreset[]>(bytes.ToArray());
-                    if(all.Length!=185||all.Select(p=>p.Id).Distinct().Count()!=185||all.Select(p=>p.Cell).Distinct().Count()!=185||all.Any(p=>p.Revision<1||string.IsNullOrWhiteSpace(p.Label)||(!p.Supported&&string.IsNullOrWhiteSpace(p.Reason))))throw new ArgumentException("デフォルト条件一覧が不正です。");return all;}
+                    if(all.Length!=192||all.Select(p=>p.Id).Distinct().Count()!=192||all.Select(p=>p.Cell).Distinct().Count()!=192||all.Any(p=>p.Revision<1||string.IsNullOrWhiteSpace(p.Label)||(!p.Supported&&string.IsNullOrWhiteSpace(p.Reason))))throw new ArgumentException("デフォルト条件一覧が不正です。");return all;}
             }
         }
         public static ResearchDefaultPreset[] All(){return ResearchJson.Clone(catalog.Value);}

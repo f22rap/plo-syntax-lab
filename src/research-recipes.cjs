@@ -104,14 +104,14 @@ function conditionHash(c){
  return hash(meaning);
 }
 // Immutable identity mapping; display labels from saved user conditions are never parsed.
-if(sourcePresets.length!==185||new Set(sourcePresets.map(p=>p.preset_id)).size!==185||sourcePresets.some((p,i)=>p.cell!==catalog[i]?.cell||p.label!==catalog[i]?.label))throw Error('デフォルト条件レジストリと既存一覧が一致しません。');
+if(sourcePresets.length!==192||new Set(sourcePresets.map(p=>p.preset_id)).size!==192||sourcePresets.some((p,i)=>p.cell!==catalog[i]?.cell||p.label!==catalog[i]?.label))throw Error('デフォルト条件レジストリと既存一覧が一致しません。');
 const presets=sourcePresets.map(p=>Object.freeze({...p})),byId=new Map(presets.map(p=>[p.preset_id,p]));
 function listPresets({query='',supported_only=false}={}){
  const q=String(query).replace(/\s/g,'').toLowerCase();return presets.filter(p=>(!supported_only||p.supported)&&(p.label+p.preset_id).replace(/\s/g,'').toLowerCase().includes(q)).map(clone);
 }
 function getPreset(id){const p=byId.get(id);return p?clone(p):null;}
 function createPresetSet({preset_ids,name='デフォルト調査条件',set_id=randomUUID()}={}){
- if(!Array.isArray(preset_ids)||!preset_ids.length||preset_ids.length>185)fail('デフォルト条件を1個以上選んでください。');
+ if(!Array.isArray(preset_ids)||!preset_ids.length||preset_ids.length>192)fail('デフォルト条件を1個以上選んでください。');
  const wanted=new Set(preset_ids);for(const pid of wanted){const p=byId.get(pid);if(!p||!p.supported)fail(p?.reason||'デフォルト条件が見つかりません：'+pid,'unsupported_recipe');}
  return normalizeSet({set_id,revision:0,name,conditions:presets.filter(p=>wanted.has(p.preset_id)).map(p=>({condition_id:randomUUID(),label:p.label,enabled:true,kind:'generated',syntax:'',by_board:{},generator:{recipe_version:1,ruleset:'plo4-flop-v1',source:'preset',preset_id:p.preset_id,preset_revision:p.preset_revision,additional_syntax:'*'}}))});
 }

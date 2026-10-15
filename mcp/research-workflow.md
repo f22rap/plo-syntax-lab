@@ -8,7 +8,7 @@
 
 ## 実行順序
 
-1. `research_list_workspace`で条件セット・カタログと版を調べる。複数候補がある場合、局面条件とユーザーの依頼から特定する。特定できなければ選択を尋ねる。既定185条件や全ハンドに勝手に切り替えない。
+1. `research_list_workspace`で条件セット・カタログと版を調べる。複数候補がある場合、局面条件とユーザーの依頼から特定する。特定できなければ選択を尋ねる。既定192条件や全ハンドに勝手に切り替えない。
 2. `research_get_condition_set`でユーザーの正確な定義を確認する。`research_list_spots`で対象CSV・ボード・ノード・シナリオを確認する。ページがあれば最後まで読む。ポジション、サイズ、ソルバー設定をファイル名から推測しない。
 3. 登録が必要なら、明示されたユーザー情報を`research_save_condition_set`／`research_save_catalog`で保存する。既存設定を読み、変更対象だけを編集し、現在のworkspace revisionと対象revisionを渡す。ユーザーが指示していないsyntax・共通weight確認・相手レンジの時点を作らない。保存競合は再読込して再検討する。
 4. `research_validate`にカタログID・版、セットID・版、必要なspot_ids、計算設定を渡す。最高ランクはユーザーの指示に従う。スキャンのhighest_rank省略時はall、一覧・計算の省略時はカタログのhighest_rankを継承する。KhiはAなしで最高K、QhiはA・Kなしで最高Q。settings.HighestRankへAを勝手に補完しない。欠損定義不可・EQ必須が初期値。条件名から意味を追加せず、literalはそのまま、per_boardはその物理ボードの明示的定義だけを使う。

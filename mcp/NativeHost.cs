@@ -27,7 +27,7 @@ namespace PloMcp {
             if(q.action=="compare"){
                 string board=Commands.NormalizeBoard(q.board);
                 if(q.paths==null||q.paths.Length<2||q.paths.Length>3)throw new Exception("Two or three CSVs are required.");
-                if(q.ranges==null||q.ranges.Length>185)throw new Exception("Invalid conditions.");
+                if(q.ranges==null||q.ranges.Length>192)throw new Exception("Invalid conditions.");
                 var choices=q.ranges.Select((r,i)=>{
                     if(r==null||r.count<=0||string.IsNullOrWhiteSpace(r.label))throw new Exception("An empty condition cannot be compared.");
                     string syntax=Commands.NormalizeSyntax(r.syntax);new PloSyntax.SyntaxMatcher(syntax);

@@ -25,7 +25,7 @@ namespace FlopCommands {
             var draft=new ResearchConditionSet{Name="デフォルト選択のUIテスト"};
             using(var picker=new ResearchPresetPicker(draft)){
                 picker.Show(owner);Application.DoEvents();var grid=(DataGridView)picker.Controls.Find("researchPresetGrid",true).Single();var search=(TextBox)picker.Controls.Find("researchPresetSearch",true).Single();
-                Require(grid.Rows.Count==185,"185 defaults visible");Require(grid.Rows.Cast<DataGridViewRow>().Count(r=>r.Cells[0].ReadOnly)==26,"unsupported defaults disabled");
+                Require(grid.Rows.Count==192,"192 defaults visible");Require(grid.Rows.Cast<DataGridViewRow>().Count(r=>r.Cells[0].ReadOnly)==26,"unsupported defaults disabled");
                 search.Text="Msetall";Application.DoEvents();Require(grid.Rows.Count==1&&!grid.Rows[0].Cells[0].ReadOnly,"board-independent middle set selectable");grid.Rows[0].Cells[0].Value=true;
                 search.Text="AA SD BDSD";Application.DoEvents();grid.Rows[0].Cells[0].Value=true;Require(picker.SelectedPresetIds.SequenceEqual(new[]{"set.middle.all","aa.sd.bdsd"}),"checks survive search in canonical order");
                 search.Clear();Application.DoEvents();Require(grid.Rows.Cast<DataGridViewRow>().Count(r=>Convert.ToBoolean(r.Cells[0].Value))==2,"checked state restored after search");picker.Close();

@@ -1663,5 +1663,68 @@
     "group": "Bhit",
     "supported": true,
     "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.kicker.top",
+    "preset_revision": 1,
+    "cell": "L241",
+    "label": "Ahit kicker top",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.kicker.second",
+    "preset_revision": 1,
+    "cell": "L242",
+    "label": "Ahit kicker second",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.kicker.other",
+    "preset_revision": 1,
+    "cell": "L243",
+    "label": "Ahit kicker other",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.fd.nut",
+    "preset_revision": 1,
+    "cell": "L244",
+    "label": "Ahit FD nut",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.fd.second",
+    "preset_revision": 1,
+    "cell": "L245",
+    "label": "Ahit FD second",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.fd.third",
+    "preset_revision": 1,
+    "cell": "L246",
+    "label": "Ahit FD third",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
+  },
+  {
+    "preset_id": "pair.ace.fd.other",
+    "preset_revision": 1,
+    "cell": "L247",
+    "label": "Ahit FD other",
+    "group": "Ahit",
+    "supported": true,
+    "reason": ""
   }
 ]
