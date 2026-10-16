@@ -38,6 +38,7 @@ namespace FlopCommands {
         readonly HistoryStore historyStore;
         readonly HistoryPanel historyPanel;
         readonly EquityPanel equityPanel;
+        readonly EvAnalysisPanel evPanel=new EvAnalysisPanel();
         readonly ResearchPanel researchPanel;
         public ResearchPanel ResearchView {get{return researchPanel;}}
         public EquityPanel EquityView {get{return equityPanel;}}
@@ -168,7 +169,7 @@ namespace FlopCommands {
             Shown+=(s,e)=>QueueDefaults();FormClosed+=(s,e)=>{CancelDefaults();DefaultRunner.StopAll();if(bridge!=null)bridge.Dispose();};
             run.Name="runComparisonEq";cancel.Name="cancelComparisonEq";
             equityPanel.BusyChanged+=value=>{settingsArea.Enabled=!value&&!busy&&!ResearchBusy;filtersArea.Enabled=!value&&!busy&&!ResearchBusy;researchPanel.SetExternalBusy(value||busy);run.Enabled=!value&&!busy&&!ResearchBusy&&command.Text.Length>0&&ActivePaths().Length>=2;cancel.Enabled=value||busy;if(!value)FinishClose();};
-            equityPanel.InputChanged+=()=>{if(busy&&cancellation!=null)cancellation.Cancel();};
+            equityPanel.InputChanged+=()=>{evPanel.Clear();if(busy&&cancellation!=null)cancellation.Cancel();};
             researchPanel.BusyChanged+=value=>{settingsArea.Enabled=filtersArea.Enabled=!value&&!busy&&!EquityBusy;equityPanel.SetExternalBusy(value||busy);run.Enabled=!value&&!busy&&!EquityBusy&&command.Text.Length>0&&ActivePaths().Length>=2;if(!value)FinishClose();};
             starting=false;SwitchSyntaxMode();ApplyBoard();
         }
@@ -206,7 +207,7 @@ namespace FlopCommands {
             resultsGrid.AutoGenerateColumns=false;resultsGrid.ColumnHeadersHeight=36;resultsGrid.EnableHeadersVisualStyles=false;resultsGrid.ColumnHeadersDefaultCellStyle.BackColor=Color.FromArgb(225,233,239);resultsGrid.ColumnHeadersDefaultCellStyle.Font=new Font("Yu Gothic UI",9);resultsGrid.RowTemplate.Height=36;resultsGrid.GridColor=Canvas;
             resultsGrid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(215,241,234);resultsGrid.DefaultCellStyle.SelectionForeColor=Ink;resultsGrid.DefaultCellStyle.NullValue="—";
             ConfigureResultColumns(2);
-            resultViews.Dock=DockStyle.Fill;var tablePage=new TabPage("表");var tables=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=2};tables.RowStyles.Add(new RowStyle(SizeType.Percent,50));tables.RowStyles.Add(new RowStyle(SizeType.Percent,50));tables.Controls.Add(Group("CSV集計",resultsGrid),0,0);tables.Controls.Add(Group("アクション前EQ",equityPanel.TableView),0,1);tablePage.Controls.Add(tables);
+            resultViews.Dock=DockStyle.Fill;var tablePage=new TabPage("表");var tables=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=3};tables.RowStyles.Add(new RowStyle(SizeType.Percent,33));tables.RowStyles.Add(new RowStyle(SizeType.Percent,33));tables.RowStyles.Add(new RowStyle(SizeType.Percent,34));tables.Controls.Add(Group("CSV集計",resultsGrid),0,0);tables.Controls.Add(Group("アクション前EQ",equityPanel.TableView),0,1);tables.Controls.Add(Group("アクション別EV損失",evPanel),0,2);tablePage.Controls.Add(tables);
             var graphPage=new TabPage("グラフ");var graphs=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Name="comparisonAndEqGraphs"};graphs.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,31));graphs.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,69));graphs.Controls.Add(Group("CSV比率",chart),0,0);graphs.Controls.Add(Group("EQ × アクション頻度",equityPanel.PlotView),1,0);graphPage.Controls.Add(graphs);resultViews.TabPages.Add(tablePage);resultViews.TabPages.Add(graphPage);body.Controls.Add(resultViews);
             errorOutput.Dock=DockStyle.Fill;errorOutput.Padding=new Padding(12);errorOutput.BackColor=Color.FromArgb(255,245,240);errorOutput.ForeColor=Color.FromArgb(171,57,37);errorOutput.Visible=false;body.Controls.Add(errorOutput);layout.Controls.Add(body,0,2);
             var bottom=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Margin=Padding.Empty,Padding=new Padding(0,8,0,0)};bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,144));
@@ -223,13 +224,14 @@ namespace FlopCommands {
             if(busy||EquityBusy||ResearchBusy||ActivePaths().Length<2||string.IsNullOrWhiteSpace(command.Text))return;
             mainTabs.SelectedIndex=0;if(InvokeRequired)throw new InvalidOperationException("実行はアプリの画面から開始してください。");
             if(!(System.Threading.SynchronizationContext.Current is WindowsFormsSynchronizationContext))System.Threading.SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
-            equityPanel.ResetForComparison();var eqRequest=equityPanel.CaptureForComparison();
+            equityPanel.ResetForComparison();var eqRequest=equityPanel.CaptureForComparison();var evRequest=equityPanel.CaptureForEv();
             string code=command.Text,context=board+" · weight合計・比率";string[] sources=ActivePaths();
             ClearResults();busy=true;cancellation=new System.Threading.CancellationTokenSource();var token=cancellation.Token;equityPanel.SetExternalBusy(true);settingsArea.Enabled=false;filtersArea.Enabled=false;run.Enabled=false;cancel.Enabled=true;
             outputTabs.SelectedTab=resultsPage;resultViews.SelectedIndex=1;computePage.ScrollControlIntoView(resultArea);resultStatus.Text=context+"\r\n集計中…";progress.Style=ProgressBarStyle.Marquee;progress.Visible=true;elapsed.Restart();executionTimer.Start();
             try{
                 var completed=await CommandRunner.RunAsync(code,token);token.ThrowIfCancellationRequested();elapsed.Stop();executionTimer.Stop();progress.Visible=false;
                 DisplayComparison(completed,code,context,sources);export.Enabled=false;
+                await evPanel.RunAsync(evRequest,token);token.ThrowIfCancellationRequested();
                 if(eqRequest!=null){
                     resultStatus.Text+=" · EQ計算中…";
                     await equityPanel.ExecutePreparedAsync(eqRequest,token);token.ThrowIfCancellationRequested();

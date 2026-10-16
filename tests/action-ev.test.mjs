@@ -66,3 +66,10 @@ test('saved condition EV jobs resolve literals and guard revisions and selectors
  const stale=service.analyzeActionEvs({...args,condition_set:{set_id:'saved',revision:2}});await service.queue;assert.equal(service.getJob(stale.job_id).state,'failed');
  const unknown=service.analyzeActionEvs({...args,condition_set:{set_id:'saved',revision:1,condition_ids:['unknown']}});await service.queue;assert.equal(service.getJob(unknown.job_id).state,'failed');
 });
+
+test('GUI CLI uses shared calculation and returns condition labels without hand pages',async t=>{
+ const {spawnSync}=await import('node:child_process');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'plo-gui-ev-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const actions=[];for(const [id,ev,diff] of [['C',2,-.5],['R50',2.5,.5]]){const p=path.join(dir,'AsTd7c_BTN_C_'+id+'.csv');await fs.writeFile(p,`hand,weight,ev,ev_diff\nAhKsQcJd,0.5,${ev},${diff}\n`);actions.push({action_id:id,path:p});}
+ const input={board:'AsTd7c',actions,conditions:[{condition_id:'a',label:'トップペア',syntax:'A'}],ev_definition:EV_DEFINITION,complete_action_menu:true,common_weight_scale:true};
+ const run=spawnSync(process.execPath,['mcp/action-ev-cli.mjs'],{input:JSON.stringify(input),encoding:'utf8'});assert.equal(run.status,0,run.stderr);const result=JSON.parse(run.stdout);assert.equal(result.conditions[0].label,'トップペア');assert.equal(result.conditions[0].actions[0].mean_loss_bb_on_common_range,.5);assert.equal(result.items.length,0);
+});

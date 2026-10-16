@@ -119,6 +119,7 @@ namespace FlopCommands {
         public void SetExternalBusy(bool value){externalBusy=value;Busy(IsBusy);}
         public void NotifyComparisonStopped(string message){InvalidateResult();table.Rows.Clear();status.Text=message;}
         public void ResetForComparison(){InvalidateResult();table.Rows.Clear();status.Text="集計終了後にEQを計算します。";}
+        public EquityJobRequest CaptureForEv(){return context==null?null:context.Snapshot();}
         public EquityJobRequest CaptureForComparison(){try{return Request();}catch(Exception ex){status.Text="EQ入力を確認してください："+ex.Message;return null;}}
         public void Cancel(){if(cancellation!=null){cancellation.Cancel();status.Text="中止しています…";}}
         EquityJobRequest Request(){
