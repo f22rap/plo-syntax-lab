@@ -35,3 +35,19 @@ test('file-level aggregation uses pre-action weight, publishes missing coverage 
  await assert.rejects(()=>analyzeActionCsvs(config,{...args,actions:[...actions.slice(0,2),{...actions[2],path:actions[1].path}]}),/Duplicate/);
  await assert.rejects(()=>analyzeActionCsvs(config,{...args,actions:actions.map(a=>({...a,expected_sha256:'0'.repeat(64)}))}),/changed/);
 });
+
+test('syntax groups retain overlaps, use pre-action frequencies and identical common cohorts',async()=>{
+ const {conditionAccumulator}=await import('../mcp/action-ev.mjs');
+ const c=conditionAccumulator([{condition_id:'all',label:'all',syntax:'*'},{condition_id:'ak',label:'AK',syntax:'A:K'},{condition_id:'none',label:'22',syntax:'22'}],'AsTd7c',['C','R50','R100']);
+ c.add('AhKsQcJd',evaluateHand([row(2,-.5,.25),row(2.5,.3,.5),row(2.2,-.3,.25)]));
+ c.add('AcKhQdJc',evaluateHand([row(1,.1,3),null,null]));
+ const [all,ak,empty]=c.finish();
+ assert.equal(all.hands,2);assert.equal(ak.hands,2);assert.equal(all.common_coverage_percent,25);
+ assert.equal(all.actions[0].frequency_percent,81.25);
+ assert.equal(all.actions[0].mean_loss_bb_on_covered_range,.125);
+ assert.equal(all.actions[0].mean_loss_bb_on_common_range,.5);
+ assert.equal(all.actions[1].coverage_percent,25);assert.equal(all.actions[1].mean_loss_bb_on_common_range,0);
+ assert.equal(empty.actions[0].frequency_percent,null);assert.equal(empty.actions[0].mean_loss_bb_on_common_range,null);
+ assert.throws(()=>conditionAccumulator([{condition_id:'a',syntax:'A('}],'AsTd7c',['C','B']));
+ assert.throws(()=>conditionAccumulator([{condition_id:'a',syntax:'A'},{condition_id:'a',syntax:'K'}],'AsTd7c',['C','B']));
+});
