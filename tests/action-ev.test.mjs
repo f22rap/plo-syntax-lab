@@ -73,3 +73,24 @@ test('GUI CLI uses shared calculation and returns condition labels without hand 
  const input={board:'AsTd7c',actions,conditions:[{condition_id:'a',label:'トップペア',syntax:'A'}],ev_definition:EV_DEFINITION,complete_action_menu:true,common_weight_scale:true};
  const run=spawnSync(process.execPath,['mcp/action-ev-cli.mjs'],{input:JSON.stringify(input),encoding:'utf8'});assert.equal(run.status,0,run.stderr);const result=JSON.parse(run.stdout);assert.equal(result.conditions[0].label,'トップペア');assert.equal(result.conditions[0].actions[0].mean_loss_bb_on_common_range,.5);assert.equal(result.items.length,0);
 });
+
+test('fold zero reconstructs continuation alternatives and retains conservative loss bounds',async()=>{
+ const {compareContinuation,continuationAccumulator}=await import('../mcp/action-ev.mjs');
+ const exact=compareContinuation([null,row(.8,.3,.7),null],0,[1,2]);
+ assert.equal(exact.status,'exact');assert.deepEqual(exact.ev_bb,[.8,.5]);assert.ok(Math.abs(exact.actions[1].loss_bb-.3)<1e-12);
+ const bound=compareContinuation([null,row(.8,.8,.3),null],0,[1,2]);assert.equal(bound.status,'bounded');assert.equal(bound.actions[0].loss_bb,0);assert.equal(bound.actions[1].loss_bb,null);assert.equal(bound.actions[1].loss_lower_bound_bb,.785);
+ const both=compareContinuation([null,row(-.2,-.2),row(-.5,-.5)],0,[1,2]);assert.equal(both.status,'exact');assert.equal(both.actions[0].loss_bb,0);assert.equal(both.actions[1].loss_bb,.3);
+ const onlyFold=compareContinuation([row(0,.3),null,null],0,[1,2]);assert.equal(onlyFold.weight,0);assert.equal(onlyFold.status,'unknown');
+ assert.equal(compareContinuation([row(.1,.1),row(.8,.3),null],0,[1,2]).status,'inconsistent');
+ assert.equal(compareContinuation([null,row(.8,.9),null],0,[1,2]).status,'inconsistent');
+ const sum=continuationAccumulator(['call','raise']);sum.add(exact);sum.add(bound);sum.add(onlyFold);const r=sum.finish();assert.equal(r.continuation_weight,1);assert.equal(r.excluded_zero_continuation_hands,1);assert.equal(r.actions[0].mean_loss_bb,0);assert.equal(r.actions[1].mean_loss_bb,null);assert.ok(Math.abs(r.actions[1].mean_loss_lower_bound_bb-(.7*.3+.3*.785))<1e-12);
+ const near=compareContinuation([null,row(.8,.79),null],0,[1,2]);assert.equal(near.status,'bounded');assert.equal(near.ev_bb[1],null);
+});
+
+test('continuation comparison integrates with CSV and syntax aggregation',async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'plo-pair-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const actions=[];for(const [id,rows] of [['F',''],['CALL','AhKsQcJd,1,0.8,0.3\n'],['R75','AcKhQdJc,1,0.9,0.9\n']]){const p=path.join(dir,'AsTd7c_CO_C-R50_'+id+'.csv');await fs.writeFile(p,'hand,weight,ev,ev_diff\n'+rows);actions.push({action_id:id,path:p});}
+ const a={board:'AsTd7c',actions,conditions:[{condition_id:'a',label:'A',syntax:'A'}],ev_definition:EV_DEFINITION,complete_action_menu:true,common_weight_scale:true,continuation_comparison:{fold_action_id:'F',fold_ev_bb:0,action_ids:['CALL','R75']}};
+ const r=await analyzeActionCsvs({inputRoots:[await fs.realpath(dir)],maxCsvBytes:1e6},a);assert.equal(r.continuation.continuation_weight,2);assert.deepEqual(r.continuation,r.conditions[0].continuation);assert.equal(r.continuation.actions[0].mean_loss_bb,null);assert.equal(r.continuation.actions[1].mean_loss_bb,.15000000000000002);
+ await assert.rejects(()=>analyzeActionCsvs({inputRoots:[dir]}, {...a,continuation_comparison:{...a.continuation_comparison,fold_action_id:'CALL'}}));
+});

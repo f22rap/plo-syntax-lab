@@ -58,3 +58,12 @@ The saved revision and full definition are checked again after analysis. Do not 
 ### Windows aggregation tab
 
 The existing aggregation tab's table view includes an action EV loss table. Check the EV definition / complete action menu / common-weight confirmation, then use the existing aggregation button. EV analysis uses the selected action CSVs and syntax independently of villain range/EQ settings. It calls the shared Node.js evaluator through `mcp/action-ev-cli.mjs` (Node.js must be on PATH); no tunnel is needed for GUI computation. Missing Node or invalid EV input is displayed in the EV panel without discarding the CSV aggregation. Cancellation terminates the child process. Results are not written to history or included in existing CSV/EQ exports. Up to 100 conditions are supported. Native-only distributions do not support this EV bridge. Windows build and visual verification are required before release.
+
+
+### Preserve folds and simplify call/raise
+
+Pass `continuation_comparison: {fold_action_id, fold_ev_bb: 0, action_ids: [call_id, raise_id]}` to explicitly identify the three actions. The optional comparison is separate from existing all-action losses. Nonzero exported fold EV is rejected for the pair comparison. Existing EV contradictions are excluded. Fold frequency is preserved: each physical hand receives only the sum of its call/raise weights, not its fold weight. Fold-only hands have zero continuation weight and are excluded.
+
+For a known continuation action, EV minus ev_diff equals max(0, other continuation EV). Values above the rounding tolerance reconstruct the other EV. Values near zero give only an upper bound (max(0, observed difference) plus tolerance). Negative values beyond tolerance are contradictions. Exact loss uses the best of the two continuation actions, even when folding is better than both; this metric does not justify continuing instead of folding. The outputs distinguish exact full-range mean loss, conservative full-range lower bound, exact/bounded/unknown weights, and exact coverage. Missing evidence prevents a full-range mean rather than being counted as zero. CSV-derived “exact” means identifiable at exported precision, not exact solver precision.
+
+Condition rows also expose this comparison. In the GUI choose which CSV is fold (EV=0); the other two actions are compared. The table shows continuation loss, lower bound and exact coverage separately. No filename guessing or result persistence is performed.
