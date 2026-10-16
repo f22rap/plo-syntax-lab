@@ -44,6 +44,13 @@ AT7 live-data precheck: the first 200 matched CO hands and first 200 matched BTN
 
 ### Board-specific condition aggregation
 
-`research_analyze_action_evs` accepts an optional `conditions` array (up to 100), each with `condition_id`, `label`, and exact board-resolved `syntax`. It uses the Lab engine's syntax compiler on physical hands. Resolve saved generated recipes for the requested board before calling; do not reuse another board's literal syntax or silently substitute defaults. This endpoint does not yet resolve saved condition sets automatically or update the GUI.
+`research_analyze_action_evs` accepts an optional `conditions` array (up to 100), each with `condition_id`, `label`, and exact board-resolved `syntax`. It uses the Lab engine's syntax compiler on physical hands. Resolve saved generated recipes for the requested board before calling; do not reuse another board's literal syntax or silently substitute defaults. The optional saved-set selector below resolves saved condition sets automatically. GUI integration is not yet implemented.
 
 Each condition reports action frequency using the sum of all action weights as its denominator, per-action EV loss coverage, and `mean_loss_bb_on_common_range` using only the identical hands whose losses are available for every action. Contradictory hands remain in the frequency denominator but are excluded from losses. Missing/zero-weight cohorts have null means, not zero. Conditions can overlap and must not be summed. Top-level statistics and paginated hand items still describe the full node; conditions are aggregate results independent of pagination. These are losses from always choosing an action under the exported continuation EVs, not a re-solved strategy.
+
+
+### Saved condition sets
+
+Instead of explicit `conditions`, pass `condition_set: {set_id, revision, condition_ids: [...]}`. An empty ID list selects all enabled conditions (maximum 100). The response is a job; poll `research_get_job`. The existing board generation pipeline resolves literal, per-board and generated recipes, validates the generated snapshot, and blocks missing or failed definitions. No default substitution occurs. The response includes exact resolved syntax, recipe/version metadata and snapshot hash. Empty generated conditions match no hands and return null means.
+
+The saved revision and full definition are checked again after analysis. Do not mix explicit conditions and a saved set. Jobs and results are session-only (`persisted: false`), with no research history writes; stopping the server loses these job results. Cancellation is checked during generation and before returning the analysis, but cannot interrupt the synchronous per-hand aggregation mid-loop.

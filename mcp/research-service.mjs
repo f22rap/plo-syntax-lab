@@ -16,7 +16,27 @@ export const researchInstructions='For rank-specific SD-blocker research use res
 
 export class ResearchService {
  constructor(config,legacy,{native=researchNative}={}){this.config=config;this.legacy=legacy;this.native=native;this.plans=new Map();this.jobs=new Map();this.keys=new Map();this.scans=new Map();this.queue=Promise.resolve();this.closed=false;this.generator=new ConditionGenerator({timeoutSeconds:Math.min(3600,config.timeoutSeconds||300)});}
- analyzeActionEvs(a){return analyzeActionCsvs(this.config,a);}
+ analyzeActionEvs(a){
+  if(!a.condition_set)return analyzeActionCsvs(this.config,a);
+  if(a.conditions?.length)throw Error('Choose a saved condition set OR explicit conditions.');
+  return this.job('condition_action_evs',async j=>{
+   const {condition_set:s}=await this.condition({set_id:a.condition_set.set_id,revision:a.condition_set.revision});
+   const selected=a.condition_set.condition_ids??[];
+   if(new Set(selected).size!==selected.length||selected.some(id=>!s.conditions.some(c=>c.enabled&&c.condition_id===id)))throw Error('Select unique enabled conditions from the saved set.');
+   const chosen={...s,conditions:s.conditions.filter(c=>c.enabled&&(!selected.length||selected.includes(c.condition_id)))};
+   if(!chosen.conditions.length||chosen.conditions.length>100)throw Error('Select 1 to 100 enabled conditions.');
+   const preview=await this.generator.generate({condition_set:chosen,boards:[a.board]},{signal:j.controller.signal,progress:p=>j.progress=p});
+   const snapshot=researchSnapshot(preview,chosen);
+   const conditions=preview.rows.map(r=>({condition_id:r.condition_id,label:r.label,syntax:r.status==='empty_condition'?'!*':r.syntax}));
+   if(j.controller.signal.aborted)throw Error('Cancelled.');
+   const result=await analyzeActionCsvs(this.config,{...a,conditions});
+   const latest=await this.condition({set_id:s.set_id,revision:s.revision});
+   if(hash(JSON.stringify(latest.condition_set))!==hash(JSON.stringify(s)))throw Error('Condition set changed during analysis.');
+   verifyGenerationVersion(preview.versions.engine_hash);
+   if(j.controller.signal.aborted)throw Error('Cancelled.');
+   return {...result,condition_set:{set_id:s.set_id,revision:s.revision,name:s.name},generation:JSON.parse(snapshot.payload_json),generation_sha256:snapshot.sha256,persisted:false};
+  });
+ }
  inspectCsv(a){return inspectCsv(this.config,a);}
  compareCsv(a){return compareCsv(this.config,a);}
  scanDirectory(a){return this.job('directory_scan',async j=>{

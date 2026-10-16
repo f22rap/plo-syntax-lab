@@ -51,3 +51,18 @@ test('syntax groups retain overlaps, use pre-action frequencies and identical co
  assert.throws(()=>conditionAccumulator([{condition_id:'a',syntax:'A('}],'AsTd7c',['C','B']));
  assert.throws(()=>conditionAccumulator([{condition_id:'a',syntax:'A'},{condition_id:'a',syntax:'K'}],'AsTd7c',['C','B']));
 });
+
+test('saved condition EV jobs resolve literals and guard revisions and selectors',async t=>{
+ const {ResearchService}=await import('../mcp/research-service.mjs');
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'plo-saved-ev-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const config={inputRoots:[await fs.realpath(dir)],maxCsvBytes:1e6,timeoutSeconds:30};
+ const actions=[];
+ for(const [id,ev,diff] of [['C',2,-.5],['R50',2.5,.5]]){const p=path.join(dir,'AsTd7c_BTN_C_'+id+'.csv');await fs.writeFile(p,`hand,weight,ev,ev_diff\nAhKsQcJd,0.5,${ev},${diff}\n`);actions.push({action_id:id,path:p});}
+ const service=new ResearchService(config,{});
+ service.workspace=async()=>({revision:1,condition_sets:[{set_id:'saved',revision:1,name:'Saved',conditions:[{condition_id:'ak',label:'AK',enabled:true,kind:'literal',syntax:'A:K',by_board:{}}]}]});
+ const args={board:'AsTd7c',actions,condition_set:{set_id:'saved',revision:1},ev_definition:EV_DEFINITION,complete_action_menu:true,common_weight_scale:true};
+ const job=service.analyzeActionEvs(args);await service.queue;const done=service.getJob(job.job_id);assert.equal(done.state,'completed',done.error);assert.equal(done.result.conditions[0].hands,1);assert.equal(done.result.conditions[0].actions[0].mean_loss_bb_on_common_range,.5);assert.equal(done.result.generation.rows[0].syntax,'A:K');assert.equal(done.result.persisted,false);
+ assert.throws(()=>service.analyzeActionEvs({...args,conditions:[{condition_id:'x',label:'X',syntax:'A'}]}));
+ const stale=service.analyzeActionEvs({...args,condition_set:{set_id:'saved',revision:2}});await service.queue;assert.equal(service.getJob(stale.job_id).state,'failed');
+ const unknown=service.analyzeActionEvs({...args,condition_set:{set_id:'saved',revision:1,condition_ids:['unknown']}});await service.queue;assert.equal(service.getJob(unknown.job_id).state,'failed');
+});
