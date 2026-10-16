@@ -41,8 +41,8 @@ test('Research MCP: real SDK transport, shared settings, immutable plans, numeri
  }
  await connect();
  try{
-  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,nativeMcp?17:35);for(const name of researchToolNames.filter(n=>!nativeMcp||!['research_list_default_presets','research_build_sd_rank_set','research_sd_rank_report','research_inspect_csv','research_match_action_csvs'].includes(n)))assert.ok(names.includes(name));for(const name of nativeMcp?['get_status','get_artifact']:['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
-  if(!nativeMcp){const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,35);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');}
+  const names=(await client.listTools()).tools.map(t=>t.name);assert.equal(names.length,nativeMcp?17:36);for(const name of researchToolNames.filter(n=>!nativeMcp||!['research_list_default_presets','research_build_sd_rank_set','research_sd_rank_report','research_inspect_csv','research_match_action_csvs','research_analyze_action_evs'].includes(n)))assert.ok(names.includes(name));for(const name of nativeMcp?['get_status','get_artifact']:['start_comparison','get_result','get_artifact'])assert.ok(names.includes(name));
+  if(!nativeMcp){const diagnostic=await checkConnection({args:process.platform==='win32'?[path.join(root,'mcp/server.mjs'),'--config',configFile]:[path.join(root,'tests/research-harness.mjs'),configFile]});assert.equal(diagnostic.tool_count,36);assert.equal(diagnostic.mcp_connection,'passed');assert.equal(diagnostic.ai_host_connection,'not_tested');}
   else assert.equal((await call('get_status')).requires_node,false);
   assert.equal((await call('research_list_workspace')).workspace_revision,0);
   set=(await call('research_save_condition_set',{condition_set:set,expected_workspace_revision:0})).condition_set;assert.equal(set.revision,1);assert.equal(set.conditions[0].syntax,'*');

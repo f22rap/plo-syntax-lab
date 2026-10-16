@@ -48,7 +48,11 @@ test('MCP client discovers and calls the new tools',async t=>{
  const f=await fixture(t),p=await f.write('a.csv',header+'AhKsQcJd,0,0,0,1.24,-.1,1\n');
  const server=buildServer(new Service(f.config)),client=new Client({name:'ev-test',version:'1'}),[ct,st]=InMemoryTransport.createLinkedPair();
  await server.connect(st);await client.connect(ct);t.after(async()=>{await client.close();await server.close();});
- const tools=await client.listTools();assert.equal(tools.tools.length,35);
+ const tools=await client.listTools();assert.equal(tools.tools.length,36);
  const r=await client.callTool({name:'research_inspect_csv',arguments:{path:p,board:'AsTd7c'}});assert.ok(!r.isError);assert.equal(r.structuredContent.samples[0].values.ev,'1.24');
  const bad=await client.callTool({name:'research_match_action_csvs',arguments:{left_path:p,right_path:p,board:'AsTd7c'}});assert.equal(bad.isError,true);
+ const q=await f.write('b.csv',header+'JdQcKsAh,1,100,1,1.34,.1,1\n');
+ const ev=await client.callTool({name:'research_analyze_action_evs',arguments:{board:'AsTd7c',actions:[{action_id:'check',path:p},{action_id:'bet',path:q}],ev_definition:'action_minus_best_other_bb',complete_action_menu:true,common_weight_scale:true}});
+ assert.ok(!ev.isError);assert.equal(ev.structuredContent.actions[0].mean_loss_bb_on_covered_range,.1);assert.equal(ev.structuredContent.totals.complete_hands,1);
+
 });

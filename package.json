@@ -17,7 +17,7 @@
     "preview:generated": "node mcp/preview-generated-conditions.mjs",
     "test:sd-rank": "node --test tests/sd-rank-study.test.cjs",
     "research:sd-rank": "node mcp/sd-rank-study.cjs",
-    "test:ev-csv": "node --test tests/csv-ev-inspection.test.mjs"
+    "test:ev-csv": "node --test tests/csv-ev-inspection.test.mjs tests/action-ev.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",

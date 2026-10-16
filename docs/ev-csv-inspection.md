@@ -1,6 +1,6 @@
 # EV CSV inspection (Node.js connector)
 
-This first-stage feature reads existing source CSVs without uploading them manually or changing the source, condition sets, catalogs, or frequency calculations. It does not compute action EV differences or losses. The Windows standalone Node-free MCP does not advertise these tools yet; the installed Node.js connector must be updated and restarted before they are available remotely.
+The inspection tools read existing source CSVs without uploading them manually or changing the source, condition sets, catalogs, or frequency calculations. Inspection does not compute action EV differences or losses. The separate analysis tool below requires an explicit EV contract. The Windows standalone Node-free MCP does not advertise these tools yet; the installed Node.js connector must be updated and restarted before they are available remotely.
 
 ## Tools
 
@@ -29,3 +29,15 @@ Record the exporting solver, EV unit (bb/chips/pot fraction), EV reference point
 Only after this gate should a later feature compute per-hand bet-minus-check EV and pre-action-weighted conditional means, report comparable weight coverage, distinguish pure from mixed individual strategies, and estimate fixed-continuation action losses. EQ is not EV. A population bb/100 estimate additionally requires node reach probabilities. This stage does not add GUI EV columns or modify saved research result schemas.
 
 Validation: `npm run test:ev-csv` tests physical hand joining, missing columns, precision retention, zero rows, invalid CSVs, source hashes, file boundaries, filename nodes and actual MCP discovery/calls.
+
+## Confirmed EV analysis (2 or 3 actions)
+
+`research_analyze_action_evs` takes `board`, `actions` (2–3 entries with action_id, path, optional expected_sha256), `ev_definition: action_minus_best_other_bb`, `complete_action_menu: true`, and `common_weight_scale: true`. The operator must confirm the full legal action menu, not merely the files available. Current user context confirms a bb difference to the alternative; three-action interpretation must mean the best OTHER action for each row, not the same global runner-up for every row.
+
+For two actions only, missing EV can be reconstructed as `other_ev = ev - ev_diff`. For three actions, missing EV stays missing. Action loss is `max(0, -ev_diff)`; with all action EVs present, missing diffs can instead be evaluated relative to the highest EV. Fully observed values are cross-checked against the definition. Partial rows are checked for contradictions between their implied best values and known alternatives. Contradictory hands contribute to coverage denominators but not loss numerators.
+
+Default residual tolerance is 0.015bb for independently rounded 0.01bb EV and diff columns. It is configurable, recorded, and is not a solver-convergence claim. Calculations currently use floating point; raw strings stay available through inspection. Near-zero values should not be interpreted more precisely than source rounding.
+
+Each action summary reports covered range weight and mean loss on that covered range, weighted by the sum of action weights for each hand. This describes always choosing that action on covered hands. It is not the loss of the observed strategy, an optimized simplified strategy, or bb/100. Different coverage can make two summary means incomparable. Results cover all CSV hands, not a selected top-pair syntax. GUI integration, syntax-condition aggregation and stored EV profiles are subsequent work. This read-only tool does not alter existing saved frequency/EQ results.
+
+AT7 live-data precheck: the first 200 matched CO hands and first 200 matched BTN hands agreed with the two-action difference definition to floating-point precision. This is a sorted sample, not verification of all hands and not validation of three-action exports.

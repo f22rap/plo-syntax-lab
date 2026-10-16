@@ -1,10 +1,10 @@
 # AIから複数ボードを調査する（第4ステップ）
 
-Node.js版Windows MCPは従来15ツールと調査用20ツールを提供する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
+Node.js版Windows MCPは従来15ツールと調査用21ツールを提供する。既存15ツールの名前・意味を維持する。GUIの集計タブと同じResearchStore・ResearchRun・EQエンジンを使い、別の計算式は実装しない。共通11ツール・クラウド版は今回変更しない。
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 
-ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ35ツールを呼び出す構成。利用者環境での実接続は未検証。
+ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ36ツールを呼び出す構成。利用者環境での実接続は未検証。
 
 ## 起動と設定
 
@@ -25,17 +25,18 @@ Node.js版Windows MCPは従来15ツールと調査用20ツールを提供する�
 }
 ```
 
-4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。35ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
+4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。36ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
 5. AIに「Ahiボードのベット戦略を、ボードの特徴ごとに調査して。登録した○○条件セットを使って」と依頼する。[AI向け手順](../mcp/research-workflow.md)も参照。
 
 AIホスト固有の設定画面・インストール操作は環境によって異なる。このパッケージ自体はWeb接続用URLを提供しないため、ブラウザ版ChatGPTには別途トンネル接続を設定する。PCを使わずクラウドでEQ計算を行う場合は別の実行基盤が必要。特定のAI製品への接続完了をSDK試験だけで判断しない。
 
-EVの検査・同一ハンド照合は[EV CSV検査](ev-csv-inspection.md)を参照。EV差・損失の計算は定義確認後の次段階とする。この2ツールはNode.js版のみ。
+EVの検査・同一ハンド照合は[EV CSV検査](ev-csv-inspection.md)を参照。定義・単位・全アクションを明示確認した場合はEV評価ツールで2～3択を評価できる。この3ツールはNode.js版のみ。
 
 ## 追加ツール
 
 | ツール | 用途 |
 | --- | --- |
+| research_analyze_action_evs | 定義確認後の2～3択EV・損失・欠損率を評価（全ハンド） |
 | research_inspect_csv | CSV列・EV原値・欠損・ゼロ重み・診断を取得 |
 | research_match_action_csvs | 同じ局面の2つのアクションCSVを物理ハンドで照合 |
 | research_scan_directory | 許可ディレクトリから指定最高ランクのボード・局面・CSV対応を検出 |
