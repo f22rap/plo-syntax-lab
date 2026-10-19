@@ -32,7 +32,7 @@ test('Native EXE: official SDK transport, no Node on child PATH, config scope an
  try{
   await connect();await client.ping();
   assert.equal(client.getServerVersion().name,'plo-syntax-lab-native');
-  const listed=await client.listTools();assert.deepEqual(listed.tools.map(x=>x.name).sort(),['get_status','get_artifact',...researchToolNames.filter(name=>!['research_list_default_presets','research_build_sd_rank_set','research_sd_rank_report','research_inspect_csv','research_match_action_csvs','research_analyze_action_evs'].includes(name))].sort());
+  const listed=await client.listTools();assert.deepEqual(listed.tools.map(x=>x.name).sort(),['get_status','get_artifact',...researchToolNames.filter(name=>!['research_build_strategy_report','research_get_strategy_report','research_list_strategy_reports','research_export_strategy_report','research_list_default_presets','research_build_sd_rank_set','research_sd_rank_report','research_inspect_csv','research_match_action_csvs','research_analyze_action_evs'].includes(name))].sort());
   assert.equal(listed.tools[0].annotations.readOnlyHint,true);
   const r=await client.callTool({name:'get_status',arguments:{}});assert.ok(!r.isError);
   const s=r.structuredContent;assert.equal(s.requires_node,false);assert.equal(s.research_ready,true);assert.equal(s.tool_count,17);assert.equal(s.planned_tool_count,17);
