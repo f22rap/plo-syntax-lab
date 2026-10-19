@@ -3,7 +3,7 @@
 import fs from 'node:fs/promises';
 import {z} from 'zod';
 import {registerResearchTools} from './research-tools.mjs';
-import {researchInstructions} from './research-service.mjs';
+import {commonResearchInstructions as researchInstructions} from './research-service.mjs';
 const tools=[];
 function tool(name,description,shape,handler,readOnly=true){
  if(name==='research_list_default_presets')return;

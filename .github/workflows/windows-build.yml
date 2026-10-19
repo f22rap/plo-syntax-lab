@@ -12,6 +12,25 @@ permissions:
   contents: read
 
 jobs:
+  strategy:
+    name: Standard strategy report (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Test standard strategy report and PDF
+        run: npm run test:strategy
   native-connection:
     name: Native MCP connection (no Node.js)
     runs-on: windows-2022
@@ -165,6 +184,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Packaged research MCP tests failed' }
           node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/mcp.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Packaged Windows-native MCP tests failed' }
+          node --test dist/PLO-Syntax-Lab-Windows-MCP/tests/strategy-report.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged standard strategy report tests failed' }
           Remove-Item Env:PLO_MCP_TEST_ROOT
           Compress-Archive -Path dist\PLO-Syntax-Lab-Windows-MCP\* -DestinationPath dist\PLO-Syntax-Lab-Windows-MCP.zip
           $hash = (Get-FileHash dist\PLO-Syntax-Lab-Windows-MCP.zip -Algorithm SHA256).Hash.ToLowerInvariant()

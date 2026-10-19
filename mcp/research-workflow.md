@@ -45,3 +45,6 @@ Node.js版では`research_list_default_presets`でアプリと同じ一覧を取
 ランク別SDブロッカー調査は `research_build_sd_rank_set` でpp込みの条件セットを作る。
 結果のランキングは `research_sd_rank_report` を使用する。`_nopp_` 条件を再生成・代用しない。
 詳細は `docs/sd-rank-study.md`。ユーザーが別途明示したpp限定分析は別セットとして扱う。
+
+## Ahit standard report
+For the saved Ahit four-slot workflow use research_build_strategy_report and poll research_get_job. Read cells with research_get_strategy_report; use research_list_strategy_reports and research_export_strategy_report after restart. See [definitions and fixed PDF](../docs/standard-strategy-report.md). Do not replace absent cells with check or infer unknown approved-five block assignments.
