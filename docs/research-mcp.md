@@ -4,7 +4,7 @@ Node.js版Windows MCPは従来15ツールと調査用21ツールを提供する�
 
 接続先にはWindows上のCodexを選定。[セットアップ](codex-setup.md)の`Setup-Codex.cmd`で初回設定・MCP診断・CLI登録を行える。
 
-ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ36ツールを呼び出す構成。利用者環境での実接続は未検証。
+ブラウザ版ChatGPTから使う場合は[Secure MCP Tunnelでの接続手順](chatgpt-browser-setup.md)を参照。CSVと計算エンジンはWindows PCに置き、トンネルを通して同じ40ツールを呼び出す構成。利用者環境での実接続は未検証。
 
 ## 起動と設定
 
@@ -25,7 +25,7 @@ Node.js版Windows MCPは従来15ツールと調査用21ツールを提供する�
 }
 ```
 
-4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。36ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
+4. ホストを再接続し、`get_status`と`research_list_workspace`を呼ぶ。40ツールが見え、GUIで保存した条件セット・カタログが返ることを確認する。
 5. AIに「Ahiボードのベット戦略を、ボードの特徴ごとに調査して。登録した○○条件セットを使って」と依頼する。[AI向け手順](../mcp/research-workflow.md)も参照。
 
 AIホスト固有の設定画面・インストール操作は環境によって異なる。このパッケージ自体はWeb接続用URLを提供しないため、ブラウザ版ChatGPTには別途トンネル接続を設定する。PCを使わずクラウドでEQ計算を行う場合は別の実行基盤が必要。特定のAI製品への接続完了をSDK試験だけで判断しない。

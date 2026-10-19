@@ -12,7 +12,7 @@ const publicJob=j=>({job_id:j.id,state:j.state,progress:j.progress,result:j.resu
 export class Service {
  constructor(config){this.config=config;this.datasets=new Map();this.conditions=new Map();this.defaults=new Map();this.schemas=new Map();this.jobs=new Map();this.artifacts=new Map();this.queue=Promise.resolve();this.closed=false;}
  async init(){
-  const files=['mcp/action-ev.mjs','mcp/csv-ev-inspection.mjs','src/lab/engine.js','src/defaults.js','src/default-labels.json','src/SyntaxMatcher.cs','src/compare-runtime.ps1','src/CompareCommands.cs','src/Core.cs','src/Execution.cs','src/History.cs','src/LabSelection.cs','mcp/NativeHost.cs','dist/PloMcp.Native.exe','dist/PloResearch.Native.exe','mcp/ResearchHost.cs','src/ResearchData.cs','src/ResearchRecipes.cs','src/ResearchGeneration.cs','src/default-presets.json','src/ResearchRun.cs','src/ResearchFiles.cs','src/EquityEngine.cs','src/EquityInput.cs','src/EquityJob.cs','src/EquityPlot.cs','src/EquityArchive.cs'];
+  const files=['mcp/strategy-features.mjs','mcp/strategy-analysis.mjs','mcp/strategy-report.mjs','mcp/strategy-pdf.mjs','assets/fonts/NotoSansJP-Regular.ttf','mcp/action-ev.mjs','mcp/csv-ev-inspection.mjs','src/lab/engine.js','src/defaults.js','src/default-labels.json','src/SyntaxMatcher.cs','src/compare-runtime.ps1','src/CompareCommands.cs','src/Core.cs','src/Execution.cs','src/History.cs','src/LabSelection.cs','mcp/NativeHost.cs','dist/PloMcp.Native.exe','dist/PloResearch.Native.exe','mcp/ResearchHost.cs','src/ResearchData.cs','src/ResearchRecipes.cs','src/ResearchGeneration.cs','src/default-presets.json','src/ResearchRun.cs','src/ResearchFiles.cs','src/EquityEngine.cs','src/EquityInput.cs','src/EquityJob.cs','src/EquityPlot.cs','src/EquityArchive.cs'];
   this.versions={mcp:VERSION,source_commit:await sourceCommit(),build_info:await buildInfo(),files:Object.fromEntries(await Promise.all(files.map(async f=>[f,await fileHash(path.join(root,f))])))};
   return this;
  }
@@ -146,6 +146,6 @@ export class Service {
   const a=this.artifacts.get(id);if(!a)throw Error('Unknown artifact_id (artifacts are session-scoped).');
   const real=await fs.realpath(a.path);if(!within(this.config.outputRoot,real))throw Error('Artifact is outside output root.');
   if((await fs.stat(real)).size>2*1024*1024)throw Error('Artifact is too large to return inline; use its exported file.');
-  return {...a,text:await fs.readFile(real,'utf8')};
+  return a.mimeType==='application/pdf'?{...a,blob:(await fs.readFile(real)).toString('base64')}:{...a,text:await fs.readFile(real,'utf8')};
  }
 }

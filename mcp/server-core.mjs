@@ -45,7 +45,7 @@ export function buildServer(service,research=new ResearchService(service.config,
  tool('get_artifact','Read an exported artifact by ID. For large files use the returned file path.',{artifact_id:z.string().uuid()},a=>service.readArtifact(a.artifact_id));
  registerResearchTools(tool,research);
  server.registerResource('artifact',new ResourceTemplate('plo://artifacts/{id}',{list:undefined}),{description:'Exported reports, CSVs and SVG charts from this session.'},async(uri,vars)=>{
-  const a=await service.readArtifact(String(vars.id));return {contents:[{uri:uri.href,mimeType:a.mimeType,text:a.text}]};
+  const a=await service.readArtifact(String(vars.id));return {contents:[{uri:uri.href,mimeType:a.mimeType,...(a.blob?{blob:a.blob}:{text:a.text})}]};
  });
  return server;
 }
