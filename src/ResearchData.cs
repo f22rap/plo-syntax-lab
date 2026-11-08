@@ -98,7 +98,10 @@ namespace FlopCommands.Research {
     }
     public static class ResearchJson {
         public const int MaxBytes=16*1024*1024;
-        static DataContractJsonSerializer Serializer(Type type){return new DataContractJsonSerializer(type,new DataContractJsonSerializerSettings{UseSimpleDictionaryFormat=true,MaxItemsInObjectGraph=200000});}
+        // Workspace snapshots contain all saved sets, not only the edited conditions.
+        // Keep a finite graph budget consistent with research result persistence.
+        public const int MaxGraphItems=2000000;
+        static DataContractJsonSerializer Serializer(Type type){return new DataContractJsonSerializer(type,new DataContractJsonSerializerSettings{UseSimpleDictionaryFormat=true,MaxItemsInObjectGraph=MaxGraphItems});}
         public static byte[] Encode<T>(T value){using(var stream=new MemoryStream()){Serializer(typeof(T)).WriteObject(stream,value);if(stream.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");return stream.ToArray();}}
         public static T Decode<T>(byte[] bytes){if(bytes==null||bytes.Length>MaxBytes)throw new ArgumentException("調査設定は16MiB以下にしてください。");ResearchRecipeJson.CheckDocument(bytes);using(var stream=new MemoryStream(bytes))return (T)Serializer(typeof(T)).ReadObject(stream);}
         public static T Clone<T>(T value){return Decode<T>(Encode(value));}
