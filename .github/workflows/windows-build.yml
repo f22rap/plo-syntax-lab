@@ -12,6 +12,16 @@ permissions:
   contents: read
 
 jobs:
+  research-persistence:
+    name: Research workspace persistence
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Test serialization and large workspace saves
+        shell: powershell
+        run: .\test-equity.ps1
   strategy:
     name: Standard strategy report (${{ matrix.os }})
     strategy:

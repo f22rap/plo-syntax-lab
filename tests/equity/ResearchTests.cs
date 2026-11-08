@@ -64,6 +64,30 @@ namespace EquityTests {
             using(var gate=new FileStream(store.FilePath+".lock",FileMode.Open,FileAccess.ReadWrite,FileShare.None)){bool blocked=false;try{store.Save(loaded,loaded.Revision);}catch(IOException){blocked=true;}Check(blocked,"concurrent store writer locked");}
             File.WriteAllText(store.FilePath,"invalid JSON");bool unreadable=false;try{store.Save(loaded,loaded.Revision);}catch(Exception){unreadable=true;}Check(unreadable&&File.ReadAllText(store.FilePath)=="invalid JSON","corrupt existing store never silently replaced");
         }
-        public static void Run(){Definitions();string dir=Path.Combine(Path.GetTempPath(),"plo-research-tests-"+Guid.NewGuid().ToString("N"));try{FilesAndPersistence(dir);}finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}Console.WriteLine("PASS: "+checks+" research setup checks");GeneratedConditionTests.Run();}
+        static void LargeWorkspacePersistence(string dir){
+            var workspace=new ResearchWorkspace();
+            for(int i=0;i<30;i++){
+                var set=new ResearchConditionSet{Id="large_"+i,Name="Large fixture "+i};
+                for(int j=0;j<1000;j++)set.Conditions.Add(new ResearchCondition{Id="c_"+j,Label="AA",Syntax="AA"});
+                workspace.Sets.Add(set);
+            }
+            bool oldQuotaExceeded=false;
+            try{using(var stream=new MemoryStream()){
+                new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(ResearchWorkspace),new System.Runtime.Serialization.Json.DataContractJsonSerializerSettings{UseSimpleDictionaryFormat=true,MaxItemsInObjectGraph=200000}).WriteObject(stream,workspace);
+            }}catch(System.Runtime.Serialization.SerializationException){oldQuotaExceeded=true;}
+            Check(oldQuotaExceeded,"fixture exceeds the previous object graph budget");
+            var encoded=ResearchJson.Encode(workspace);
+            Check(encoded.Length<ResearchJson.MaxBytes,"large workspace remains inside the byte limit");
+            var store=new ResearchStore(Path.Combine(dir,"large-workspace"));
+            var saved=store.Save(workspace,0);
+            var loaded=store.Load();
+            Check(loaded.Sets.Count==30&&loaded.Sets.All(x=>x.Conditions.Count==1000),"large workspace restart preserves all conditions");
+            loaded.Sets.Add(new ResearchConditionSet{Id="new_three",Name="Three new conditions",Conditions=new List<ResearchCondition>{new ResearchCondition{Id="a",Label="A",Syntax="A"},new ResearchCondition{Id="k",Label="K",Syntax="K"},new ResearchCondition{Id="q",Label="Q",Syntax="Q"}}});
+            var updated=store.Save(loaded,saved.Revision);
+            Check(updated.Sets.Count==31&&updated.Sets.Last().Conditions.Count==3,"three-condition save succeeds in a large workspace");
+            Check(updated.Sets.Take(30).All(x=>x.Revision==1&&x.Conditions.Count==1000),"unrelated set contents and revisions preserved");
+            Reject(()=>ResearchJson.Decode<ResearchWorkspace>(new byte[ResearchJson.MaxBytes+1]),"oversized JSON still rejected");
+        }
+        public static void Run(){Definitions();string dir=Path.Combine(Path.GetTempPath(),"plo-research-tests-"+Guid.NewGuid().ToString("N"));try{FilesAndPersistence(dir);LargeWorkspacePersistence(dir);}finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}Console.WriteLine("PASS: "+checks+" research setup checks");GeneratedConditionTests.Run();}
     }
 }
